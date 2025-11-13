@@ -8,11 +8,11 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
--- TABLES
+-- TABLES (Created in dependency order)
 -- ============================================================================
 
 -- Users table (synced with auth.users)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
@@ -27,9 +27,38 @@ COMMENT ON TABLE users IS 'User profiles and roles';
 COMMENT ON COLUMN users.role IS 'User role: employee, finance, or admin';
 COMMENT ON COLUMN users.manager_id IS 'Reference to user''s manager (for approval workflows)';
 
+-- Receipts table (created before expenses to avoid circular dependency)
+CREATE TABLE IF NOT EXISTS receipts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) NOT NULL,
+
+  -- File info
+  file_path TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_type TEXT NOT NULL CHECK (file_type IN ('image/jpeg', 'image/png', 'application/pdf')),
+  file_size INTEGER NOT NULL CHECK (file_size <= 5242880),  -- 5MB limit
+
+  -- OCR data
+  ocr_status TEXT DEFAULT 'pending' CHECK (ocr_status IN ('pending', 'processing', 'completed', 'failed')),
+  ocr_data JSONB,
+  ocr_confidence DECIMAL(3,2) CHECK (ocr_confidence >= 0 AND ocr_confidence <= 1),
+
+  -- Extracted fields (verified by user)
+  extracted_merchant TEXT,
+  extracted_amount DECIMAL(10,2),
+  extracted_date DATE,
+  extracted_tax DECIMAL(10,2),
+
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE receipts IS 'Receipt images and OCR data';
+COMMENT ON COLUMN receipts.ocr_data IS 'Raw OCR response data';
+COMMENT ON COLUMN receipts.ocr_confidence IS 'OCR accuracy confidence score (0-1)';
+
 -- Expenses table
-CREATE TABLE expenses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) NOT NULL,
   receipt_id UUID REFERENCES receipts(id),
 
@@ -65,55 +94,28 @@ COMMENT ON TABLE expenses IS 'Employee expense records';
 COMMENT ON COLUMN expenses.policy_violations IS 'Array of policy violations detected';
 COMMENT ON COLUMN expenses.status IS 'Expense workflow status';
 
--- Receipts table
-CREATE TABLE receipts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  expense_id UUID REFERENCES expenses(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) NOT NULL,
-
-  -- File info
-  file_path TEXT NOT NULL,
-  file_name TEXT NOT NULL,
-  file_type TEXT NOT NULL CHECK (file_type IN ('image/jpeg', 'image/png', 'application/pdf')),
-  file_size INTEGER NOT NULL CHECK (file_size <= 5242880),  -- 5MB limit
-
-  -- OCR data
-  ocr_status TEXT DEFAULT 'pending' CHECK (ocr_status IN ('pending', 'processing', 'completed', 'failed')),
-  ocr_data JSONB,
-  ocr_confidence DECIMAL(3,2) CHECK (ocr_confidence >= 0 AND ocr_confidence <= 1),
-
-  -- Extracted fields (verified by user)
-  extracted_merchant TEXT,
-  extracted_amount DECIMAL(10,2),
-  extracted_date DATE,
-  extracted_tax DECIMAL(10,2),
-
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-COMMENT ON TABLE receipts IS 'Receipt images and OCR data';
-COMMENT ON COLUMN receipts.ocr_data IS 'Raw OCR response data';
-COMMENT ON COLUMN receipts.ocr_confidence IS 'OCR accuracy confidence score (0-1)';
+-- Add foreign key from receipts back to expenses (now that expenses exists)
+ALTER TABLE receipts ADD COLUMN IF NOT EXISTS expense_id UUID REFERENCES expenses(id) ON DELETE CASCADE;
 
 -- ============================================================================
 -- INDEXES
 -- ============================================================================
 
 -- Expenses indexes for common queries
-CREATE INDEX idx_expenses_user_id ON expenses(user_id);
-CREATE INDEX idx_expenses_status ON expenses(status);
-CREATE INDEX idx_expenses_date ON expenses(expense_date DESC);
-CREATE INDEX idx_expenses_created_at ON expenses(created_at DESC);
-CREATE INDEX idx_expenses_user_status ON expenses(user_id, status);  -- Composite for filtering
+CREATE INDEX IF NOT EXISTS idx_expenses_user_id ON expenses(user_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_expenses_user_status ON expenses(user_id, status);
 
 -- Receipts indexes
-CREATE INDEX idx_receipts_expense_id ON receipts(expense_id);
-CREATE INDEX idx_receipts_user_id ON receipts(user_id);
-CREATE INDEX idx_receipts_ocr_status ON receipts(ocr_status);
+CREATE INDEX IF NOT EXISTS idx_receipts_expense_id ON receipts(expense_id);
+CREATE INDEX IF NOT EXISTS idx_receipts_user_id ON receipts(user_id);
+CREATE INDEX IF NOT EXISTS idx_receipts_ocr_status ON receipts(ocr_status);
 
 -- Users indexes
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_manager_id ON users(manager_id);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_manager_id ON users(manager_id);
 
 -- ============================================================================
 -- FUNCTIONS
@@ -161,7 +163,7 @@ BEGIN
   FROM expenses
   WHERE user_id = NEW.user_id
     AND expense_date = NEW.expense_date
-    AND id != NEW.id  -- Exclude current expense if updating
+    AND id != NEW.id
     AND status != 'rejected';
 
   IF daily_total + NEW.amount > 750 THEN
@@ -185,6 +187,11 @@ COMMENT ON FUNCTION check_expense_policies() IS 'Validates expense against polic
 -- ============================================================================
 -- TRIGGERS
 -- ============================================================================
+
+-- Drop triggers if they exist (for idempotency)
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_expenses_updated_at ON expenses;
+DROP TRIGGER IF EXISTS check_expense_policies_trigger ON expenses;
 
 -- Trigger to update updated_at on users table
 CREATE TRIGGER update_users_updated_at
@@ -213,22 +220,35 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receipts ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Users can read own data" ON users;
+DROP POLICY IF EXISTS "Users can update own data" ON users;
+DROP POLICY IF EXISTS "Finance can read all users" ON users;
+DROP POLICY IF EXISTS "Employees can view own expenses" ON expenses;
+DROP POLICY IF EXISTS "Finance can view all expenses" ON expenses;
+DROP POLICY IF EXISTS "Employees can create own expenses" ON expenses;
+DROP POLICY IF EXISTS "Employees can update own draft expenses" ON expenses;
+DROP POLICY IF EXISTS "Finance can update expenses" ON expenses;
+DROP POLICY IF EXISTS "Employees can delete own draft expenses" ON expenses;
+DROP POLICY IF EXISTS "Users can view own receipts" ON receipts;
+DROP POLICY IF EXISTS "Finance can view all receipts" ON receipts;
+DROP POLICY IF EXISTS "Users can create own receipts" ON receipts;
+DROP POLICY IF EXISTS "Users can update own receipts" ON receipts;
+DROP POLICY IF EXISTS "Users can delete own receipts" ON receipts;
+
 -- ============================================================================
 -- USERS TABLE POLICIES
 -- ============================================================================
 
--- Users can read their own data
 CREATE POLICY "Users can read own data"
   ON users FOR SELECT
   USING (auth.uid() = id);
 
--- Users can update their own data (except role)
 CREATE POLICY "Users can update own data"
   ON users FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id AND role = (SELECT role FROM users WHERE id = auth.uid()));
 
--- Finance and admin can read all users
 CREATE POLICY "Finance can read all users"
   ON users FOR SELECT
   USING (
@@ -243,12 +263,10 @@ CREATE POLICY "Finance can read all users"
 -- EXPENSES TABLE POLICIES
 -- ============================================================================
 
--- Employees can view their own expenses
 CREATE POLICY "Employees can view own expenses"
   ON expenses FOR SELECT
   USING (auth.uid() = user_id);
 
--- Finance and admin can view all expenses
 CREATE POLICY "Finance can view all expenses"
   ON expenses FOR SELECT
   USING (
@@ -259,12 +277,10 @@ CREATE POLICY "Finance can view all expenses"
     )
   );
 
--- Employees can create their own expenses
 CREATE POLICY "Employees can create own expenses"
   ON expenses FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Employees can update their own draft expenses
 CREATE POLICY "Employees can update own draft expenses"
   ON expenses FOR UPDATE
   USING (
@@ -276,7 +292,6 @@ CREATE POLICY "Employees can update own draft expenses"
     AND status = 'draft'
   );
 
--- Finance can update any expense (for reimbursement, etc.)
 CREATE POLICY "Finance can update expenses"
   ON expenses FOR UPDATE
   USING (
@@ -287,7 +302,6 @@ CREATE POLICY "Finance can update expenses"
     )
   );
 
--- Employees can delete their own draft expenses
 CREATE POLICY "Employees can delete own draft expenses"
   ON expenses FOR DELETE
   USING (
@@ -299,12 +313,10 @@ CREATE POLICY "Employees can delete own draft expenses"
 -- RECEIPTS TABLE POLICIES
 -- ============================================================================
 
--- Users can view their own receipts
 CREATE POLICY "Users can view own receipts"
   ON receipts FOR SELECT
   USING (auth.uid() = user_id);
 
--- Finance can view all receipts
 CREATE POLICY "Finance can view all receipts"
   ON receipts FOR SELECT
   USING (
@@ -315,107 +327,23 @@ CREATE POLICY "Finance can view all receipts"
     )
   );
 
--- Users can create their own receipts
 CREATE POLICY "Users can create own receipts"
   ON receipts FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Users can update their own receipts (for OCR updates)
 CREATE POLICY "Users can update own receipts"
   ON receipts FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Users can delete their own receipts
 CREATE POLICY "Users can delete own receipts"
   ON receipts FOR DELETE
   USING (auth.uid() = user_id);
 
 -- ============================================================================
--- STORAGE BUCKET SETUP
--- Note: These need to be run in the Supabase Dashboard under Storage
--- ============================================================================
-
-/*
-1. Create a bucket named 'receipts' with these settings:
-   - Public: false
-   - File size limit: 5MB
-   - Allowed MIME types: image/jpeg, image/png, application/pdf
-
-2. Add the following Storage Policies:
-
--- Users can upload to their own folder
-CREATE POLICY "Users can upload own receipts"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'receipts'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- Users can read their own files
-CREATE POLICY "Users can read own receipts"
-  ON storage.objects FOR SELECT
-  USING (
-    bucket_id = 'receipts'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- Finance can read all files
-CREATE POLICY "Finance can read all receipts"
-  ON storage.objects FOR SELECT
-  USING (
-    bucket_id = 'receipts'
-    AND EXISTS (
-      SELECT 1 FROM public.users
-      WHERE users.id = auth.uid()
-      AND users.role IN ('finance', 'admin')
-    )
-  );
-
--- Users can delete their own files
-CREATE POLICY "Users can delete own receipts"
-  ON storage.objects FOR DELETE
-  USING (
-    bucket_id = 'receipts'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-*/
-
--- ============================================================================
--- SEED DATA (Optional - for testing)
--- ============================================================================
-
--- Insert a finance admin user (after creating via Supabase Auth)
--- UPDATE: This will be done through the application after user signs up
--- We'll manually update the first user's role to 'finance' for testing
-
--- ============================================================================
--- VERIFICATION QUERIES
--- ============================================================================
-
--- Verify tables were created
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-    RAISE EXCEPTION 'Users table was not created';
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'expenses') THEN
-    RAISE EXCEPTION 'Expenses table was not created';
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'receipts') THEN
-    RAISE EXCEPTION 'Receipts table was not created';
-  END IF;
-
-  RAISE NOTICE 'All tables created successfully!';
-END $$;
-
--- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================
 
--- Output success message
 DO $$
 BEGIN
   RAISE NOTICE '========================================';
@@ -428,7 +356,7 @@ BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'Next steps:';
   RAISE NOTICE '1. Create storage bucket "receipts" in Supabase Dashboard';
-  RAISE NOTICE '2. Configure storage policies (see comments above)';
+  RAISE NOTICE '2. Configure storage policies';
   RAISE NOTICE '3. Test user registration and expense creation';
   RAISE NOTICE '========================================';
 END $$;
