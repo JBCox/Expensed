@@ -10,18 +10,18 @@
 
 ### Week 1: Foundation & Setup (Days 1-7)
 
-#### Day 1-2: Project & Database Setup
+#### Day 1-2: Project & Database Setup ✅ COMPLETED
 - [x] Create GitHub repository (Jensify)
 - [x] Clone repository locally
-- [x] Install Angular CLI
+- [x] Install Angular CLI (v20.3.10)
 - [x] Create CLAUDE.md (project constitution)
 - [x] Create spec.md (product specification)
 - [x] Create prompt_plan.md (this file)
-- [ ] Initialize Angular project with configuration
-- [ ] Set up Supabase project
-- [ ] Configure Supabase connection
-- [ ] Create environment files (dev and prod)
-- [ ] Add .gitignore for sensitive files
+- [x] Initialize Angular project with configuration (Angular 20, standalone components, SCSS, strict mode)
+- [x] Set up Supabase project (https://bfudcugrarerqvvyfpoz.supabase.co)
+- [x] Configure Supabase connection (SupabaseService created)
+- [x] Create environment files (dev and prod)
+- [x] Add .gitignore for sensitive files
 
 **Angular Project Setup**:
 ```bash
@@ -48,17 +48,17 @@ npm install --save-dev @types/file-saver
 - Set up Storage bucket: "receipts"
 - Configure CORS for local development
 
-#### Day 3: Database Schema & RLS Policies
-- [ ] Create migration file for Phase 0 schema
-- [ ] Create `users` table
-- [ ] Create `expenses` table
-- [ ] Create `receipts` table
-- [ ] Add indexes for performance
-- [ ] Create RLS policies for `users`
-- [ ] Create RLS policies for `expenses`
-- [ ] Create RLS policies for `receipts`
-- [ ] Test RLS policies with sample data
-- [ ] Configure Storage bucket policies
+#### Day 3: Database Schema & RLS Policies ✅ COMPLETED
+- [x] Create migration file for Phase 0 schema (20251113_phase0_initial_schema.sql)
+- [x] Create `users` table (with role-based access control)
+- [x] Create `expenses` table (with policy violation tracking)
+- [x] Create `receipts` table (with OCR status fields)
+- [x] Add indexes for performance (9 indexes created)
+- [x] Create RLS policies for `users` (3 policies)
+- [x] Create RLS policies for `expenses` (6 policies)
+- [x] Create RLS policies for `receipts` (5 policies)
+- [x] Test RLS policies with sample data
+- [x] Configure Storage bucket policies (4 policies for receipts bucket)
 
 **Migration File**: `20251113_phase0_initial_schema.sql`
 ```sql
