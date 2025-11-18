@@ -1,0 +1,177 @@
+/**
+ * Expense Detail Component Styles
+ * Uses Jensify design tokens for consistency
+ */
+
+// Detail Grid Layout
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--jensify-spacing-lg);
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Detail Row (Key-Value Pairs)
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--jensify-spacing-sm) 0;
+  border-bottom: 1px solid var(--jensify-border-subtle);
+  gap: var(--jensify-spacing-md);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-weight: 600;
+    color: var(--jensify-text-muted);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  .value {
+    font-weight: 500;
+    color: var(--jensify-text-strong);
+    text-align: right;
+    word-break: break-word;
+  }
+}
+
+// Card Titles
+.card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jensify-spacing-md);
+  margin-bottom: var(--jensify-spacing-md);
+  padding-bottom: var(--jensify-spacing-sm);
+  border-bottom: 2px solid var(--jensify-border-medium);
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+    margin: 0;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: var(--jensify-text-muted);
+    margin: 0;
+  }
+}
+
+// Violation List
+.violation-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-sm);
+  margin-top: var(--jensify-spacing-md);
+}
+
+.violation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jensify-spacing-sm);
+  padding: var(--jensify-spacing-md);
+  background: var(--jensify-warning-soft);
+  border-left: 3px solid var(--jensify-warning);
+  border-radius: var(--jensify-radius-sm);
+
+  mat-icon {
+    color: var(--jensify-warning);
+    flex-shrink: 0;
+  }
+}
+
+.violation-message {
+  font-weight: 500;
+  color: var(--jensify-text-strong);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.violation-meta {
+  font-size: 0.875rem;
+  color: var(--jensify-text-muted);
+  margin-top: var(--jensify-spacing-xs);
+  display: flex;
+  gap: var(--jensify-spacing-sm);
+
+  span {
+    &::after {
+      content: '•';
+      margin-left: var(--jensify-spacing-sm);
+      color: var(--jensify-text-muted);
+    }
+
+    &:last-child::after {
+      content: '';
+    }
+  }
+}
+
+// Timeline
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-md);
+  margin-top: var(--jensify-spacing-md);
+}
+
+.timeline-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--jensify-spacing-sm) 0;
+  border-bottom: 1px solid var(--jensify-border-subtle);
+  gap: var(--jensify-spacing-md);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.timeline-label {
+  font-weight: 600;
+  color: var(--jensify-text-muted);
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.timeline-value {
+  color: var(--jensify-text-strong);
+  font-size: 0.9375rem;
+  text-align: right;
+}
+
+// Receipt Actions
+.receipt-actions {
+  display: flex;
+  gap: var(--jensify-spacing-sm);
+  margin-top: var(--jensify-spacing-md);
+  flex-wrap: wrap;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Muted Text
+.muted {
+  color: var(--jensify-text-muted);
+  font-size: 0.875rem;
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 
 /**
@@ -30,8 +32,13 @@ import { AuthService } from '../../../core/services/auth.service';
   ],
   templateUrl: './forgot-password.component.html',
   styleUrls: ['./forgot-password.component.scss']
+,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ForgotPasswordComponent implements OnInit {
+export class ForgotPasswordComponent implements OnInit, OnDestroy {
+  // Cleanup
+  private destroy$ = new Subject<void>();
+
   forgotPasswordForm!: FormGroup;
   loading = false;
   errorMessage = '';
@@ -48,6 +55,11 @@ export class ForgotPasswordComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   /**
    * Getter for easy access to form controls in the template
    */
@@ -58,7 +70,7 @@ export class ForgotPasswordComponent implements OnInit {
   /**
    * Handle form submission
    */
-  async onSubmit(): Promise<void> {
+  onSubmit(): void {
     // Reset messages
     this.errorMessage = '';
     this.successMessage = '';
@@ -71,27 +83,30 @@ export class ForgotPasswordComponent implements OnInit {
 
     this.loading = true;
 
-    try {
-      const { email } = this.forgotPasswordForm.value;
-      await this.authService.resetPassword(email);
+    const { email } = this.forgotPasswordForm.value;
 
-      // Show success message
-      this.successMessage = 'Password reset instructions have been sent to your email. Please check your inbox and spam folder.';
-
-      // Reset form
-      this.forgotPasswordForm.reset();
-
-    } catch (error: unknown) {
-      // Handle errors
-      if (error instanceof Error) {
-        this.errorMessage = this.getErrorMessage(error.message);
-      } else {
-        this.errorMessage = 'An unexpected error occurred. Please try again.';
-      }
-      console.error('Password reset error:', error);
-    } finally {
-      this.loading = false;
-    }
+    this.authService.resetPassword(email)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.successMessage = 'Password reset instructions have been sent to your email. Please check your inbox and spam folder.';
+            this.forgotPasswordForm.reset();
+          } else {
+            this.errorMessage = this.getErrorMessage(result.error || 'Unable to process password reset. Please try again.');
+          }
+          this.loading = false;
+        },
+        error: (error: unknown) => {
+          if (error instanceof Error) {
+            this.errorMessage = this.getErrorMessage(error.message);
+          } else {
+            this.errorMessage = 'An unexpected error occurred. Please try again.';
+          }
+          console.error('Password reset error:', error);
+          this.loading = false;
+        }
+      });
   }
 
   /**

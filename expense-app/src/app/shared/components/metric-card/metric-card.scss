@@ -1,0 +1,194 @@
+.metric-card {
+  position: relative;
+  background: var(--jensify-gradient-card);
+  border: 1px solid var(--jensify-border-subtle);
+  border-radius: var(--jensify-radius-xl);
+  padding: var(--jensify-spacing-lg) var(--jensify-spacing-lg) calc(var(--jensify-spacing-lg) - 4px);
+  box-shadow: var(--jensify-shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  cursor: default;
+
+  /* Subtle accent bar */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--jensify-primary), var(--jensify-primary-hover));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    box-shadow: var(--jensify-shadow-lg);
+    transform: translateY(-4px);
+    border-color: var(--jensify-border-medium);
+
+    &::before {
+      opacity: 1;
+    }
+
+    .metric-icon {
+      transform: scale(1.05);
+    }
+  }
+
+  .metric-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--jensify-spacing-md);
+
+    .metric-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--jensify-radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--jensify-shadow-icon);
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      &.spend {
+        background: var(--jensify-primary-soft);
+        color: var(--jensify-primary);
+      }
+
+      &.approvals {
+        background: var(--jensify-warning-soft);
+        color: var(--jensify-warning);
+      }
+
+      &.budget {
+        background: var(--jensify-success-soft);
+        color: var(--jensify-success);
+      }
+
+      &.recent {
+        background: var(--jensify-info-soft);
+        color: var(--jensify-info);
+      }
+
+      &.pending {
+        background: var(--jensify-warning-soft);
+        color: var(--jensify-warning-strong);
+      }
+
+      &.reimbursed {
+        background: var(--jensify-success-soft);
+        color: var(--jensify-success-strong);
+      }
+
+      &.flagged {
+        background: var(--jensify-danger-soft);
+        color: var(--jensify-danger);
+      }
+    }
+  }
+
+  .metric-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .metric-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--jensify-text-strong);
+      line-height: 1.1;
+      margin-bottom: var(--jensify-spacing-xs);
+      letter-spacing: -0.02em;
+    }
+
+    .metric-value-skeleton {
+      height: 38px;
+      background: linear-gradient(
+        90deg,
+        var(--jensify-surface-soft) 0%,
+        var(--jensify-border-subtle) 50%,
+        var(--jensify-surface-soft) 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--jensify-radius-md);
+      margin-bottom: var(--jensify-spacing-xs);
+    }
+
+    .metric-label {
+      font-size: 14px;
+      color: var(--jensify-text-muted);
+      font-weight: 500;
+      margin-bottom: var(--jensify-spacing-sm);
+    }
+
+    .metric-change {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--jensify-spacing-xs);
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: auto;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &.positive {
+        color: var(--jensify-success);
+      }
+
+      &.negative {
+        color: var(--jensify-danger);
+      }
+
+      &.neutral {
+        color: var(--jensify-text-muted);
+      }
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 767px) {
+  .metric-card {
+    padding: var(--jensify-spacing-md);
+
+    .metric-header .metric-icon {
+      width: 40px;
+      height: 40px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .metric-content .metric-value {
+      font-size: 28px;
+    }
+  }
+}

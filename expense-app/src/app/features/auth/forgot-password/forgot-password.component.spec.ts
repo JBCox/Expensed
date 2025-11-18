@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of, throwError } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { Observable, of, throwError } from 'rxjs';
 import { ForgotPasswordComponent } from './forgot-password.component';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -20,7 +21,8 @@ describe('ForgotPasswordComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
-        { provide: AuthService, useValue: mockAuthService }
+        { provide: AuthService, useValue: mockAuthService },
+        provideRouter([])
       ]
     }).compileComponents();
 
@@ -57,26 +59,26 @@ describe('ForgotPasswordComponent', () => {
 
   describe('Form Submission', () => {
     it('should call authService.resetPassword on valid form submission', async () => {
-      mockAuthService.resetPassword.and.returnValue(Promise.resolve());
+      mockAuthService.resetPassword.and.returnValue(of({ success: true }) as any);
 
       component.forgotPasswordForm.patchValue({
         email: 'test@example.com'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       expect(mockAuthService.resetPassword).toHaveBeenCalledWith('test@example.com');
       expect(component.successMessage).toContain('Password reset instructions');
     });
 
     it('should display success message on successful password reset', async () => {
-      mockAuthService.resetPassword.and.returnValue(Promise.resolve());
+      mockAuthService.resetPassword.and.returnValue(of({ success: true }) as any);
 
       component.forgotPasswordForm.patchValue({
         email: 'test@example.com'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       expect(component.successMessage).toBeTruthy();
       expect(component.errorMessage).toBe('');
@@ -85,14 +87,14 @@ describe('ForgotPasswordComponent', () => {
 
     it('should display error message on password reset failure', async () => {
       mockAuthService.resetPassword.and.returnValue(
-        Promise.reject(new Error('Network error'))
+        throwError(() => new Error('Network error')) as any
       );
 
       component.forgotPasswordForm.patchValue({
         email: 'test@example.com'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       expect(component.errorMessage).toBeTruthy();
       expect(component.successMessage).toBe('');
@@ -110,41 +112,41 @@ describe('ForgotPasswordComponent', () => {
     });
 
     it('should reset form after successful submission', async () => {
-      mockAuthService.resetPassword.and.returnValue(Promise.resolve());
+      mockAuthService.resetPassword.and.returnValue(of({ success: true }) as any);
 
       component.forgotPasswordForm.patchValue({
         email: 'test@example.com'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       expect(component.forgotPasswordForm.get('email')?.value).toBeNull();
     });
 
     it('should handle network errors gracefully', async () => {
       mockAuthService.resetPassword.and.returnValue(
-        Promise.reject(new Error('Network error'))
+        throwError(() => new Error('Network error')) as any
       );
 
       component.forgotPasswordForm.patchValue({
         email: 'test@example.com'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       expect(component.errorMessage).toContain('Network error');
     });
 
     it('should not expose user existence in error messages', async () => {
       mockAuthService.resetPassword.and.returnValue(
-        Promise.reject(new Error('User not found'))
+        of({ success: false, error: 'User not found' }) as any
       );
 
       component.forgotPasswordForm.patchValue({
         email: 'nonexistent@example.com'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       // Should show generic message for security
       expect(component.errorMessage).toContain('If an account exists');
@@ -152,20 +154,26 @@ describe('ForgotPasswordComponent', () => {
   });
 
   describe('Loading State', () => {
-    it('should set loading to true during submission', async () => {
+    it('should set loading to true during submission', (done) => {
+      // Simulate delayed Observable
       mockAuthService.resetPassword.and.returnValue(
-        new Promise(resolve => setTimeout(resolve, 100))
+        new Observable(sub => { setTimeout(() => { sub.next({ success: true }); sub.complete(); }, 100); }) as any
       );
 
       component.forgotPasswordForm.patchValue({
         email: 'test@example.com'
       });
 
-      const submitPromise = component.onSubmit();
+      component.onSubmit();
+
+      // Check loading is true immediately after calling onSubmit
       expect(component.loading).toBeTrue();
 
-      await submitPromise;
-      expect(component.loading).toBeFalse();
+      // Wait for the observable to complete
+      setTimeout(() => {
+        expect(component.loading).toBeFalse();
+        done();
+      }, 150);
     });
   });
 });

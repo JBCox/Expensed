@@ -1,0 +1,110 @@
+.notification-button {
+  position: relative;
+}
+
+.notification-menu {
+  width: min(360px, 90vw);
+  padding: 0 0.5rem 0.5rem;
+
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+
+    .title {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--jensify-text-muted);
+      font-size: 0.85rem;
+    }
+  }
+
+  .notification-list {
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 0.25rem;
+  }
+
+  .notification-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--jensify-radius-md);
+    cursor: pointer;
+
+    &.unread {
+      background-color: var(--jensify-surface-soft);
+    }
+
+    .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--jensify-border-subtle);
+
+      &.success { background-color: var(--jensify-success-soft); color: var(--jensify-success-strong); }
+      &.warning { background-color: var(--jensify-warning-soft); color: var(--jensify-warning-strong); }
+      &.error { background-color: var(--jensify-danger-soft); color: var(--jensify-danger-strong); }
+      &.info { background-color: var(--jensify-info-soft); color: var(--jensify-info-strong); }
+    }
+
+    .content {
+      flex: 1;
+      min-width: 0;
+
+      .item-title {
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .item-message {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--jensify-text-medium);
+      }
+
+      .timestamp {
+        font-size: 0.75rem;
+        color: var(--jensify-text-muted);
+      }
+    }
+  }
+
+  .empty-state {
+    padding: 1.5rem 0.5rem;
+    text-align: center;
+    color: var(--jensify-text-muted);
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      margin-bottom: 0.5rem;
+      color: var(--jensify-icon-muted);
+    }
+  }
+
+  .preferences {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-top: 0.5rem;
+
+    .pref-title {
+      font-size: 0.85rem;
+      color: var(--jensify-text-muted);
+      margin: 0 0 0.25rem;
+    }
+  }
+}

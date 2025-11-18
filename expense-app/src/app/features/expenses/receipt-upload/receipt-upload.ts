@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { Receipt, ReceiptUploadResponse } from '../../../core/models/receipt.model';
+import { Subject, takeUntil } from 'rxjs';
 
 /**
  * Receipt Upload Component
@@ -27,8 +28,10 @@ import { Receipt, ReceiptUploadResponse } from '../../../core/models/receipt.mod
   ],
   templateUrl: './receipt-upload.html',
   styleUrl: './receipt-upload.scss',
+
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReceiptUpload {
+export class ReceiptUpload implements OnDestroy {
   // State signals
   selectedFile = signal<File | null>(null);
   previewUrl = signal<string | null>(null);
@@ -48,11 +51,24 @@ export class ReceiptUpload {
   readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
   readonly ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
 
+  // Subject for subscription cleanup
+  private destroy$ = new Subject<void>();
+  private progressIntervalId: number | null = null;
+
   constructor(
     private expenseService: ExpenseService,
     private snackBar: MatSnackBar,
     private router: Router
   ) {}
+
+  /**
+   * Clean up subscriptions and timers when component is destroyed
+   */
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.clearProgressInterval();
+  }
 
   /**
    * Handle file selection from input
@@ -159,37 +175,50 @@ export class ReceiptUpload {
     this.uploadProgress.set(0);
     this.errorMessage.set(null);
 
+    // Clear any existing progress interval
+    this.clearProgressInterval();
+
     // Simulate progress (Supabase doesn't provide upload progress)
-    const progressInterval = setInterval(() => {
+    this.progressIntervalId = window.setInterval(() => {
       const current = this.uploadProgress();
       if (current < 90) {
         this.uploadProgress.set(current + 10);
       }
     }, 200);
 
-    this.expenseService.uploadReceipt(file).subscribe({
-      next: (response: ReceiptUploadResponse) => {
-        clearInterval(progressInterval);
-        this.uploadProgress.set(100);
-        this.uploadedReceipt.set(response.receipt);
-        this.showSuccess('Receipt uploaded successfully!');
+    this.expenseService.uploadReceipt(file)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: ReceiptUploadResponse) => {
+          this.clearProgressInterval();
+          this.uploadProgress.set(100);
+          this.uploadedReceipt.set(response.receipt);
 
-        // Navigate to expense form with receipt ID
-        setTimeout(() => {
+          // Navigate to expense form with receipt ID
+          // Success message will be shown in the expense form via SmartScan status
           this.router.navigate(['/expenses/new'], {
             queryParams: { receiptId: response.receipt.id }
           });
-        }, 1000);
-      },
-      error: (error: Error) => {
-        clearInterval(progressInterval);
-        this.isUploading.set(false);
-        this.uploadProgress.set(0);
-        const errorMsg = error.message || 'Failed to upload receipt';
-        this.errorMessage.set(errorMsg);
-        this.showError(errorMsg);
-      }
-    });
+        },
+        error: (error: Error) => {
+          this.clearProgressInterval();
+          this.isUploading.set(false);
+          this.uploadProgress.set(0);
+          const errorMsg = error.message || 'Failed to upload receipt';
+          this.errorMessage.set(errorMsg);
+          this.showError(errorMsg);
+        }
+      });
+  }
+
+  /**
+   * Clear progress simulation interval
+   */
+  private clearProgressInterval(): void {
+    if (this.progressIntervalId !== null) {
+      clearInterval(this.progressIntervalId);
+      this.progressIntervalId = null;
+    }
   }
 
   /**

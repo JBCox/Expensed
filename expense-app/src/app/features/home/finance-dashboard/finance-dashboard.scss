@@ -1,0 +1,90 @@
+/**
+ * Finance Dashboard Styles
+ * Component-specific styling for finance dashboard
+ */
+
+.jensify-dashboard-container {
+  padding: var(--jensify-spacing-lg, 1.5rem);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.jensify-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--jensify-spacing-xl, 2rem);
+  padding-bottom: var(--jensify-spacing-lg, 1.5rem);
+  border-bottom: 1px solid var(--jensify-border-subtle, #e5e5e5);
+
+  .jensify-header-content {
+    .jensify-title {
+      margin: 0 0 var(--jensify-spacing-xs, 0.5rem);
+      font-size: 2rem;
+      color: var(--jensify-text-strong, #1a1a1a);
+    }
+
+    .jensify-subtitle {
+      margin: 0;
+      color: var(--jensify-text-medium, #666);
+      font-size: 1rem;
+    }
+  }
+}
+
+.jensify-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--jensify-spacing-lg, 1.5rem);
+  margin-bottom: var(--jensify-spacing-xl, 2rem);
+}
+
+.jensify-section {
+  margin-bottom: var(--jensify-spacing-xl, 2rem);
+
+  .jensify-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--jensify-spacing-md, 1rem);
+
+    .jensify-section-title {
+      display: flex;
+      align-items: center;
+      gap: var(--jensify-spacing-sm, 0.75rem);
+      margin: 0;
+      font-size: 1.3rem;
+      color: var(--jensify-text-strong, #1a1a1a);
+
+      mat-icon {
+        color: var(--jensify-primary, #ff5900);
+      }
+    }
+  }
+}
+
+.jensify-card {
+  background: var(--jensify-surface-card, #fff);
+  border: 1px solid var(--jensify-border-subtle, #e5e5e5);
+  border-radius: var(--jensify-radius-lg, 8px);
+  padding: var(--jensify-spacing-lg, 1.5rem);
+}
+
+@media (max-width: 767px) {
+  .jensify-dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--jensify-spacing-md, 1rem);
+  }
+
+  .jensify-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .jensify-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}

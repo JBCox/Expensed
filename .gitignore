@@ -1,1 +1,32 @@
+# Supabase local development
+.supabase/
+supabase/.branches/
 supabase/.temp/
+
+# Environment files (sensitive credentials)
+expense-app/src/environments/environment.ts
+expense-app/src/environments/environment.development.ts
+.env
+.env.local
+.env.*.local
+
+# MCP Configuration (contains API tokens)
+.mcp.json
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist/
+.angular/
+coverage/

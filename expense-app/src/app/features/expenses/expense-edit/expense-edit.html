@@ -1,0 +1,118 @@
+<div class="jensify-container">
+  <button mat-button class="jensify-back-link jensify-button" (click)="cancel()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Expense
+  </button>
+
+  @if (loading()) {
+    <div class="jensify-loading">
+      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+      <p>Loading expense...</p>
+    </div>
+  } @else if (error()) {
+    <mat-card class="jensify-card jensify-message-error">
+      <mat-icon>error</mat-icon>
+      <div>
+        <h3>Unable to load expense</h3>
+        <p>{{ error() }}</p>
+        <button mat-stroked-button color="primary" (click)="loadExpense()" class="jensify-button">Try Again</button>
+      </div>
+    </mat-card>
+  } @else if (expense()) {
+    <mat-card class="jensify-card">
+      <mat-card-header>
+        <mat-card-title>Edit Expense</mat-card-title>
+        <mat-card-subtitle>Update details and fix violations before submitting.</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (expense()!.policy_violations.length) {
+          <div class="jensify-message-warning" [class.pulse]="highlightViolations()">
+            <mat-icon>report_problem</mat-icon>
+            <div>
+              <h3>Policy Violations</h3>
+              <ul>
+                @for (violation of expense()!.policy_violations; track violation.rule) {
+                  <li>{{ violation.message }}</li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="saveChanges()" class="jensify-form">
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Merchant</mat-label>
+            <input matInput formControlName="merchant" placeholder="Vendor or merchant name">
+            <mat-error *ngIf="form.get('merchant')?.hasError('required')">Merchant is required.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Amount</mat-label>
+            <span matPrefix>$</span>
+            <input matInput type="number" min="0.01" step="0.01" formControlName="amount">
+            <mat-error *ngIf="form.get('amount')?.hasError('required')">Amount is required.</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="category">
+              @for (category of categories; track category) {
+                <mat-option [value]="category">{{ category }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always">
+            <mat-label>Expense Date</mat-label>
+            <input matInput type="date" formControlName="expense_date">
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="notes-field">
+            <mat-label>Notes</mat-label>
+            <textarea matInput rows="3" formControlName="notes" placeholder="Add details or attendee names"></textarea>
+          </mat-form-field>
+
+          <div class="receipt-section">
+            <div class="receipt-header">
+              <div>
+                <h3>Attached Receipt</h3>
+                <p>
+                  @if (attachedReceipt()) {
+                    {{ attachedReceipt()!.file_name }}
+                  } @else {
+                    No receipt linked
+                  }
+                </p>
+              </div>
+              <div class="receipt-actions">
+                <button mat-stroked-button type="button" (click)="openAttachDialog()" class="jensify-button">
+                  <mat-icon>attachment</mat-icon>
+                  Attach/Change
+                </button>
+                @if (attachedReceipt()) {
+                  <button mat-button type="button" (click)="viewReceipt()" class="jensify-button">
+                    <mat-icon>visibility</mat-icon>
+                    View
+                  </button>
+                  <button mat-button color="warn" type="button" (click)="removeReceipt()" class="jensify-button">
+                    <mat-icon>delete</mat-icon>
+                    Remove
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="jensify-form-actions">
+            <button mat-stroked-button type="button" (click)="cancel()" class="jensify-button">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="saving()" class="jensify-button">
+              <mat-icon>save</mat-icon>
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

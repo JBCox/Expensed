@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ExpenseService } from './expense.service';
 import { SupabaseService } from './supabase.service';
+import { NotificationService } from './notification.service';
+import { OrganizationService } from './organization.service';
 import { of, throwError } from 'rxjs';
 import { ExpenseStatus, ExpenseCategory } from '../models/enums';
 import { Expense, CreateExpenseDto } from '../models/expense.model';
@@ -9,16 +11,20 @@ import { Receipt, ReceiptUploadResponse } from '../models/receipt.model';
 describe('ExpenseService', () => {
   let service: ExpenseService;
   let supabaseServiceSpy: jasmine.SpyObj<SupabaseService>;
+  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
+  let organizationServiceSpy: jasmine.SpyObj<OrganizationService>;
 
   const mockUserId = 'test-user-id';
+  const mockOrgId = 'test-org-id';
   const mockExpense: Expense = {
     id: 'expense-1',
     user_id: mockUserId,
+    organization_id: mockOrgId,
     receipt_id: 'receipt-1',
     merchant: 'Test Gas Station',
     amount: 50.00,
     currency: 'USD',
-    category: ExpenseCategory.GAS,
+    category: ExpenseCategory.FUEL,
     expense_date: '2025-11-13',
     notes: 'Business trip',
     status: ExpenseStatus.DRAFT,
@@ -31,6 +37,7 @@ describe('ExpenseService', () => {
   const mockReceipt: Receipt = {
     id: 'receipt-1',
     user_id: mockUserId,
+    organization_id: mockOrgId,
     expense_id: undefined,
     file_path: `${mockUserId}/1234567890_receipt.jpg`,
     file_name: 'receipt.jpg',
@@ -44,6 +51,7 @@ describe('ExpenseService', () => {
     const supabaseSpy = jasmine.createSpyObj('SupabaseService', [
       'uploadFile',
       'getPublicUrl',
+      'getSignedUrl',
       'deleteFile'
     ], {
       userId: mockUserId,
@@ -51,16 +59,34 @@ describe('ExpenseService', () => {
         from: jasmine.createSpy('from')
       }
     });
+    const notificationSpy = jasmine.createSpyObj('NotificationService', ['notify', 'shouldAlert'], {
+      currentPreferences: {
+        smartScanUpdates: true,
+        receiptIssues: true,
+        approvals: true,
+        reimbursements: true
+      }
+    });
+    notificationSpy.shouldAlert.and.returnValue(true);
+
+    const organizationSpy = jasmine.createSpyObj('OrganizationService',
+      ['getUserOrganizationContext', 'setCurrentOrganization'],
+      { currentOrganizationId: mockOrgId }
+    );
 
     TestBed.configureTestingModule({
       providers: [
         ExpenseService,
-        { provide: SupabaseService, useValue: supabaseSpy }
+        { provide: SupabaseService, useValue: supabaseSpy },
+        { provide: NotificationService, useValue: notificationSpy },
+        { provide: OrganizationService, useValue: organizationSpy }
       ]
     });
 
     service = TestBed.inject(ExpenseService);
     supabaseServiceSpy = TestBed.inject(SupabaseService) as jasmine.SpyObj<SupabaseService>;
+    notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
+    organizationServiceSpy = TestBed.inject(OrganizationService) as jasmine.SpyObj<OrganizationService>;
   });
 
   it('should be created', () => {
@@ -70,9 +96,10 @@ describe('ExpenseService', () => {
   describe('createExpense', () => {
     it('should create an expense successfully', (done) => {
       const dto: CreateExpenseDto = {
+        organization_id: mockOrgId,
         merchant: 'Test Gas Station',
         amount: 50.00,
-        category: ExpenseCategory.GAS,
+        category: ExpenseCategory.FUEL,
         expense_date: '2025-11-13',
         notes: 'Business trip'
       };
@@ -107,12 +134,16 @@ describe('ExpenseService', () => {
     });
 
     it('should handle unauthenticated user', (done) => {
-      (supabaseServiceSpy as any).userId = null;
+      Object.defineProperty(supabaseServiceSpy, 'userId', {
+        get: () => null,
+        configurable: true
+      });
 
       const dto: CreateExpenseDto = {
+        organization_id: mockOrgId,
         merchant: 'Test Gas Station',
         amount: 50.00,
-        category: ExpenseCategory.GAS,
+        category: ExpenseCategory.FUEL,
         expense_date: '2025-11-13'
       };
 
@@ -139,7 +170,8 @@ describe('ExpenseService', () => {
       service.getExpenseById('expense-1').subscribe({
         next: (expense) => {
           expect(expense).toEqual(mockExpense);
-          expect(selectSpy).toHaveBeenCalledWith('*, user:users(*), receipt:receipts(*)');
+          // Updated to match foreign key hint syntax used in implementation
+          expect(selectSpy).toHaveBeenCalledWith('*, user:users!user_id(*), receipt:receipts!expenses_receipt_id_fkey(*)');
           expect(eqSpy).toHaveBeenCalledWith('id', 'expense-1');
           done();
         },
@@ -170,26 +202,32 @@ describe('ExpenseService', () => {
   describe('uploadReceipt', () => {
     it('should upload receipt successfully', (done) => {
       const mockFile = new File(['test'], 'receipt.jpg', { type: 'image/jpeg' });
-      const mockUploadResponse = { data: { path: 'test-path' }, error: null };
+      const mockUploadResponse = { data: { id: 'id', path: 'test-path', fullPath: 'test-path' }, error: null } as any;
       const mockReceiptResponse = { data: mockReceipt, error: null };
       const mockPublicUrl = 'https://example.com/receipt.jpg';
 
       supabaseServiceSpy.uploadFile.and.resolveTo(mockUploadResponse);
       supabaseServiceSpy.getPublicUrl.and.returnValue(mockPublicUrl);
+      supabaseServiceSpy.getSignedUrl.and.resolveTo({ signedUrl: mockPublicUrl, error: null });
 
       const selectSpy = jasmine.createSpy('select').and.returnValue({
         single: jasmine.createSpy('single').and.resolveTo(mockReceiptResponse)
       });
       const insertSpy = jasmine.createSpy('insert').and.returnValue({ select: selectSpy });
-      supabaseServiceSpy.client.from = jasmine.createSpy('from').and.returnValue({
-        insert: insertSpy
-      }) as any;
+      const updateSpy = jasmine.createSpy('update').and.returnValue({
+        eq: jasmine.createSpy('eq').and.returnValue(Promise.resolve())
+      });
+      supabaseServiceSpy.client.from = jasmine.createSpy('from').and.callFake(() => ({
+        insert: insertSpy,
+        update: updateSpy
+      })) as any;
 
       service.uploadReceipt(mockFile).subscribe({
         next: (response: ReceiptUploadResponse) => {
           expect(response.receipt).toEqual(mockReceipt);
           expect(response.public_url).toBe(mockPublicUrl);
           expect(supabaseServiceSpy.uploadFile).toHaveBeenCalled();
+          expect(notificationServiceSpy.notify).toHaveBeenCalled();
           done();
         },
         error: done.fail
@@ -272,7 +310,9 @@ describe('ExpenseService', () => {
       service.submitExpense('expense-1').subscribe({
         next: (expense) => {
           expect(expense.status).toBe(ExpenseStatus.SUBMITTED);
-          expect(updateSpy).toHaveBeenCalledWith({ status: ExpenseStatus.SUBMITTED });
+          expect(updateSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+            status: ExpenseStatus.SUBMITTED
+          }));
           done();
         },
         error: done.fail

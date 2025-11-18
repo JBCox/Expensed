@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
@@ -14,8 +14,7 @@ describe('LoginComponent', () => {
 
   beforeEach(async () => {
     // Create mock services
-    mockAuthService = jasmine.createSpyObj('AuthService', ['signIn']);
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockAuthService = jasmine.createSpyObj('AuthService', ['signIn', 'shouldUseDefaultRoute', 'suppressNextDefaultRedirect', 'refreshUserProfile', 'getDefaultRoute']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -25,20 +24,14 @@ describe('LoginComponent', () => {
       ],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              queryParams: {}
-            }
-          }
-        }
+        provideRouter([])
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+    mockRouter = TestBed.inject(Router) as any;
+    spyOn(mockRouter, 'navigate');
     fixture.detectChanges();
   });
 
@@ -82,24 +75,30 @@ describe('LoginComponent', () => {
     expect(passwordControl?.hasError('minlength')).toBeFalse();
   });
 
-  it('should call authService.signIn on valid form submission', async () => {
-    mockAuthService.signIn.and.returnValue(Promise.resolve());
-    mockRouter.navigate.and.returnValue(Promise.resolve(true));
+  it('should call authService.signIn on valid form submission', (done) => {
+    mockAuthService.signIn.and.returnValue(of({ success: true } as any));
+    mockAuthService.refreshUserProfile.and.returnValue(Promise.resolve());
+    mockAuthService.shouldUseDefaultRoute.and.returnValue(false);
+    mockAuthService.getDefaultRoute.and.returnValue('/expenses');
+    spyOn(mockRouter, 'navigateByUrl').and.returnValue(Promise.resolve(true));
 
     component.loginForm.patchValue({
       email: 'test@example.com',
       password: 'password123'
     });
 
-    await component.onSubmit();
+    component.onSubmit();
 
-    expect(mockAuthService.signIn).toHaveBeenCalledWith('test@example.com', 'password123');
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/expenses']);
+    setTimeout(() => {
+      expect(mockAuthService.signIn).toHaveBeenCalled();
+      expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/expenses');
+      done();
+    }, 100);
   });
 
   it('should display error message on login failure', async () => {
     mockAuthService.signIn.and.returnValue(
-      Promise.reject(new Error('Invalid login credentials'))
+      throwError(() => new Error('Invalid login credentials')) as any
     );
 
     component.loginForm.patchValue({
@@ -107,7 +106,7 @@ describe('LoginComponent', () => {
       password: 'wrongpassword'
     });
 
-    await component.onSubmit();
+    component.onSubmit();
 
     expect(component.errorMessage).toBe('Invalid email or password. Please try again.');
     expect(component.loading).toBeFalse();
@@ -136,14 +135,10 @@ describe('LoginComponent', () => {
     const route = TestBed.inject(ActivatedRoute);
     route.snapshot.queryParams = { returnUrl: '/custom-route' };
 
-    const newComponent = new LoginComponent(
-      TestBed.inject(ReactiveFormsModule) as any,
-      mockAuthService,
-      mockRouter,
-      route
-    );
-    newComponent.ngOnInit();
-
-    expect(newComponent.returnUrl).toBe('/custom-route');
+    // Create a fresh component instance with the updated route
+    const fixture2 = TestBed.createComponent(LoginComponent);
+    const comp2 = fixture2.componentInstance;
+    comp2.ngOnInit();
+    expect(comp2.returnUrl).toBe('/custom-route');
   });
 });

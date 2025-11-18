@@ -1,0 +1,216 @@
+/**
+ * Component-specific styles only
+ * Layout, colors, spacing come from global Jensify utilities (_utilities.scss)
+ */
+
+// Table Container
+.jensify-table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 600px;
+  border: 1px solid var(--jensify-border-subtle);
+  border-radius: var(--jensify-radius-md);
+  background: var(--jensify-surface-card);
+}
+
+// Base Table Styles (Members & Invitations)
+.jensify-members-table,
+.jensify-invitations-table {
+  width: 100%;
+  background: var(--jensify-surface-card);
+
+  // Sticky Header Rows
+  .mat-mdc-header-row {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--jensify-surface-soft);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  // Header Cells
+  .mat-mdc-header-cell {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--jensify-text-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: var(--jensify-spacing-md) var(--jensify-spacing-md);
+    border-bottom: 2px solid var(--jensify-border-medium);
+    background: var(--jensify-surface-soft);
+  }
+
+  // Data Rows (Zebra Striping)
+  .mat-mdc-row {
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+
+    // Zebra striping
+    &:nth-child(even) {
+      background-color: var(--jensify-surface-soft);
+    }
+
+    &:nth-child(odd) {
+      background-color: var(--jensify-surface-card);
+    }
+
+    // Enhanced hover state
+    &:hover {
+      background-color: var(--jensify-surface-hover) !important;
+      box-shadow: inset 4px 0 0 var(--jensify-primary);
+      cursor: pointer;
+    }
+  }
+
+  // Data Cells
+  .mat-mdc-cell {
+    padding: var(--jensify-spacing-md) var(--jensify-spacing-md);
+    border-bottom: 1px solid var(--jensify-border-subtle);
+    font-size: 0.9375rem;
+    color: var(--jensify-text-medium);
+  }
+
+  // User Cell (Members Table)
+  .jensify-user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-sm);
+  }
+
+  .jensify-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--jensify-radius-full);
+    background: var(--jensify-primary-soft);
+    color: var(--jensify-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .jensify-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0; // Allow text truncation
+  }
+
+  .jensify-user-name {
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+    font-size: 0.9375rem;
+  }
+
+  .jensify-user-email {
+    font-size: 0.875rem;
+    color: var(--jensify-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Role & Status Chips
+  .jensify-chip {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: var(--jensify-radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+  }
+
+  .chip-admin {
+    background: var(--jensify-danger-soft);
+    color: var(--jensify-danger-strong);
+  }
+
+  .chip-finance {
+    background: var(--jensify-success-soft);
+    color: var(--jensify-success-strong);
+  }
+
+  .chip-manager {
+    background: var(--jensify-warning-soft);
+    color: var(--jensify-warning-strong);
+  }
+
+  .chip-employee {
+    background: var(--jensify-info-soft);
+    color: var(--jensify-info-strong);
+  }
+
+  .chip-active {
+    background: var(--jensify-success-soft);
+    color: var(--jensify-success-strong);
+  }
+
+  .chip-inactive {
+    background: var(--jensify-border-subtle);
+    color: var(--jensify-text-muted);
+  }
+
+  .chip-pending {
+    background: var(--jensify-warning-soft);
+    color: var(--jensify-warning-strong);
+  }
+
+  .chip-accepted {
+    background: var(--jensify-success-soft);
+    color: var(--jensify-success-strong);
+  }
+
+  .chip-expired {
+    background: var(--jensify-danger-soft);
+    color: var(--jensify-danger-strong);
+  }
+
+  .chip-revoked {
+    background: var(--jensify-border-subtle);
+    color: var(--jensify-text-muted);
+  }
+
+  // Action Buttons
+  .mat-mdc-icon-button {
+    color: var(--jensify-text-muted);
+    transition: color 0.15s ease, background-color 0.15s ease;
+
+    &:hover {
+      color: var(--jensify-primary);
+      background-color: var(--jensify-primary-soft);
+    }
+  }
+}
+
+// Responsive Table Adjustments
+@media (max-width: 767px) {
+  .jensify-table-container {
+    max-height: 500px;
+  }
+
+  .jensify-members-table,
+  .jensify-invitations-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: var(--jensify-spacing-sm) var(--jensify-spacing-xs);
+      font-size: 0.8125rem;
+    }
+
+    .jensify-user-avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 0.875rem;
+    }
+
+    .jensify-user-name {
+      font-size: 0.875rem;
+    }
+
+    .jensify-user-email {
+      font-size: 0.75rem;
+    }
+  }
+}

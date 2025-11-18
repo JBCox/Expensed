@@ -1,0 +1,214 @@
+/**
+ * Shortcuts Help Dialog Styles
+ * Uses Jensify design system tokens
+ */
+
+.shortcuts-dialog {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  min-width: 500px;
+  max-height: 80vh;
+
+  @media (max-width: 767px) {
+    min-width: unset;
+    width: 100%;
+    max-height: 90vh;
+  }
+}
+
+// Header
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jensify-spacing-lg);
+  border-bottom: 1px solid var(--jensify-border-medium);
+  background: var(--jensify-surface-soft);
+}
+
+.shortcuts-title {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-sm);
+
+  .shortcuts-icon {
+    color: var(--jensify-primary);
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+  }
+}
+
+.close-button {
+  color: var(--jensify-text-muted);
+
+  &:hover {
+    color: var(--jensify-text-strong);
+    background: var(--jensify-surface-hover);
+  }
+}
+
+// Content
+.shortcuts-content {
+  padding: var(--jensify-spacing-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.shortcut-group {
+  margin-bottom: var(--jensify-spacing-xl);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.group-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--jensify-text-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 var(--jensify-spacing-md) 0;
+  padding-bottom: var(--jensify-spacing-xs);
+  border-bottom: 2px solid var(--jensify-border-medium);
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-sm);
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+  border-radius: var(--jensify-radius-md);
+  background: var(--jensify-surface-card);
+  border: 1px solid var(--jensify-border-subtle);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--jensify-surface-hover);
+    border-color: var(--jensify-border-medium);
+    box-shadow: var(--jensify-shadow-sm);
+  }
+}
+
+.shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--jensify-spacing-xs) var(--jensify-spacing-sm);
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--jensify-text-strong);
+  background: var(--jensify-surface-soft);
+  border: 1px solid var(--jensify-border-medium);
+  border-radius: var(--jensify-radius-sm);
+  box-shadow: 0 2px 0 var(--jensify-border-medium), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  min-width: 80px;
+  text-align: center;
+  justify-content: center;
+}
+
+.shortcut-description {
+  flex: 1;
+  margin-left: var(--jensify-spacing-md);
+  font-size: 0.9375rem;
+  color: var(--jensify-text-medium);
+}
+
+// Empty state
+.no-shortcuts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jensify-spacing-xl);
+  text-align: center;
+  color: var(--jensify-text-muted);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--jensify-spacing-md);
+    color: var(--jensify-border-medium);
+  }
+
+  p {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+// Footer
+.shortcuts-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jensify-spacing-lg);
+  border-top: 1px solid var(--jensify-border-medium);
+  background: var(--jensify-surface-soft);
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    gap: var(--jensify-spacing-md);
+  }
+}
+
+.footer-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-xs);
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--jensify-text-muted);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--jensify-info);
+  }
+
+  kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+    background: var(--jensify-surface-card);
+    border: 1px solid var(--jensify-border-medium);
+    border-radius: 3px;
+    box-shadow: 0 1px 0 var(--jensify-border-medium);
+  }
+}
+
+// Animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shortcuts-dialog {
+  animation: slideIn 0.3s ease-out;
+}

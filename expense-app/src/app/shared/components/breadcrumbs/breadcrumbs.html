@@ -1,0 +1,35 @@
+<nav class="breadcrumbs-container" aria-label="Breadcrumb navigation">
+  <ol class="breadcrumbs-list">
+    @for (breadcrumb of breadcrumbs(); track breadcrumb.url; let i = $index) {
+      <li class="breadcrumb-item">
+        @if (!isLast(i)) {
+          <!-- Clickable breadcrumb -->
+          <a
+            class="breadcrumb-link"
+            [attr.href]="breadcrumb.url"
+            (click)="navigateTo(breadcrumb); $event.preventDefault()"
+            [attr.aria-current]="isLast(i) ? 'page' : null"
+          >
+            @if (breadcrumb.icon) {
+              <mat-icon class="breadcrumb-icon">{{ breadcrumb.icon }}</mat-icon>
+            }
+            <span class="breadcrumb-label">{{ breadcrumb.label }}</span>
+          </a>
+        } @else {
+          <!-- Current page (non-clickable) -->
+          <span class="breadcrumb-current" aria-current="page">
+            @if (breadcrumb.icon) {
+              <mat-icon class="breadcrumb-icon">{{ breadcrumb.icon }}</mat-icon>
+            }
+            <span class="breadcrumb-label">{{ breadcrumb.label }}</span>
+          </span>
+        }
+
+        <!-- Separator -->
+        @if (!isLast(i)) {
+          <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+        }
+      </li>
+    }
+  </ol>
+</nav>

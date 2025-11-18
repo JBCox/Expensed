@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 
 /**
@@ -22,8 +24,13 @@ import { AuthService } from '../../../core/services/auth.service';
   ],
   templateUrl: './confirm-email.html',
   styleUrl: './confirm-email.scss',
+
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ConfirmEmailComponent implements OnInit {
+export class ConfirmEmailComponent implements OnInit, OnDestroy {
+  // Cleanup
+  private destroy$ = new Subject<void>();
+
   email = '';
   resendLoading = false;
   resendSuccess = false;
@@ -37,14 +44,21 @@ export class ConfirmEmailComponent implements OnInit {
 
   ngOnInit(): void {
     // Get email from query params
-    this.route.queryParams.subscribe(params => {
-      this.email = params['email'] || '';
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        this.email = params['email'] || '';
 
-      // If no email provided, redirect to register
-      if (!this.email) {
-        this.router.navigate(['/auth/register']);
-      }
-    });
+        // If no email provided, redirect to register
+        if (!this.email) {
+          this.router.navigate(['/auth/register']);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**

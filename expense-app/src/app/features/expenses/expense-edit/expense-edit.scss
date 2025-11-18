@@ -1,0 +1,82 @@
+/**
+ * Expense Edit Component Styles
+ * Uses Jensify design tokens for consistency
+ */
+
+// Pulse Animation for Policy Violations
+@keyframes pulse {
+  0%, 100% {
+    border-color: var(--jensify-warning-border);
+    box-shadow: 0 0 0 0 var(--jensify-warning-glow-start);
+  }
+  50% {
+    border-color: var(--jensify-warning);
+    box-shadow: 0 0 0 8px var(--jensify-warning-glow-end);
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+// Notes Field (Full Width Textarea)
+.notes-field {
+  width: 100%;
+  margin-top: var(--jensify-spacing-md);
+
+  textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+}
+
+// Receipt Section
+.receipt-section {
+  margin-top: var(--jensify-spacing-xl);
+  padding: var(--jensify-spacing-lg);
+  background: var(--jensify-surface-soft);
+  border: 1px solid var(--jensify-border-subtle);
+  border-radius: var(--jensify-radius-md);
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--jensify-spacing-md);
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+    margin: 0 0 var(--jensify-spacing-xs) 0;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: var(--jensify-text-muted);
+    margin: 0;
+  }
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.receipt-actions {
+  display: flex;
+  gap: var(--jensify-spacing-sm);
+  flex-wrap: wrap;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    width: 100%;
+    margin-top: var(--jensify-spacing-md);
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

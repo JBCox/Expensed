@@ -1,0 +1,129 @@
+<div class="jensify-dashboard-container">
+  <!-- Header -->
+  <div class="jensify-dashboard-header">
+    <div class="jensify-header-content">
+      <h1 class="jensify-title">Manager Dashboard</h1>
+      <p class="jensify-subtitle">Approve team expenses and manage your own</p>
+    </div>
+    <div class="jensify-header-actions">
+      <button mat-raised-button color="primary" (click)="onViewApprovals()">
+        <mat-icon>task_alt</mat-icon>
+        View All Approvals
+      </button>
+    </div>
+  </div>
+
+  <!-- Metrics Row -->
+  <div class="jensify-metrics-grid" *ngIf="metrics$ | async as metrics">
+    <app-metric-card
+      icon="pending_actions"
+      label="Pending Approvals"
+      [value]="metrics.teamPendingApprovals.toString()"
+      variant="warning">
+    </app-metric-card>
+
+    <app-metric-card
+      icon="payments"
+      label="Team Spend (MTD)"
+      [value]="formatCurrency(metrics.teamMonthSpend)"
+      variant="primary">
+    </app-metric-card>
+
+    <app-metric-card
+      icon="receipt_long"
+      label="My Pending"
+      [value]="metrics.myPendingExpenses.toString()"
+      variant="info">
+    </app-metric-card>
+
+    <app-metric-card
+      icon="people"
+      label="Team Members"
+      [value]="metrics.teamMemberCount.toString()"
+      variant="success">
+    </app-metric-card>
+  </div>
+
+  <!-- Team Pending Approvals -->
+  <div class="jensify-section">
+    <div class="jensify-section-header">
+      <h2 class="jensify-section-title">
+        <mat-icon>task_alt</mat-icon>
+        Team Approvals Needed
+      </h2>
+      <button mat-button color="primary" (click)="onViewApprovals()">View All</button>
+    </div>
+
+    <div class="jensify-card" *ngIf="teamPendingApprovals$ | async as approvals">
+      <div class="jensify-expense-list" *ngIf="approvals.length > 0; else noApprovals">
+        <div class="jensify-expense-item" *ngFor="let expense of approvals" (click)="onViewExpense(expense)">
+          <div class="jensify-expense-user">
+            <mat-icon class="user-avatar">account_circle</mat-icon>
+            <div class="user-info">
+              <div class="user-name">{{ getUserName(expense) }}</div>
+              <div class="expense-desc">{{ expense.merchant || 'No merchant' }}</div>
+            </div>
+          </div>
+          <div class="jensify-expense-details">
+            <div class="expense-amount">{{ formatCurrency(expense.amount) }}</div>
+            <div class="expense-date">{{ formatDate(expense.expense_date) }}</div>
+          </div>
+          <div class="jensify-expense-actions">
+            <button mat-icon-button color="primary" (click)="onApprove(expense, $event)" matTooltip="Approve">
+              <mat-icon>check_circle</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="onReject(expense, $event)" matTooltip="Reject">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noApprovals>
+        <app-empty-state
+          icon="task_alt"
+          title="No Pending Approvals"
+          message="Your team has no expenses waiting for approval.">
+        </app-empty-state>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- My Recent Expenses -->
+  <div class="jensify-section">
+    <div class="jensify-section-header">
+      <h2 class="jensify-section-title">
+        <mat-icon>receipt_long</mat-icon>
+        My Recent Expenses
+      </h2>
+      <button mat-button color="primary" (click)="onViewMyExpenses()">View All</button>
+    </div>
+
+    <div class="jensify-card" *ngIf="myRecentExpenses$ | async as expenses">
+      <div class="jensify-expense-list" *ngIf="expenses.length > 0; else noExpenses">
+        <div class="jensify-expense-item" *ngFor="let expense of expenses" (click)="onViewExpense(expense)">
+          <div class="jensify-expense-info">
+            <div class="expense-desc">{{ expense.merchant || 'No merchant' }}</div>
+            <div class="expense-date">{{ formatDate(expense.expense_date) }}</div>
+          </div>
+          <div class="jensify-expense-meta">
+            <div class="expense-amount">{{ formatCurrency(expense.amount) }}</div>
+            <app-status-badge [status]="mapStatus(expense.status)"></app-status-badge>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noExpenses>
+        <app-empty-state
+          icon="receipt_long"
+          title="No Expenses Yet"
+          message="You haven't submitted any expenses recently.">
+          <button mat-raised-button color="primary" routerLink="/expenses/upload">
+            <mat-icon>upload</mat-icon>
+            Upload Receipt
+          </button>
+        </app-empty-state>
+      </ng-template>
+    </div>
+  </div>
+</div>

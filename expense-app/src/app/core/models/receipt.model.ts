@@ -2,6 +2,7 @@ import { OcrStatus } from './enums';
 
 export interface Receipt {
   id: string;
+  organization_id: string;
   expense_id?: string;
   user_id: string;
 
@@ -13,7 +14,7 @@ export interface Receipt {
 
   // OCR data
   ocr_status: OcrStatus;
-  ocr_data?: any;
+  ocr_data?: unknown; // Raw OCR response data (varies by provider)
   ocr_confidence?: number;
 
   // Extracted fields
@@ -28,6 +29,7 @@ export interface Receipt {
 export interface UploadReceiptDto {
   file: File;
   user_id: string;
+  organization_id: string;
 }
 
 export interface OcrResult {
@@ -36,7 +38,7 @@ export interface OcrResult {
   date?: string;
   tax?: number;
   confidence: number;
-  raw_data: any;
+  raw_data: unknown; // Raw OCR provider response
 }
 
 export interface ReceiptUploadResponse {

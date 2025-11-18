@@ -1,0 +1,98 @@
+<div class="jensify-container">
+  <div class="jensify-hero-surface">
+    <div class="jensify-dashboard-header jensify-animate-slide-down">
+      <div class="header-content">
+        <h1>My Dashboard</h1>
+        <p>Welcome back! Here's your expense overview.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="jensify-grid-4 jensify-animate-fade" *ngIf="metrics$ | async as metrics">
+    <app-metric-card
+      [value]="formatCurrency(metrics.totalSpend)"
+      label="Total Spend This Month"
+      icon="payments"
+      iconType="spend"
+      [loading]="loading">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="metrics.pendingCount.toString()"
+      label="Pending Expenses"
+      icon="schedule"
+      iconType="pending"
+      [loading]="loading">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="metrics.approvedCount.toString()"
+      label="Approved Awaiting Reimbursement"
+      icon="check_circle"
+      iconType="approvals"
+      [loading]="loading">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="metrics.recentUploads.toString()"
+      label="Recent Uploads (7 days)"
+      icon="receipt"
+      iconType="recent"
+      [loading]="loading">
+    </app-metric-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="jensify-quick-actions">
+    <h2>Quick Actions</h2>
+    <div class="jensify-action-buttons">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onUploadReceipt()"
+        class="jensify-button">
+        <mat-icon>camera_alt</mat-icon>
+        Upload Receipt
+      </button>
+      <button
+        mat-stroked-button
+        (click)="onSubmitExpense()"
+        class="jensify-button">
+        <mat-icon>add_circle_outline</mat-icon>
+        Submit Expense
+      </button>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="jensify-recent-activity">
+    <h2>Recent Activity</h2>
+
+    <div class="jensify-activity-list" *ngIf="recentExpenses$ | async as expenses">
+      <app-empty-state
+        *ngIf="expenses.length === 0"
+        icon="receipt_long"
+        title="No expenses yet"
+        message="Upload your first receipt to get started"
+        actionLabel="Upload Receipt"
+        actionIcon="camera_alt">
+      </app-empty-state>
+
+      <div
+        *ngFor="let expense of expenses"
+        class="jensify-expense-item"
+        (click)="onViewExpense(expense)">
+        <div class="jensify-expense-icon">
+          <mat-icon>receipt</mat-icon>
+        </div>
+        <div class="jensify-expense-details">
+          <div class="jensify-expense-merchant">{{ expense.merchant }}</div>
+          <div class="jensify-expense-date">{{ formatDate(expense.expense_date) }}</div>
+        </div>
+        <div class="jensify-expense-amount">{{ formatCurrency(expense.amount) }}</div>
+        <app-status-badge [status]="mapStatus(expense.status)" size="small"></app-status-badge>
+      </div>
+    </div>
+  </div>
+</div>

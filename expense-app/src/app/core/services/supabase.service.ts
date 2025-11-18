@@ -3,17 +3,57 @@ import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-
 import { environment } from '../../../environments/environment';
 import { BehaviorSubject, Observable } from 'rxjs';
 
+/**
+ * Supabase Service
+ *
+ * Core service for managing Supabase client instance and authentication state.
+ * Provides reactive streams for user and session changes, and exposes the
+ * Supabase client for database and storage operations.
+ *
+ * Features:
+ * - Automatic session initialization and persistence
+ * - Real-time authentication state tracking
+ * - Auto-refresh tokens
+ * - Reactive observables for user and session
+ *
+ * @example
+ * ```typescript
+ * constructor(private supabase: SupabaseService) {
+ *   // Subscribe to user changes
+ *   this.supabase.currentUser$.subscribe(user => {
+ *     console.log('User:', user);
+ *   });
+ *
+ *   // Access client for queries
+ *   const { data } = await this.supabase.client
+ *     .from('expenses')
+ *     .select('*');
+ * }
+ * ```
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class SupabaseService {
+  /** Supabase client instance */
   private supabase: SupabaseClient;
+
+  /** BehaviorSubject for current user state */
   private currentUserSubject = new BehaviorSubject<User | null>(null);
+
+  /** BehaviorSubject for current session state */
   private sessionSubject = new BehaviorSubject<Session | null>(null);
 
+  /** Observable stream of current user changes */
   public currentUser$: Observable<User | null> = this.currentUserSubject.asObservable();
+
+  /** Observable stream of session changes */
   public session$: Observable<Session | null> = this.sessionSubject.asObservable();
 
+  /**
+   * Initializes the Supabase client with configuration from environment
+   * Sets up authentication state listeners and session persistence
+   */
   constructor() {
     this.supabase = createClient(
       environment.supabase.url,
@@ -32,12 +72,16 @@ export class SupabaseService {
 
     // Listen for auth changes
     this.supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event);
       this.sessionSubject.next(session);
       this.currentUserSubject.next(session?.user || null);
     });
   }
 
+  /**
+   * Initializes the user session from storage
+   * Called automatically on service construction
+   * @private
+   */
   private async initializeSession(): Promise<void> {
     try {
       const { data: { session } } = await this.supabase.auth.getSession();
@@ -50,13 +94,30 @@ export class SupabaseService {
 
   /**
    * Get the Supabase client instance
+   *
+   * Use this to access Supabase database, storage, and auth methods
+   *
+   * @returns Supabase client instance
+   *
+   * @example
+   * ```typescript
+   * const { data, error } = await this.supabase.client
+   *   .from('expenses')
+   *   .select('*')
+   *   .eq('user_id', userId);
+   * ```
    */
   get client(): SupabaseClient {
     return this.supabase;
   }
 
   /**
-   * Get current user
+   * Get current authenticated user
+   *
+   * Returns synchronous snapshot of current user state.
+   * For reactive updates, use `currentUser$` observable instead.
+   *
+   * @returns Current user or null if not authenticated
    */
   get currentUser(): User | null {
     return this.currentUserSubject.value;
@@ -64,6 +125,11 @@ export class SupabaseService {
 
   /**
    * Get current session
+   *
+   * Returns synchronous snapshot of current session state.
+   * For reactive updates, use `session$` observable instead.
+   *
+   * @returns Current session or null if not authenticated
    */
   get currentSession(): Session | null {
     return this.sessionSubject.value;
@@ -71,6 +137,8 @@ export class SupabaseService {
 
   /**
    * Check if user is authenticated
+   *
+   * @returns true if user has an active session
    */
   get isAuthenticated(): boolean {
     return this.currentSession !== null;
@@ -78,6 +146,10 @@ export class SupabaseService {
 
   /**
    * Get current user's ID
+   *
+   * Convenience getter for accessing the user ID directly
+   *
+   * @returns User ID or null if not authenticated
    */
   get userId(): string | null {
     return this.currentUser?.id || null;
@@ -104,7 +176,7 @@ export class SupabaseService {
       // See migration: 20251113215904_handle_new_user_signup.sql
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign up error:', error);
       return { data: null, error };
     }
@@ -123,7 +195,7 @@ export class SupabaseService {
       if (error) throw error;
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign in error:', error);
       return { data: null, error };
     }
@@ -141,7 +213,7 @@ export class SupabaseService {
       this.sessionSubject.next(null);
 
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign out error:', error);
       return { error };
     }
@@ -153,13 +225,13 @@ export class SupabaseService {
   async resetPassword(email: string) {
     try {
       const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `${window.location.origin}/auth/reset-password`
       });
 
       if (error) throw error;
 
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Reset password error:', error);
       return { error };
     }
@@ -177,7 +249,7 @@ export class SupabaseService {
       if (error) throw error;
 
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Update password error:', error);
       return { error };
     }
@@ -204,7 +276,7 @@ export class SupabaseService {
       if (error) throw error;
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload file error:', error);
       return { data: null, error };
     }
@@ -222,6 +294,24 @@ export class SupabaseService {
   }
 
   /**
+   * Get a signed URL for a private file
+   */
+  async getSignedUrl(bucket: string, filePath: string, expiresInSeconds = 60 * 30) {
+    try {
+      const { data, error } = await this.supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, expiresInSeconds);
+
+      if (error) throw error;
+
+      return { signedUrl: data.signedUrl as string, error: null };
+    } catch (error: unknown) {
+      console.error('Create signed URL error:', error);
+      return { signedUrl: '', error };
+    }
+  }
+
+  /**
    * Download file from storage
    */
   async downloadFile(bucket: string, filePath: string) {
@@ -233,7 +323,7 @@ export class SupabaseService {
       if (error) throw error;
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Download file error:', error);
       return { data: null, error };
     }
@@ -251,7 +341,7 @@ export class SupabaseService {
       if (error) throw error;
 
       return { error: null };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Delete file error:', error);
       return { error };
     }

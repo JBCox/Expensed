@@ -1,0 +1,129 @@
+<div class="jensify-container-sm">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <mat-card class="jensify-card invitation-card">
+      <mat-card-content class="loading-content">
+        <mat-spinner diameter="48"></mat-spinner>
+        <p>Loading invitation...</p>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Error State -->
+  @else if (error()) {
+    <mat-card class="jensify-card invitation-card error-card">
+      <mat-card-content>
+        <mat-icon class="error-icon">error_outline</mat-icon>
+        <h2>Invitation Error</h2>
+        <p class="jensify-message-error">{{ error() }}</p>
+        <div class="actions">
+          <button
+            mat-raised-button
+            color="primary"
+            routerLink="/"
+            class="jensify-button">
+            <mat-icon>home</mat-icon>
+            Go Home
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Invitation Details -->
+  @else if (invitation(); as inv) {
+    <mat-card class="jensify-card invitation-card">
+      <mat-card-header>
+        <mat-icon class="invitation-icon">mail</mat-icon>
+      </mat-card-header>
+      <mat-card-content>
+        <h1>You're Invited!</h1>
+
+        <div class="invitation-details">
+          <p class="invitation-message">
+            You've been invited to join
+            <strong>{{ inv.organization?.name || 'an organization' }}</strong>
+          </p>
+
+          <div class="invitation-info">
+            <div class="info-item">
+              <mat-icon>badge</mat-icon>
+              <div>
+                <label>Role</label>
+                <span>{{ inv.role }}</span>
+              </div>
+            </div>
+
+            @if (inv.department) {
+              <div class="info-item">
+                <mat-icon>business_center</mat-icon>
+                <div>
+                  <label>Department</label>
+                  <span>{{ inv.department }}</span>
+                </div>
+              </div>
+            }
+
+            <div class="info-item">
+              <mat-icon>person</mat-icon>
+              <div>
+                <label>Invited by</label>
+                <span>{{ inv.inviter?.full_name || 'Admin' }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <mat-icon>schedule</mat-icon>
+              <div>
+                <label>Expires</label>
+                <span>{{ inv.expires_at | date:'short' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Authenticated User Actions -->
+        @if (authService.isAuthenticated) {
+          <div class="actions">
+            <button
+              mat-button
+              (click)="declineInvitation()"
+              class="jensify-button">
+              Decline
+            </button>
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="acceptInvitation()"
+              class="jensify-button">
+              <mat-icon>check_circle</mat-icon>
+              Accept Invitation
+            </button>
+          </div>
+        }
+
+        <!-- Unauthenticated User Actions -->
+        @else {
+          <div class="auth-prompt">
+            <p>Please sign in or create an account to accept this invitation.</p>
+            <div class="actions">
+              <button
+                mat-button
+                (click)="goToRegister()"
+                class="jensify-button">
+                Create Account
+              </button>
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="goToLogin()"
+                class="jensify-button">
+                Sign In
+              </button>
+            </div>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

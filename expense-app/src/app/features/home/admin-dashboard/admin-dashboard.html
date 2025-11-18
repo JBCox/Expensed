@@ -1,0 +1,110 @@
+<div class="jensify-dashboard-container">
+  <!-- Header -->
+  <div class="jensify-dashboard-header">
+    <div class="jensify-header-content">
+      <h1 class="jensify-title">Admin Dashboard</h1>
+      <p class="jensify-subtitle">Manage organization, users, and system settings</p>
+    </div>
+    <div class="jensify-header-actions">
+      <button mat-raised-button color="primary" (click)="onManageUsers()">
+        <mat-icon>people</mat-icon>
+        Manage Users
+      </button>
+    </div>
+  </div>
+
+  <!-- Metrics Row -->
+  <div class="jensify-metrics-grid" *ngIf="metrics$ | async as metrics">
+    <app-metric-card
+      icon="people"
+      label="Total Users"
+      [value]="metrics.totalUsers.toString()"
+      variant="primary">
+    </app-metric-card>
+
+    <app-metric-card
+      icon="person_check"
+      label="Active Users"
+      [value]="metrics.activeUsers.toString()"
+      variant="success">
+    </app-metric-card>
+
+    <app-metric-card
+      icon="mail"
+      label="Pending Invitations"
+      [value]="metrics.pendingInvitations.toString()"
+      variant="warning">
+    </app-metric-card>
+
+    <app-metric-card
+      icon="health_and_safety"
+      label="System Health"
+      [value]="metrics.systemHealth"
+      variant="success">
+    </app-metric-card>
+  </div>
+
+  <!-- System Overview -->
+  <div class="jensify-section">
+    <div class="jensify-section-header">
+      <h2 class="jensify-section-title">
+        <mat-icon>analytics</mat-icon>
+        System Overview
+      </h2>
+    </div>
+
+    <div class="jensify-metrics-grid" *ngIf="metrics$ | async as metrics">
+      <app-metric-card
+        icon="receipt_long"
+        label="Total Expenses"
+        [value]="metrics.totalExpenses.toString()"
+        variant="info">
+      </app-metric-card>
+
+      <app-metric-card
+        icon="payments"
+        label="Monthly Spend"
+        [value]="formatCurrency(metrics.monthlySpend)"
+        variant="primary">
+      </app-metric-card>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="jensify-section">
+    <div class="jensify-section-header">
+      <h2 class="jensify-section-title">
+        <mat-icon>settings</mat-icon>
+        Quick Actions
+      </h2>
+    </div>
+
+    <div class="jensify-card">
+      <div class="jensify-action-grid">
+        <button mat-raised-button class="jensify-action-card" (click)="onManageUsers()">
+          <mat-icon>people</mat-icon>
+          <div class="action-label">User Management</div>
+          <div class="action-desc">Invite users, manage roles</div>
+        </button>
+
+        <button mat-raised-button class="jensify-action-card" (click)="onViewApprovals()">
+          <mat-icon>task_alt</mat-icon>
+          <div class="action-label">Approvals Queue</div>
+          <div class="action-desc">Review pending expenses</div>
+        </button>
+
+        <button mat-raised-button class="jensify-action-card" (click)="onViewFinance()">
+          <mat-icon>account_balance</mat-icon>
+          <div class="action-label">Finance Dashboard</div>
+          <div class="action-desc">View financial reports</div>
+        </button>
+
+        <button mat-raised-button class="jensify-action-card" routerLink="/expenses">
+          <mat-icon>receipt_long</mat-icon>
+          <div class="action-label">All Expenses</div>
+          <div class="action-desc">Browse all expenses</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

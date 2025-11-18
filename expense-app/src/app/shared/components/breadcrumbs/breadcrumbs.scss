@@ -1,0 +1,161 @@
+/**
+ * Breadcrumbs Component Styles
+ * Uses Jensify design system tokens
+ */
+
+.breadcrumbs-container {
+  padding: var(--jensify-spacing-md) var(--jensify-spacing-lg);
+  margin-bottom: var(--jensify-spacing-md);
+  border-bottom: 1px solid var(--jensify-border-subtle);
+  background: transparent;
+
+  @media (max-width: 767px) {
+    padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+    margin-bottom: var(--jensify-spacing-sm);
+  }
+}
+
+.breadcrumbs-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--jensify-spacing-xs);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-xs);
+  font-size: 0.875rem;
+}
+
+// Clickable breadcrumb link
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jensify-spacing-xs);
+  color: var(--jensify-text-muted);
+  text-decoration: none;
+  padding: var(--jensify-spacing-xs) var(--jensify-spacing-sm);
+  border-radius: var(--jensify-radius-sm);
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--jensify-primary);
+    background: var(--jensify-primary-soft);
+    text-decoration: none;
+
+    .breadcrumb-icon {
+      color: var(--jensify-primary);
+    }
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--jensify-primary);
+    outline-offset: 2px;
+  }
+}
+
+// Current page (non-clickable)
+.breadcrumb-current {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jensify-spacing-xs);
+  color: var(--jensify-text-strong);
+  font-weight: 600;
+  padding: var(--jensify-spacing-xs) var(--jensify-spacing-sm);
+
+  .breadcrumb-icon {
+    color: var(--jensify-primary);
+  }
+}
+
+// Icons
+.breadcrumb-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--jensify-text-muted);
+  transition: color 0.2s ease;
+}
+
+// Separator
+.breadcrumb-separator {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--jensify-border-medium);
+  margin: 0 var(--jensify-spacing-xs);
+}
+
+// Label
+.breadcrumb-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+
+  @media (max-width: 767px) {
+    max-width: 120px;
+  }
+}
+
+// Mobile responsive adjustments
+@media (max-width: 767px) {
+  .breadcrumbs-list {
+    gap: 4px;
+  }
+
+  .breadcrumb-item {
+    font-size: 0.8125rem;
+  }
+
+  .breadcrumb-link,
+  .breadcrumb-current {
+    padding: 4px 8px;
+  }
+
+  .breadcrumb-icon,
+  .breadcrumb-separator {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  // Hide icons on very small screens to save space
+  @media (max-width: 480px) {
+    .breadcrumb-icon {
+      display: none;
+    }
+  }
+}
+
+// Animation
+@keyframes breadcrumbFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.breadcrumb-item {
+  animation: breadcrumbFadeIn 0.3s ease-out;
+
+  // Stagger animation for each breadcrumb
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.05}s;
+    }
+  }
+}

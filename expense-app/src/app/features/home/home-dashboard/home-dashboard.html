@@ -1,0 +1,91 @@
+<div class="jensify-container">
+  <div class="home-layout jensify-mb-xl">
+  <mat-card class="hero-card jensify-card">
+    <div class="hero-copy">
+      <p class="eyebrow">Welcome back</p>
+      <h1>Hi {{ (user$ | async)?.full_name || 'there' }} 👋</h1>
+      <p class="subtitle">
+        Capture receipts, finish drafts, and keep approvals moving.
+      </p>
+      <div class="quick-actions">
+        <button mat-raised-button color="primary" routerLink="/expenses/upload">
+          <mat-icon>photo_camera</mat-icon>
+          Add Receipt
+        </button>
+        <button mat-stroked-button color="primary" routerLink="/expenses/new">
+          <mat-icon>note_add</mat-icon>
+          New Expense
+        </button>
+        <button
+          mat-button
+          class="text-action"
+          routerLink="/approvals"
+          *ngIf="(isFinanceOrAdmin$ | async)"
+        >
+          <mat-icon>approval</mat-icon>
+          Review Approvals
+        </button>
+      </div>
+    </div>
+    <mat-card class="stats-card jensify-card">
+      <div>
+        <p class="label">Drafts</p>
+        <p class="value">{{ (draftCount$ | async) ?? 0 }}</p>
+      </div>
+      <div>
+        <p class="label">Submitted</p>
+        <p class="value">{{ (submittedCount$ | async) ?? 0 }}</p>
+      </div>
+      <div>
+        <p class="label">Reimbursed</p>
+        <p class="value">{{ (reimbursedCount$ | async) ?? 0 }}</p>
+      </div>
+    </mat-card>
+  </mat-card>
+
+  <div class="content-grid jensify-grid-2">
+    <mat-card class="todo-card jensify-card">
+      <h2>Next Up</h2>
+      <p class="hint">Finish drafts and submit them for approval.</p>
+      <div class="todo-item">
+        <div>
+          <p>Draft expenses</p>
+          <span>{{ (draftCount$ | async) ?? 0 }} waiting</span>
+        </div>
+        <button mat-button color="primary" routerLink="/expenses/new">Open form</button>
+      </div>
+      <div class="todo-item">
+        <div>
+          <p>Receipts without expenses</p>
+          <span>Create expenses for uploaded receipts.</span>
+        </div>
+        <button mat-button color="primary" routerLink="/expenses/upload">Review receipts</button>
+      </div>
+    </mat-card>
+
+    <mat-card class="recent-card jensify-card">
+      <div class="recent-header">
+        <div>
+          <h2>Recent activity</h2>
+          <p class="hint">Latest four expenses</p>
+        </div>
+        <button mat-stroked-button routerLink="/expenses/new">View all soon</button>
+      </div>
+      <ng-container *ngIf="(recentExpenses$ | async) as recent; else emptyState">
+        <div class="recent-list" *ngIf="recent.length; else emptyState">
+          <div class="recent-row" *ngFor="let expense of recent">
+            <div>
+              <p class="merchant">{{ expense.merchant }}</p>
+              <p class="meta">{{ expense.expense_date | date:'MMM d' }} · {{ expense.status | titlecase }}</p>
+            </div>
+            <div class="amount">{{ expense.amount | currency:'USD':'symbol':'1.0-0' }}</div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #emptyState>
+        <p class="empty">No expenses yet. Upload a receipt to get started.</p>
+      </ng-template>
+    </mat-card>
+  </div>
+  </div>
+</div>

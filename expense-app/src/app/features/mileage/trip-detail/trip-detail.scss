@@ -1,0 +1,118 @@
+/**
+ * Trip Detail Component Styles
+ * Uses Jensify design tokens for consistency
+ */
+
+// Detail Grid Layout
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--jensify-spacing-md);
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--jensify-spacing-sm) 0;
+  border-bottom: 1px solid var(--jensify-border-subtle);
+
+  &.full-width {
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--jensify-spacing-xs);
+  }
+
+  .label {
+    font-weight: 600;
+    color: var(--jensify-text-muted);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .value {
+    font-weight: 500;
+    color: var(--jensify-text-strong);
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-xs);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// Timeline Styles
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-lg);
+  padding: var(--jensify-spacing-md) 0;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jensify-spacing-md);
+  padding: var(--jensify-spacing-md);
+  background: var(--jensify-surface-soft);
+  border-radius: var(--jensify-radius-md);
+  border-left: 4px solid var(--jensify-primary);
+
+  mat-icon {
+    color: var(--jensify-primary);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .timeline-label {
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+    font-size: 0.9375rem;
+    margin-bottom: var(--jensify-spacing-xs);
+  }
+
+  .timeline-value {
+    color: var(--jensify-text-medium);
+    font-size: 0.875rem;
+  }
+
+  .rejection-reason {
+    margin-top: var(--jensify-spacing-sm);
+    padding: var(--jensify-spacing-sm);
+    background: var(--jensify-danger-soft);
+    border-radius: var(--jensify-radius-sm);
+    color: var(--jensify-danger-strong);
+    font-size: 0.875rem;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 767px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--jensify-spacing-xs);
+
+    .value {
+      text-align: left;
+    }
+  }
+}

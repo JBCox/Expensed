@@ -1,5 +1,5 @@
-<div class="confirm-email-container">
-  <mat-card class="confirm-email-card">
+<div class="jensify-container-sm">
+  <mat-card class="jensify-card confirm-email-card">
     <mat-card-header>
       <div class="icon-wrapper">
         <mat-icon class="email-icon">mail_outline</mat-icon>
@@ -43,13 +43,13 @@
       </div>
 
       <!-- Success Message for Resend -->
-      <div *ngIf="resendSuccess" class="success-message" role="alert">
+      <div *ngIf="resendSuccess" class="jensify-message-success" role="alert">
         <mat-icon>check_circle</mat-icon>
         <span>Confirmation email has been resent! Please check your inbox.</span>
       </div>
 
       <!-- Error Message for Resend -->
-      <div *ngIf="resendError" class="error-message" role="alert">
+      <div *ngIf="resendError" class="jensify-message-error" role="alert">
         <mat-icon>error</mat-icon>
         <span>{{ resendError }}</span>
       </div>
@@ -61,7 +61,7 @@
           color="primary"
           (click)="resendConfirmation()"
           [disabled]="resendLoading || resendSuccess"
-          class="resend-button"
+          class="resend-button jensify-button"
         >
           <mat-icon *ngIf="!resendLoading">send</mat-icon>
           <span *ngIf="!resendLoading">Resend Confirmation Email</span>
@@ -71,7 +71,7 @@
         <button
           mat-stroked-button
           (click)="goToLogin()"
-          class="login-button"
+          class="login-button jensify-button"
         >
           Already confirmed? Sign In
         </button>

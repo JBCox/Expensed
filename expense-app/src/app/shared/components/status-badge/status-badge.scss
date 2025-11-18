@@ -1,0 +1,125 @@
+// Animations
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes iconSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jensify-spacing-xs);
+  padding: var(--jensify-spacing-xs) var(--jensify-spacing-md);
+  border-radius: var(--jensify-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &.small {
+    padding: 2px var(--jensify-spacing-sm);
+    font-size: 11px;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &.medium {
+    padding: var(--jensify-spacing-xs) var(--jensify-spacing-md);
+    font-size: 12px;
+  }
+
+  // Status-specific styles
+  &.pending {
+    background: var(--jensify-warning-soft);
+    color: var(--jensify-warning);
+    border-color: var(--jensify-warning-border);
+    animation: badgePulse 2s ease-in-out infinite;
+
+    mat-icon {
+      animation: iconSpin 2s linear infinite;
+    }
+  }
+
+  &.approved {
+    background: var(--jensify-success-soft);
+    color: var(--jensify-success);
+    border-color: var(--jensify-success-border);
+
+    mat-icon {
+      animation: fadeIn 0.3s ease-in;
+    }
+  }
+
+  &.rejected {
+    background: var(--jensify-danger-soft);
+    color: var(--jensify-danger);
+    border-color: var(--jensify-danger-border);
+
+    mat-icon {
+      animation: fadeIn 0.3s ease-in;
+    }
+  }
+
+  &.reimbursed {
+    background: var(--jensify-info-soft);
+    color: var(--jensify-info);
+    border-color: var(--jensify-info-border);
+
+    mat-icon {
+      animation: fadeIn 0.3s ease-in;
+    }
+  }
+
+  &.flagged {
+    background: var(--jensify-primary-soft);
+    color: var(--jensify-primary);
+    border-color: var(--jensify-primary-border);
+
+    mat-icon {
+      animation: fadeIn 0.3s ease-in;
+    }
+  }
+
+  &.draft {
+    background: var(--jensify-surface-soft);
+    color: var(--jensify-text-muted);
+    border-color: var(--jensify-border-subtle);
+
+    mat-icon {
+      animation: fadeIn 0.3s ease-in;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

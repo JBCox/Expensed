@@ -1,5 +1,9 @@
-// Import Angular Material first (before any other rules)
+// Import Angular Material theme utilities once
 @use '@angular/material' as mat;
+
+// Forward Jensify universal utility classes (modern Sass approach)
+// Using @forward instead of deprecated @import to make utilities globally available
+@forward './utilities';
 
 // Then include Tailwind directives
 @tailwind base;
@@ -7,32 +11,191 @@
 @tailwind utilities;
 
 // Angular Material theme configuration
+// Custom orange palette for Jensify (Brex-inspired)
+$jensify-orange-palette: (
+  0: #000000,
+  10: #3A0E00,
+  20: #5F1A00,
+  25: #702000,
+  30: #822600,
+  35: #942C00,
+  40: #A63300,
+  50: #CB4100,
+  60: #F24F00,
+  70: #FF5900,
+  80: #FF6A1A,
+  90: #FF8A4D,
+  95: #FFB380,
+  98: #FFE5D6,
+  99: #FFF4ED,
+  100: #FFFFFF,
+);
+
 html {
   @include mat.theme((
     color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary: $jensify-orange-palette,
+      tertiary: mat.$orange-palette,
     ),
     typography: Roboto,
     density: 0,
   ));
 }
 
+// Shared helpers for Angular Material form fields
+@mixin jensify-form-field-surface {
+  position: relative;
+  border: 1px solid var(--jensify-border-medium);
+  border-radius: var(--jensify-radius-md);
+  background-color: var(--jensify-surface-card);
+  padding: 0 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+@mixin jensify-form-field-infix-spacing {
+  padding: 0.65rem 0;
+}
+
+@mixin jensify-form-field-focus-state {
+  border-color: var(--jensify-primary);
+  box-shadow: 0 0 0 var(--jensify-focus-ring-width) rgba(255, 89, 0, 0.2);
+}
+
+// Jensify design tokens (global CSS variables)
+// Brex-inspired orange color palette
+:root {
+  // Primary Orange (Brex-inspired)
+  --jensify-primary: #FF5900;
+  --jensify-primary-strong: #E54F00;
+  --jensify-primary-hover: #FF6A1A;
+  --jensify-primary-soft: #FFF4ED;
+  --jensify-primary-border: #FFCFB3;
+  --jensify-primary-background-active: #FFE5D6;
+
+  // Accent & Secondary
+  --jensify-accent: #FF7A33;
+  --jensify-secondary: #3B82F6;
+
+  // Surface & Background
+  --jensify-surface-soft: #F9FAFB;
+  --jensify-surface-card: #FFFFFF;
+  --jensify-surface-raised: #FFFFFF;
+  --jensify-background-dark: #1A1A1A;
+
+  // Borders
+  --jensify-border-subtle: #E5E7EB;
+  --jensify-border-medium: #D1D5DB;
+  --jensify-border-strong: #9CA3AF;
+
+  // Text
+  --jensify-text-strong: #111827;
+  --jensify-text-medium: #374151;
+  --jensify-text-muted: #6B7280;
+  --jensify-text-subtle: #9CA3AF;
+
+  // Icons
+  --jensify-icon-strong: #374151;
+  --jensify-icon-muted: #9CA3AF;
+
+  // Semantic Colors
+  --jensify-danger: #EF4444;
+  --jensify-danger-strong: #DC2626;
+  --jensify-danger-soft: #FEE2E2;
+  --jensify-danger-border: #FECACA;
+
+  --jensify-success: #059669;
+  --jensify-success-strong: #047857;
+  --jensify-success-soft: #D1FAE5;
+  --jensify-success-border: #A7F3D0;
+
+  --jensify-warning: #F59E0B;
+  --jensify-warning-strong: #D97706;
+  --jensify-warning-soft: #FEF3C7;
+  --jensify-warning-border: #FDE68A;
+
+  --jensify-info: #3B82F6;
+  --jensify-info-strong: #2563EB;
+  --jensify-info-soft: #DBEAFE;
+  --jensify-info-border: #BFDBFE;
+
+  // Focus & Interactive States
+  --jensify-focus-ring: #FFB380;
+  --jensify-focus-ring-width: 2px;
+
+  // Shadows (for cards and elevated surfaces)
+  --jensify-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --jensify-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --jensify-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --jensify-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --jensify-shadow-icon: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  // Gradients & Special Effects
+  --jensify-gradient-card: linear-gradient(135deg, var(--jensify-surface-card) 0%, var(--jensify-surface-soft) 100%);
+  --jensify-gradient-hero: linear-gradient(135deg, var(--jensify-surface-card), #FFF8F3);
+  --jensify-glow-primary: radial-gradient(circle, rgba(255, 89, 0, 0.12), transparent 60%);
+  --jensify-surface-frosted: rgba(255, 255, 255, 0.95);
+  --jensify-overlay: rgba(0, 0, 0, 0.5);
+  --jensify-warning-glow-start: rgba(245, 158, 11, 0.4);
+  --jensify-warning-glow-end: rgba(245, 158, 11, 0);
+
+  // Spacing Scale (for generous whitespace)
+  --jensify-spacing-xs: 0.25rem;    // 4px
+  --jensify-spacing-sm: 0.5rem;     // 8px
+  --jensify-spacing-md: 1rem;       // 16px
+  --jensify-spacing-lg: 1.5rem;     // 24px
+  --jensify-spacing-xl: 2rem;       // 32px
+  --jensify-spacing-2xl: 3rem;      // 48px
+  --jensify-spacing-3xl: 4rem;      // 64px
+
+  // Border Radius
+  --jensify-radius-sm: 0.375rem;    // 6px
+  --jensify-radius-md: 0.5rem;      // 8px
+  --jensify-radius-lg: 0.75rem;     // 12px
+  --jensify-radius-xl: 1rem;        // 16px
+  --jensify-radius-full: 9999px;
+
+  // Legacy aliases (for older component styles)
+  // These ensure any remaining uses of generic spacing/radius tokens still work.
+  --spacing-xs: var(--jensify-spacing-xs);
+  --spacing-sm: var(--jensify-spacing-sm);
+  --spacing-md: var(--jensify-spacing-md);
+  --spacing-lg: var(--jensify-spacing-lg);
+  --spacing-xl: var(--jensify-spacing-xl);
+
+  --radius-sm: var(--jensify-radius-sm);
+  --radius-md: var(--jensify-radius-md);
+  --radius-lg: var(--jensify-radius-lg);
+  --radius-xl: var(--jensify-radius-xl);
+
+  // Additional surface & text tokens used by layout components
+  --jensify-surface-hover: #F3F4F6;
+  --jensify-text-primary: var(--jensify-text-strong);
+  --jensify-text-secondary: var(--jensify-text-medium);
+
+  // Layout (sidebar, content widths)
+  --jensify-sidebar-width: 64px;
+  --jensify-sidebar-expanded: 240px;
+  --jensify-content-max-width: 1400px;
+  --jensify-topbar-height: 64px;
+}
+
 body {
   // Default the application to a light color theme
   color-scheme: light;
 
-  // Set Angular Material CSS variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
+  // Set base typography and background
+  background-color: var(--jensify-surface-soft);
+  color: var(--jensify-text-strong);
   font: var(--mat-sys-body-medium);
+  line-height: 1.6;
 
   // Reset the user agent margin
   margin: 0;
   height: 100%;
 }
 
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -45,73 +208,298 @@ body {
   box-sizing: border-box;
 }
 
-/* Fix Angular Material MDC form field label overlap with prefix icons */
+// ============================================================================
+// GLOBAL MATERIAL FORM FIELD FIX - Complete Override
+// Fixes label overlap, spacing, and alignment issues across entire app
+// ============================================================================
+
+// CRITICAL: Override Material's default form field behavior
 .mat-mdc-form-field {
-  /* When there's a prefix icon, add padding to the text field container */
-  &.mat-mdc-form-field-has-icon-prefix {
+  width: 100%;
+  margin-bottom: 1rem;
+}
 
-    /* The text field container needs left padding for the icon */
-    .mat-mdc-text-field-wrapper {
-      padding-left: 0 !important;
-    }
+// Target the actual wrapper element
+.mat-mdc-text-field-wrapper {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
 
-    /* The floating label in ALL states needs proper positioning */
-    .mdc-floating-label {
-      /* When NOT floating (resting state) - push right for icon */
-      left: 48px !important;
+// Fix the container that holds input/select
+.mat-mdc-form-field-flex {
+  padding-top: 0 !important;
+}
 
-      /* When floating above - reset to left edge */
-      &.mdc-floating-label--float-above {
-        left: 0 !important;
+// CRITICAL: Set proper height and padding for the input area
+.mat-mdc-form-field-infix {
+  min-height: 56px !important;
+  padding-top: 28px !important;
+  padding-bottom: 8px !important;
+  border-top: none !important;
+  min-width: 0 !important; // Allow shrinking
+}
+
+// CRITICAL: Force label to float above content ALWAYS
+.mat-mdc-form-field .mdc-floating-label {
+  position: absolute !important;
+  left: 16px !important;
+  top: 16px !important;
+  transform: translateY(0) scale(0.75) !important;
+  transform-origin: left top !important;
+  transition: none !important;
+  color: var(--jensify-text-muted) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  max-width: calc(100% - 32px) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+// When focused, change label color
+.mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--jensify-primary) !important;
+}
+
+// CRITICAL: Prevent text overflow in input/select content
+.mat-mdc-form-field input.mat-mdc-input-element,
+.mat-mdc-form-field textarea.mat-mdc-input-element,
+.mat-mdc-form-field .mat-mdc-select-trigger {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+  line-height: 1.5 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: initial !important;
+}
+
+// CRITICAL: mat-select specific - ensure value displays below label
+.mat-mdc-form-field .mat-mdc-select {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-select-value,
+.mat-mdc-form-field .mat-mdc-select-value-text {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+  line-height: 1.5 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: block !important;
+}
+
+// Ensure select arrow doesn't get cut off
+.mat-mdc-form-field .mat-mdc-select-arrow-wrapper {
+  flex-shrink: 0 !important;
+}
+
+// Fix datepicker and suffix icons
+.mat-mdc-form-field .mat-mdc-form-field-icon-suffix,
+.mat-mdc-form-field .mat-datepicker-toggle {
+  margin-top: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+// appearance="fill" specific
+.mat-mdc-form-field-appearance-fill .mdc-line-ripple {
+  display: none !important;
+}
+
+// Ensure filter rows work properly
+.jensify-filter-row mat-form-field,
+.jensify-form-row mat-form-field {
+  min-width: 0 !important;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-flex {
+  @include jensify-form-field-surface;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-infix {
+  @include jensify-form-field-infix-spacing;
+}
+
+.mat-mdc-form-field-appearance-fill.mat-focused .mat-mdc-form-field-flex {
+  @include jensify-form-field-focus-state;
+}
+
+.mat-mdc-form-field-appearance-fill .mdc-floating-label,
+.mat-mdc-form-field-appearance-fill .mdc-floating-label--float-above {
+  transform: translateY(-1.45rem) scale(0.85);
+  color: var(--jensify-text-muted);
+  background-color: transparent;
+}
+
+.mat-mdc-form-field-appearance-fill.mat-focused .mdc-floating-label {
+  color: var(--jensify-primary);
+}
+
+.mat-mdc-form-field-appearance-fill input.mat-mdc-input-element,
+.mat-mdc-form-field-appearance-fill .mat-mdc-select-trigger {
+  font-size: 1rem;
+  padding: 0.25rem 0;
+}
+
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-flex {
+  @include jensify-form-field-surface;
+}
+
+.mat-mdc-form-field-appearance-outline.mat-mdc-form-field-has-icon-prefix .mat-mdc-notched-outline {
+  display: none;
+}
+
+.mat-mdc-form-field-appearance-outline .mat-mdc-form-field-infix {
+  @include jensify-form-field-infix-spacing;
+}
+
+.mat-mdc-form-field-appearance-outline.mat-focused .mat-mdc-form-field-flex {
+  @include jensify-form-field-focus-state;
+}
+
+.mat-mdc-form-field:not([appearance]),
+.mat-mdc-form-field[appearance='legacy'] {
+  .mat-mdc-form-field-flex {
+    @include jensify-form-field-surface;
+  }
+
+  .mat-mdc-form-field-infix {
+    @include jensify-form-field-infix-spacing;
+  }
+
+  &.mat-focused .mat-mdc-form-field-flex {
+    @include jensify-form-field-focus-state;
+  }
+}
+
+.mat-mdc-form-field-appearance-outline .mdc-floating-label,
+.mat-mdc-form-field-appearance-outline .mdc-floating-label--float-above {
+  transform: translateY(-1.45rem) scale(0.85);
+  color: var(--jensify-text-muted);
+  background-color: transparent;
+}
+
+.mat-mdc-form-field-appearance-outline.mat-focused .mdc-floating-label {
+  color: var(--jensify-primary);
+}
+
+.mat-mdc-form-field-appearance-outline input.mat-mdc-input-element,
+.mat-mdc-form-field-appearance-outline .mat-mdc-select-trigger {
+  font-size: 1rem;
+  padding: 0.25rem 0;
+}
+
+.mat-mdc-select-panel {
+  background-color: var(--jensify-surface-card);
+  border: 1px solid var(--jensify-border-medium);
+  border-radius: var(--jensify-radius-lg);
+  box-shadow: var(--jensify-shadow-lg);
+  color: var(--jensify-text-strong);
+}
+
+.mat-mdc-select-panel .mat-mdc-option {
+  background-color: transparent;
+}
+
+.cdk-overlay-container .mat-mdc-select-panel {
+  background-color: var(--jensify-surface-card) !important;
+  border-color: var(--jensify-border-medium) !important;
+  box-shadow: var(--jensify-shadow-lg) !important;
+}
+
+/* Fix datepicker overlay - add solid background */
+.cdk-overlay-container {
+  .mat-datepicker-content {
+    background-color: var(--jensify-surface-card) !important;
+    box-shadow: var(--jensify-shadow-xl) !important;
+  }
+  
+  .mat-calendar {
+    background-color: var(--jensify-surface-card) !important;
+  }
+  
+  .mat-datepicker-content-container {
+    background-color: var(--jensify-surface-card) !important;
+  }
+}
+
+/* Ensure datepicker has proper z-index */
+.cdk-overlay-pane {
+  z-index: 1000 !important;
+}
+
+.mat-datepicker-popup {
+  z-index: 1000 !important;
+}
+
+/* Angular Material prefix icon alignment */
+.mat-mdc-form-field.mat-mdc-form-field-has-icon-prefix {
+  $jensify-prefix-width: 44px;
+
+  .mat-mdc-text-field-wrapper {
+    padding-left: 0 !important;
+  }
+
+  .mat-mdc-form-field-flex {
+    padding-left: 0 !important;
+  }
+
+  &.mat-mdc-form-field-appearance-outline {
+    .mat-mdc-form-field-flex {
+      &::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        bottom: 8px;
+        left: calc(#{$jensify-prefix-width} + 0.25rem);
+        width: 1px;
+        background-color: var(--jensify-border-medium);
+        pointer-events: none;
       }
     }
 
-    /* Ensure the input field itself has proper padding */
-    .mat-mdc-form-field-infix {
-      padding-left: 0 !important;
-
-      input {
-        padding-left: 4px !important;
-      }
-    }
-
-    /* Prefix icon positioning - STANDARDIZED for all icons */
-    .mat-mdc-form-field-icon-prefix {
-      padding-right: 12px !important;
-      padding-left: 12px !important;
-      margin-right: 0 !important;
-      margin-left: 0 !important;
-      display: flex;
-      align-items: center;
-      width: 48px !important; /* Fixed width for consistent alignment */
-      min-width: 48px !important;
-      max-width: 48px !important;
-      justify-content: center;
-
-      .mat-icon {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 24px;
-        height: 24px;
-        font-size: 24px;
+    &.mat-focused {
+      .mat-mdc-form-field-flex::after {
+        background-color: var(--jensify-primary);
       }
     }
   }
 
-  /* Outline appearance specific fixes */
-  &.mat-mdc-form-field-type-mat-input.mat-form-field-appearance-outline {
-    &.mat-mdc-form-field-has-icon-prefix {
+  .mat-mdc-form-field-icon-prefix {
+    width: $jensify-prefix-width !important;
+    min-width: $jensify-prefix-width !important;
+    max-width: $jensify-prefix-width !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-      .mat-mdc-form-field-flex {
-        padding-left: 8px !important; /* Consistent padding */
-      }
+  .mat-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    line-height: 24px;
+  }
 
-      /* Adjust the notched outline to accommodate the icon */
-      .mdc-notched-outline {
-        .mdc-notched-outline__leading {
-          width: 8px !important;
-        }
-      }
+  .mdc-floating-label {
+    left: $jensify-prefix-width + 6px !important;
+
+    &.mdc-floating-label--float-above {
+      left: 0 !important;
+    }
+  }
+
+  .mat-mdc-form-field-infix {
+    padding-left: calc(#{$jensify-prefix-width} + 0.5rem) !important;
+
+    input {
+      padding-left: 0 !important;
     }
   }
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

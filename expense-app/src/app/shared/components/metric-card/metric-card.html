@@ -1,0 +1,19 @@
+<div class="metric-card">
+  <div class="metric-header">
+    <div class="metric-icon" [ngClass]="iconType">
+      <mat-icon>{{ icon }}</mat-icon>
+    </div>
+  </div>
+
+  <div class="metric-content">
+    <div class="metric-value" *ngIf="!loading">{{ value }}</div>
+    <div class="metric-value-skeleton" *ngIf="loading"></div>
+
+    <div class="metric-label">{{ label }}</div>
+
+    <div class="metric-change" *ngIf="change && changeType" [ngClass]="changeType">
+      <mat-icon>{{ changeType === 'positive' ? 'trending_up' : changeType === 'negative' ? 'trending_down' : 'remove' }}</mat-icon>
+      <span>{{ change }}</span>
+    </div>
+  </div>
+</div>

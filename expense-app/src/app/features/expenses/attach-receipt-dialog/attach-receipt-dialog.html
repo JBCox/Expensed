@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>Attach Receipt</h2>
+
+<mat-tab-group>
+  <mat-tab label="Upload New">
+    <div class="upload-pane">
+      <input type="file" #fileInput (change)="onFileSelected($event)" hidden accept=".jpg,.jpeg,.png,.pdf">
+      <div class="file-info" *ngIf="pendingFile as file">
+        Selected: {{ file.name }} ({{ (file.size / 1024) | number:'1.0-0' }} KB)
+      </div>
+      <button mat-stroked-button color="primary" (click)="fileInput.click()" class="jensify-button">Choose File</button>
+      <button mat-raised-button color="primary" (click)="uploadSelected()" [disabled]="!pendingFile || uploading()" class="jensify-button">
+        <mat-icon>cloud_upload</mat-icon>
+        Upload
+      </button>
+      <mat-progress-bar mode="indeterminate" *ngIf="uploading()"></mat-progress-bar>
+      <div class="jensify-message-error" *ngIf="errorMessage() as error">
+        <mat-icon>error</mat-icon>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+  </mat-tab>
+
+  <mat-tab label="Choose Existing">
+    <div class="existing-pane">
+      <ng-container *ngIf="receipts$ | async as receipts; else loadingReceipts">
+        <div *ngIf="receipts.length; else empty">
+          <div class="receipt-row" *ngFor="let receipt of receipts">
+            <div class="receipt-meta">
+              <span class="receipt-name">{{ receipt.file_name }}</span>
+              <small>{{ receipt.file_type }} · {{ (receipt.file_size / 1024) | number:'1.0-0' }} KB</small>
+            </div>
+            <button mat-button color="primary" (click)="selectExisting(receipt)">Select</button>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #loadingReceipts>
+        <p>Loading receipts…</p>
+      </ng-template>
+      <ng-template #empty>
+        <p>No receipts yet. Upload one in the first tab!</p>
+      </ng-template>
+    </div>
+  </mat-tab>
+</mat-tab-group>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Close</button>
+</div>

@@ -1,0 +1,127 @@
+<div class="jensify-dashboard-container">
+  <div class="jensify-hero-surface">
+    <div class="jensify-dashboard-header jensify-animate-slide-down">
+      <h1>Finance Dashboard</h1>
+      <p class="subtitle">Manage approvals and track company expenses.</p>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="jensify-metrics-grid jensify-animate-fade" *ngIf="metrics$ | async as metrics">
+    <app-metric-card
+      [value]="metrics.pendingApprovals.toString()"
+      label="Pending Approvals"
+      icon="pending_actions"
+      iconType="approvals"
+      [loading]="loading">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="formatCurrency(metrics.reimbursementsDue)"
+      label="Total Reimbursements Due"
+      icon="payments"
+      iconType="spend"
+      [loading]="loading">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="formatCurrency(metrics.monthToDateSpend)"
+      label="Month-to-Date Spend"
+      icon="trending_up"
+      iconType="budget"
+      [loading]="loading">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="metrics.flaggedExpenses.toString()"
+      label="Policy Violations"
+      icon="flag"
+      iconType="flagged"
+      [loading]="loading">
+    </app-metric-card>
+  </div>
+
+  <!-- Approval Queue -->
+  <div class="jensify-section">
+    <div class="jensify-section-header">
+      <h2>Approval Queue</h2>
+      <button mat-stroked-button (click)="onViewApprovals()" class="jensify-button">
+        View All
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    <div class="jensify-list" *ngIf="pendingApprovals$ | async as approvals">
+      <app-empty-state
+        *ngIf="approvals.length === 0"
+        icon="check_circle"
+        title="All caught up!"
+        message="No pending approvals at this time">
+      </app-empty-state>
+
+      <div
+        *ngFor="let expense of approvals"
+        class="jensify-queue-item"
+        (click)="onViewExpense(expense)">
+        <div class="jensify-queue-info">
+          <div class="jensify-queue-employee">{{ getUserName(expense) }}</div>
+          <div class="jensify-queue-details">
+            <span>{{ expense.merchant }}</span>
+            <span class="jensify-text-muted">•</span>
+            <span>{{ expense.category }}</span>
+            <span class="jensify-text-muted">•</span>
+            <span>{{ formatDate(expense.expense_date) }}</span>
+          </div>
+        </div>
+        <div class="jensify-queue-amount">{{ formatCurrency(expense.amount) }}</div>
+        <div class="jensify-queue-actions">
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="onApprove(expense, $event)"
+            matTooltip="Approve"
+            class="jensify-icon-button">
+            <mat-icon>check_circle</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="onReject(expense, $event)"
+            matTooltip="Reject"
+            class="jensify-icon-button">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="jensify-section">
+    <h2 class="jensify-section-title">Recent Activity</h2>
+
+    <div class="jensify-list" *ngIf="recentActivity$ | async as expenses">
+      <app-empty-state
+        *ngIf="expenses.length === 0"
+        icon="history"
+        title="No recent activity"
+        message="Recent approvals and reimbursements will appear here">
+      </app-empty-state>
+
+      <div
+        *ngFor="let expense of expenses"
+        class="jensify-expense-item"
+        (click)="onViewExpense(expense)">
+        <div class="jensify-expense-icon">
+          <mat-icon>receipt</mat-icon>
+        </div>
+        <div class="jensify-expense-info">
+          <div class="jensify-expense-merchant">{{ expense.merchant }}</div>
+          <div class="jensify-expense-meta">{{ getUserName(expense) }} • {{ formatDate(expense.expense_date) }}</div>
+        </div>
+        <div class="jensify-expense-amount">{{ formatCurrency(expense.amount) }}</div>
+        <app-status-badge [status]="mapStatus(expense.status)" size="small"></app-status-badge>
+      </div>
+    </div>
+  </div>
+</div>

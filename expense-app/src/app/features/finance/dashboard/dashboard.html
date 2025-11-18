@@ -1,0 +1,169 @@
+<div class="jensify-container">
+  <!-- Header with Metrics -->
+  <div class="jensify-page-header">
+    <div class="jensify-header-content">
+      <h1 class="jensify-page-title">Finance Dashboard</h1>
+      <p class="jensify-page-subtitle">Review approved expenses and process reimbursements</p>
+    </div>
+    <button
+      mat-stroked-button
+      class="jensify-export-btn"
+      (click)="exportToCSV()">
+      <mat-icon>download</mat-icon>
+      Export to CSV
+    </button>
+  </div>
+
+  <!-- Metrics Cards -->
+  <div class="jensify-metrics-grid">
+    <app-metric-card
+      [value]="totalPending().toString()"
+      label="Pending Reimbursement"
+      icon="pending_actions"
+      iconType="pending">
+    </app-metric-card>
+
+    <app-metric-card
+      [value]="formatCurrency(totalAmount())"
+      label="Total Amount"
+      icon="payments"
+      iconType="spend">
+    </app-metric-card>
+
+    <app-metric-card
+      value="Analytics"
+      label="Coming Soon"
+      icon="insights"
+      iconType="budget">
+    </app-metric-card>
+  </div>
+
+  <!-- Batch Actions -->
+  @if (selectedCount() > 0) {
+    <div class="jensify-batch-action-bar">
+      <span class="jensify-selection-count">{{ selectedCount() }} selected</span>
+      <button
+        mat-raised-button
+        class="jensify-reimbursed-btn"
+        (click)="markAllAsReimbursed()">
+        <mat-icon>paid</mat-icon>
+        Mark All as Reimbursed
+      </button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <app-loading-skeleton />
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <mat-card class="jensify-card error-card">
+      <mat-icon>error</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-raised-button color="primary" (click)="loadApprovedExpenses()">Retry</button>
+    </mat-card>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && !error() && approvedExpenses().length === 0) {
+    <app-empty-state
+      icon="check_circle"
+      title="All payments processed"
+      message="No approved expenses awaiting reimbursement.">
+    </app-empty-state>
+  }
+
+  <!-- Reimbursement Queue -->
+  @if (!loading() && !error() && approvedExpenses().length > 0) {
+    <mat-card class="jensify-card">
+      <div class="jensify-queue-header">
+        <h2 class="jensify-queue-title">Reimbursement Queue</h2>
+        <span class="jensify-queue-count">{{ totalPending() }} expense{{ totalPending() === 1 ? '' : 's' }}</span>
+      </div>
+
+      <!-- Mobile View with Virtual Scrolling -->
+      <cdk-virtual-scroll-viewport itemSize="180" class="jensify-queue-viewport jensify-hide-desktop">
+        <div class="jensify-mobile-queue">
+          <div
+            *cdkVirtualFor="let expense of approvedExpenses(); trackBy: trackByExpenseId"
+            class="jensify-queue-item-mobile">
+            <div class="jensify-item-header-mobile">
+              <mat-checkbox
+                [checked]="isSelected(expense.id)"
+                (change)="toggleSelection(expense.id)">
+              </mat-checkbox>
+              <div class="jensify-employee-info">
+                <span class="jensify-employee-name">{{ expense.user.full_name || 'Unknown' }}</span>
+                <span class="jensify-employee-meta">Approved: {{ formatDate(expense.updated_at) }}</span>
+              </div>
+            </div>
+
+            <div class="jensify-item-body-mobile">
+              <div class="jensify-flex-col jensify-gap-sm">
+                <span class="jensify-merchant-name">{{ expense.merchant }}</span>
+                <span class="jensify-employee-meta">{{ expense.category }}</span>
+              </div>
+              <span class="jensify-amount">{{ formatCurrency(expense.amount) }}</span>
+            </div>
+
+            <button
+              mat-raised-button
+              class="jensify-reimbursed-btn jensify-button jensify-full-width"
+              (click)="markAsReimbursed(expense.id)">
+              <mat-icon>paid</mat-icon>
+              Mark as Reimbursed
+            </button>
+          </div>
+        </div>
+      </cdk-virtual-scroll-viewport>
+
+      <!-- Desktop Table View with Virtual Scrolling -->
+      <cdk-virtual-scroll-viewport itemSize="80" class="jensify-queue-viewport jensify-hide-mobile">
+        <div class="jensify-desktop-queue">
+          <div
+            *cdkVirtualFor="let expense of approvedExpenses(); trackBy: trackByExpenseId"
+            class="jensify-queue-row">
+            <mat-checkbox
+              [checked]="isSelected(expense.id)"
+              (change)="toggleSelection(expense.id)">
+            </mat-checkbox>
+
+            <div class="jensify-column">
+              <span class="jensify-employee-name">{{ expense.user.full_name || 'Unknown' }}</span>
+              <span class="jensify-employee-meta">{{ expense.user.email || '' }}</span>
+            </div>
+
+            <div class="jensify-column">
+              <span class="jensify-column-value">{{ expense.merchant }}</span>
+              <span class="jensify-employee-meta">{{ expense.category }}</span>
+            </div>
+
+            <div class="jensify-column">
+              <span class="jensify-column-value">{{ formatDate(expense.expense_date) }}</span>
+            </div>
+
+            <div class="jensify-column">
+              <span class="jensify-column-value">{{ formatDate(expense.updated_at) }}</span>
+            </div>
+
+            <div class="jensify-column">
+              <span class="jensify-amount">{{ formatCurrency(expense.amount) }}</span>
+            </div>
+
+            <div class="jensify-column">
+              <button
+                mat-raised-button
+                class="jensify-reimbursed-btn jensify-button-sm"
+                (click)="markAsReimbursed(expense.id)">
+                <mat-icon>paid</mat-icon>
+                Reimburse
+              </button>
+            </div>
+          </div>
+        </div>
+      </cdk-virtual-scroll-viewport>
+    </mat-card>
+  }
+</div>

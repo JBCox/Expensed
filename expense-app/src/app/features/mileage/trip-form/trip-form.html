@@ -1,0 +1,204 @@
+<div class="jensify-container-sm">
+  <mat-card class="jensify-card">
+    <mat-card-header>
+      <mat-card-title>{{ isEditMode ? 'Edit Trip' : 'New Mileage Trip' }}</mat-card-title>
+      <mat-card-subtitle>Log your business mileage for reimbursement</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Real-time Calculation Display -->
+      @if (totalMiles() > 0 && currentRate() > 0) {
+        <div class="jensify-calculation-card">
+          <div class="jensify-calculation-header">
+            <mat-icon>calculate</mat-icon>
+            <h3>Reimbursement Calculation</h3>
+          </div>
+          <div class="jensify-calculation-details">
+            <div class="jensify-calc-item">
+              <span class="jensify-calc-label">Total Miles:</span>
+              <span class="jensify-calc-value">{{ totalMiles().toFixed(1) }} mi</span>
+            </div>
+            <div class="jensify-calc-item">
+              <span class="jensify-calc-label">IRS Rate:</span>
+              <span class="jensify-calc-value">${{ currentRate().toFixed(3) }}/mi</span>
+            </div>
+            <div class="jensify-calc-item total">
+              <span class="jensify-calc-label">Reimbursement:</span>
+              <span class="jensify-calc-value">{{ formatCurrency(reimbursementAmount()) }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        @if (errorMessage()) {
+          <p class="jensify-message-error">{{ errorMessage() }}</p>
+        }
+        @if (successMessage()) {
+          <p class="jensify-message-success">{{ successMessage() }}</p>
+        }
+
+        <!-- Trip Date -->
+        <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+          <mat-label>Trip Date</mat-label>
+          <input
+            matInput
+            [matDatepicker]="tripDatePicker"
+            formControlName="trip_date"
+            [max]="maxDate">
+          <mat-datepicker-toggle matSuffix [for]="tripDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #tripDatePicker></mat-datepicker>
+          @if (hasError('trip_date', 'required')) {
+            <mat-error>{{ getErrorMessage('trip_date') }}</mat-error>
+          }
+          <mat-hint>Trip must be within last 90 days</mat-hint>
+        </mat-form-field>
+
+        <!-- Origin Address -->
+        <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+          <mat-label>Origin Address</mat-label>
+          <mat-icon matPrefix>place</mat-icon>
+          <input
+            matInput
+            formControlName="origin_address"
+            placeholder="123 Main St, City, ST">
+          @if (hasError('origin_address', 'required')) {
+            <mat-error>{{ getErrorMessage('origin_address') }}</mat-error>
+          }
+          @if (hasError('origin_address', 'minlength')) {
+            <mat-error>{{ getErrorMessage('origin_address') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Destination Address -->
+        <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+          <mat-label>Destination Address</mat-label>
+          <mat-icon matPrefix>location_on</mat-icon>
+          <input
+            matInput
+            formControlName="destination_address"
+            placeholder="456 Oak Ave, City, ST">
+          @if (hasError('destination_address', 'required')) {
+            <mat-error>{{ getErrorMessage('destination_address') }}</mat-error>
+          }
+          @if (hasError('destination_address', 'minlength')) {
+            <mat-error>{{ getErrorMessage('destination_address') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Distance and Round Trip -->
+        <div class="jensify-form-row">
+          <mat-form-field appearance="fill" floatLabel="always" class="jensify-half-width">
+            <mat-label>Distance (one-way)</mat-label>
+            <mat-icon matPrefix>straighten</mat-icon>
+            <input
+              matInput
+              type="number"
+              step="0.1"
+              min="0.1"
+              formControlName="distance_miles"
+              placeholder="0.0">
+            <span matSuffix>miles</span>
+            @if (hasError('distance_miles', 'required')) {
+              <mat-error>{{ getErrorMessage('distance_miles') }}</mat-error>
+            }
+            @if (hasError('distance_miles', 'min')) {
+              <mat-error>{{ getErrorMessage('distance_miles') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="jensify-round-trip-field">
+            <mat-checkbox formControlName="is_round_trip">
+              Round Trip
+            </mat-checkbox>
+            <p class="jensify-field-hint">Check if you returned to your starting point</p>
+          </div>
+        </div>
+
+        <!-- Purpose -->
+        <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+          <mat-label>Purpose</mat-label>
+          <mat-icon matPrefix>description</mat-icon>
+          <input
+            matInput
+            formControlName="purpose"
+            placeholder="Client meeting, site visit, delivery, etc.">
+          @if (hasError('purpose', 'required')) {
+            <mat-error>{{ getErrorMessage('purpose') }}</mat-error>
+          }
+          @if (hasError('purpose', 'minlength')) {
+            <mat-error>{{ getErrorMessage('purpose') }}</mat-error>
+          }
+          <mat-hint>Brief description of the trip purpose</mat-hint>
+        </mat-form-field>
+
+        <!-- Category -->
+        <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+          <mat-label>Category</mat-label>
+          <mat-icon matPrefix>business_center</mat-icon>
+          <mat-select formControlName="category">
+            <mat-option value="business">Business</mat-option>
+            <mat-option value="medical">Medical</mat-option>
+            <mat-option value="charity">Charity</mat-option>
+            <mat-option value="moving">Moving</mat-option>
+          </mat-select>
+          @if (hasError('category', 'required')) {
+            <mat-error>{{ getErrorMessage('category') }}</mat-error>
+          }
+          <mat-hint>IRS category for mileage rate</mat-hint>
+        </mat-form-field>
+
+        <!-- Optional Fields Section -->
+        <div class="jensify-form-section">
+          <h3 class="jensify-form-section-title">Optional Details</h3>
+
+          <div class="jensify-form-row">
+            <mat-form-field appearance="fill" floatLabel="always" class="jensify-half-width">
+              <mat-label>Department</mat-label>
+              <input
+                matInput
+                formControlName="department"
+                placeholder="Sales, Engineering, etc.">
+            </mat-form-field>
+
+            <mat-form-field appearance="fill" floatLabel="always" class="jensify-half-width">
+              <mat-label>Project Code</mat-label>
+              <input
+                matInput
+                formControlName="project_code"
+                placeholder="PROJ-123">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+            <mat-label>Notes</mat-label>
+            <textarea
+              matInput
+              formControlName="notes"
+              rows="3"
+              placeholder="Additional details about this trip..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="jensify-form-actions">
+          <button
+            mat-button
+            type="button"
+            (click)="cancel()">
+            <mat-icon>close</mat-icon>
+            Cancel
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="loading()">
+            <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+            {{ isEditMode ? 'Update Trip' : 'Create Trip' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

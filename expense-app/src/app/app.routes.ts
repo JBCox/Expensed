@@ -1,16 +1,23 @@
 import { Routes } from '@angular/router';
-import { authGuard, financeGuard } from './core/guards/auth.guard';
+import { authGuard, financeGuard, adminGuard, managerGuard } from './core/guards/auth.guard';
 
 /**
  * Application routes configuration
  * Defines all routes and their authentication requirements
  */
 export const routes: Routes = [
-  // Default route - redirect to expenses
+  // Default route - authenticated home dashboard
   {
     path: '',
-    redirectTo: '/expenses',
+    redirectTo: '/home',
     pathMatch: 'full'
+  },
+  {
+    path: 'home',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/home/home/home').then(m => m.Home),
+    title: 'Home - Jensify',
+    data: { breadcrumb: 'Home', breadcrumbIcon: 'home' }
   },
 
   // Authentication routes (public)
@@ -33,9 +40,19 @@ export const routes: Routes = [
         title: 'Reset Password - Jensify'
       },
       {
+        path: 'reset-password',
+        loadComponent: () => import('./features/auth/reset-password/reset-password').then(m => m.ResetPasswordComponent),
+        title: 'Set New Password - Jensify'
+      },
+      {
         path: 'confirm-email',
         loadComponent: () => import('./features/auth/confirm-email/confirm-email').then(m => m.ConfirmEmailComponent),
         title: 'Confirm Email - Jensify'
+      },
+      {
+        path: 'accept-invitation',
+        loadComponent: () => import('./features/auth/accept-invitation/accept-invitation.component').then(m => m.AcceptInvitationComponent),
+        title: 'Accept Invitation - Jensify'
       },
       {
         path: '',
@@ -45,113 +62,134 @@ export const routes: Routes = [
     ]
   },
 
+  // Organization routes
+  {
+    path: 'organization',
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Organization', breadcrumbIcon: 'business' },
+    children: [
+      {
+        path: 'setup',
+        loadComponent: () => import('./features/organization/setup/organization-setup.component').then(m => m.OrganizationSetupComponent),
+        title: 'Organization Setup - Jensify',
+        data: { breadcrumb: 'Setup' }
+      },
+      {
+        path: 'users',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/organization/user-management/user-management.component').then(m => m.UserManagementComponent),
+        title: 'User Management - Jensify',
+        data: { breadcrumb: 'User Management' }
+      }
+    ]
+  },
+
   // Protected routes - require authentication
   {
     path: 'expenses',
     canActivate: [authGuard],
+    data: { breadcrumb: 'Expenses', breadcrumbIcon: 'receipt_long' },
     children: [
       {
         path: '',
-        redirectTo: 'upload',
-        pathMatch: 'full'
+        loadComponent: () => import('./features/expenses/expense-list/expense-list').then(m => m.ExpenseList),
+        title: 'My Expenses - Jensify',
+        data: { breadcrumb: 'My Expenses' }
       },
       {
         path: 'upload',
         loadComponent: () => import('./features/expenses/receipt-upload/receipt-upload').then(m => m.ReceiptUpload),
-        title: 'Upload Receipt - Jensify'
+        title: 'Upload Receipt - Jensify',
+        data: { breadcrumb: 'Upload Receipt' }
+      },
+      {
+        path: 'new',
+        loadComponent: () => import('./features/expenses/expense-form/expense-form').then(m => m.ExpenseFormComponent),
+        title: 'New Expense - Jensify',
+        data: { breadcrumb: 'New Expense' }
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./features/expenses/expense-detail/expense-detail').then(m => m.ExpenseDetailComponent),
+        title: 'Expense Details - Jensify',
+        data: { breadcrumb: 'Details' }
+      },
+      {
+        path: ':id/edit',
+        loadComponent: () => import('./features/expenses/expense-edit/expense-edit').then(m => m.ExpenseEditComponent),
+        title: 'Edit Expense - Jensify',
+        data: { breadcrumb: 'Edit' }
       }
-      // TODO: Add these routes after creating the components
-      // {
-      //   path: 'list',
-      //   loadComponent: () => import('./features/expenses/expense-list/expense-list.component').then(m => m.ExpenseListComponent),
-      //   title: 'My Expenses - Jensify'
-      // },
-      // {
-      //   path: 'new',
-      //   loadComponent: () => import('./features/expenses/expense-form/expense-form.component').then(m => m.ExpenseFormComponent),
-      //   title: 'New Expense - Jensify'
-      // },
-      // {
-      //   path: ':id',
-      //   loadComponent: () => import('./features/expenses/expense-detail/expense-detail.component').then(m => m.ExpenseDetailComponent),
-      //   title: 'Expense Details - Jensify'
-      // },
-      // {
-      //   path: ':id/edit',
-      //   loadComponent: () => import('./features/expenses/expense-form/expense-form.component').then(m => m.ExpenseFormComponent),
-      //   title: 'Edit Expense - Jensify'
-      // }
+    ]
+  },
+
+  // Approvals queue - managers and above can approve
+  {
+    path: 'approvals',
+    canActivate: [authGuard, managerGuard],
+    loadComponent: () => import('./features/approvals/approval-queue/approval-queue').then(m => m.ApprovalQueueComponent),
+    title: 'Approvals - Jensify',
+    data: { breadcrumb: 'Approvals', breadcrumbIcon: 'task_alt' }
+  },
+
+  {
+    path: 'receipts',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/expenses/receipt-list/receipt-list').then(m => m.ReceiptList),
+    title: 'Receipts - Jensify',
+    data: { breadcrumb: 'Receipts', breadcrumbIcon: 'receipt' }
+  },
+  {
+    path: 'mileage',
+    canActivate: [authGuard],
+    data: { breadcrumb: 'Mileage', breadcrumbIcon: 'directions_car' },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/mileage/trip-list/trip-list').then(m => m.TripList),
+        title: 'Mileage Trips - Jensify',
+        data: { breadcrumb: 'Trips' }
+      },
+      {
+        path: 'new',
+        loadComponent: () => import('./features/mileage/trip-form/trip-form').then(m => m.TripForm),
+        title: 'New Mileage Trip - Jensify',
+        data: { breadcrumb: 'New Trip' }
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./features/mileage/trip-detail/trip-detail').then(m => m.TripDetailComponent),
+        title: 'Trip Details - Jensify',
+        data: { breadcrumb: 'Details' }
+      },
+      {
+        path: ':id/edit',
+        loadComponent: () => import('./features/mileage/trip-form/trip-form').then(m => m.TripForm),
+        title: 'Edit Mileage Trip - Jensify',
+        data: { breadcrumb: 'Edit' }
+      }
     ]
   },
 
   // Finance routes - require finance or admin role
-  // {
-  //   path: 'finance',
-  //   canActivate: [authGuard, financeGuard],
-  //   children: [
-  //     {
-  //       path: '',
-  //       redirectTo: 'dashboard',
-  //       pathMatch: 'full'
-  //     },
-  //     {
-  //       path: 'dashboard',
-  //       loadComponent: () => import('./features/finance/dashboard/dashboard.component').then(m => m.DashboardComponent),
-  //       title: 'Finance Dashboard - Jensify'
-  //     },
-  //     {
-  //       path: 'reimbursements',
-  //       loadComponent: () => import('./features/finance/reimbursements/reimbursements.component').then(m => m.ReimbursementsComponent),
-  //       title: 'Reimbursements - Jensify'
-  //     },
-  //     {
-  //       path: 'analytics',
-  //       loadComponent: () => import('./features/finance/analytics/analytics.component').then(m => m.AnalyticsComponent),
-  //       title: 'Analytics - Jensify'
-  //     }
-  //   ]
-  // },
-
-  // Approvals routes - require authentication
-  // {
-  //   path: 'approvals',
-  //   canActivate: [authGuard],
-  //   children: [
-  //     {
-  //       path: '',
-  //       loadComponent: () => import('./features/approvals/approval-queue/approval-queue.component').then(m => m.ApprovalQueueComponent),
-  //       title: 'Approval Queue - Jensify'
-  //     }
-  //   ]
-  // },
-
-  // Admin routes - require admin role
-  // {
-  //   path: 'admin',
-  //   canActivate: [authGuard, financeGuard], // TODO: Create separate adminGuard
-  //   children: [
-  //     {
-  //       path: '',
-  //       redirectTo: 'users',
-  //       pathMatch: 'full'
-  //     },
-  //     {
-  //       path: 'users',
-  //       loadComponent: () => import('./features/admin/users/users.component').then(m => m.UsersComponent),
-  //       title: 'User Management - Jensify'
-  //     },
-  //     {
-  //       path: 'policies',
-  //       loadComponent: () => import('./features/admin/policies/policies.component').then(m => m.PoliciesComponent),
-  //       title: 'Policy Settings - Jensify'
-  //     },
-  //     {
-  //       path: 'settings',
-  //       loadComponent: () => import('./features/admin/settings/settings.component').then(m => m.SettingsComponent),
-  //       title: 'Settings - Jensify'
-  //     }
-  //   ]
-  // },
+  {
+    path: 'finance',
+    canActivate: [authGuard, financeGuard],
+    data: { breadcrumb: 'Finance', breadcrumbIcon: 'account_balance' },
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/finance/dashboard/dashboard').then(m => m.FinanceDashboardComponent),
+        title: 'Finance Dashboard - Jensify',
+        data: { breadcrumb: 'Dashboard', breadcrumbIcon: 'dashboard' }
+      }
+    ]
+  },
 
   // Wildcard route - redirect to login
   {

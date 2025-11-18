@@ -1,0 +1,259 @@
+<div class="jensify-container">
+  <!-- Back Link -->
+  <div class="jensify-back-link" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    <span>Back to Trips</span>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <mat-card class="jensify-card">
+      <div class="jensify-loading-container">
+        <mat-spinner></mat-spinner>
+        <p>Loading trip details...</p>
+      </div>
+    </mat-card>
+  }
+
+  <!-- Error State -->
+  @else if (error()) {
+    <mat-card class="jensify-card">
+      <mat-card-content>
+        <div class="jensify-message-error">
+          <mat-icon>error</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Trip Details -->
+  @else if (trip(); as t) {
+    <!-- Header Card -->
+    <mat-card class="jensify-card card-title">
+      <mat-card-header>
+        <div class="jensify-flex jensify-flex-between jensify-flex-wrap">
+          <div>
+            <h1 class="jensify-page-title jensify-mb-sm">Trip Details</h1>
+            <p class="jensify-text-muted jensify-mb-0">{{ formatDate(t.trip_date) }}</p>
+          </div>
+          <div class="jensify-flex jensify-gap-sm jensify-flex-center">
+            <app-status-badge [status]="getStatusBadge(t.status)"></app-status-badge>
+          </div>
+        </div>
+      </mat-card-header>
+    </mat-card>
+
+    <!-- Main Details -->
+    <mat-card class="jensify-card">
+      <div class="jensify-card-header">
+        <h2 class="jensify-card-title">
+          <mat-icon>route</mat-icon>
+          Trip Information
+        </h2>
+      </div>
+      <mat-card-content>
+        <div class="detail-grid">
+          <!-- Route Information -->
+          <div class="detail-row">
+            <span class="label">From</span>
+            <span class="value">{{ t.origin_address }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">To</span>
+            <span class="value">{{ t.destination_address }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Distance (One Way)</span>
+            <span class="value">{{ t.distance_miles.toFixed(1) }} miles</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Round Trip?</span>
+            <span class="value">
+              <mat-icon [style.color]="t.is_round_trip ? 'var(--jensify-success)' : 'var(--jensify-text-muted)'">
+                {{ t.is_round_trip ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              {{ t.is_round_trip ? 'Yes' : 'No' }}
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Total Miles</span>
+            <span class="value jensify-text-strong">{{ t.total_miles.toFixed(1) }} miles</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Reimbursement Details -->
+    <mat-card class="jensify-card">
+      <div class="jensify-card-header">
+        <h2 class="jensify-card-title">
+          <mat-icon>attach_money</mat-icon>
+          Reimbursement Calculation
+        </h2>
+      </div>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-row">
+            <span class="label">IRS Rate</span>
+            <span class="value">{{ formatCurrency(t.irs_rate) }} / mile</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Total Miles</span>
+            <span class="value">{{ t.total_miles.toFixed(1) }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Reimbursement Amount</span>
+            <span class="value jensify-text-strong" style="font-size: 1.25rem;">
+              {{ formatCurrency(t.reimbursement_amount) }}
+            </span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Purpose & Classification -->
+    <mat-card class="jensify-card">
+      <div class="jensify-card-header">
+        <h2 class="jensify-card-title">
+          <mat-icon>description</mat-icon>
+          Purpose & Classification
+        </h2>
+      </div>
+      <mat-card-content>
+        <div class="detail-grid">
+          <div class="detail-row">
+            <span class="label">Purpose</span>
+            <span class="value">{{ t.purpose }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Category</span>
+            <span class="value">{{ getCategoryLabel(t.category) }}</span>
+          </div>
+
+          @if (t.department) {
+            <div class="detail-row">
+              <span class="label">Department</span>
+              <span class="value">{{ t.department }}</span>
+            </div>
+          }
+
+          @if (t.project_code) {
+            <div class="detail-row">
+              <span class="label">Project Code</span>
+              <span class="value">{{ t.project_code }}</span>
+            </div>
+          }
+
+          @if (t.notes) {
+            <div class="detail-row full-width">
+              <span class="label">Notes</span>
+              <span class="value">{{ t.notes }}</span>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Workflow Status -->
+    @if (t.status !== 'draft') {
+      <mat-card class="jensify-card">
+        <div class="jensify-card-header">
+          <h2 class="jensify-card-title">
+            <mat-icon>timeline</mat-icon>
+            Status Timeline
+          </h2>
+        </div>
+        <mat-card-content>
+          <div class="timeline">
+            @if (t.submitted_at) {
+              <div class="timeline-item">
+                <mat-icon>send</mat-icon>
+                <div>
+                  <div class="timeline-label">Submitted</div>
+                  <div class="timeline-value">{{ formatDateTime(t.submitted_at) }}</div>
+                </div>
+              </div>
+            }
+
+            @if (t.approved_at) {
+              <div class="timeline-item">
+                <mat-icon>check_circle</mat-icon>
+                <div>
+                  <div class="timeline-label">Approved</div>
+                  <div class="timeline-value">{{ formatDateTime(t.approved_at) }}</div>
+                </div>
+              </div>
+            }
+
+            @if (t.rejected_at) {
+              <div class="timeline-item">
+                <mat-icon>cancel</mat-icon>
+                <div>
+                  <div class="timeline-label">Rejected</div>
+                  <div class="timeline-value">{{ formatDateTime(t.rejected_at) }}</div>
+                  @if (t.rejection_reason) {
+                    <div class="rejection-reason">{{ t.rejection_reason }}</div>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (t.reimbursed_at) {
+              <div class="timeline-item">
+                <mat-icon>paid</mat-icon>
+                <div>
+                  <div class="timeline-label">Reimbursed</div>
+                  <div class="timeline-value">{{ formatDateTime(t.reimbursed_at) }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Action Buttons -->
+    <div class="jensify-form-actions">
+      <button
+        mat-button
+        (click)="goBack()"
+        class="jensify-button">
+        <mat-icon>arrow_back</mat-icon>
+        Back to List
+      </button>
+
+      <div class="jensify-flex jensify-gap-sm">
+        @if (canDelete()) {
+          <button
+            mat-stroked-button
+            color="warn"
+            (click)="deleteTrip()"
+            [disabled]="deleting()"
+            class="jensify-button-danger">
+            <mat-icon>delete</mat-icon>
+            Delete
+          </button>
+        }
+
+        @if (canEdit()) {
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="goToEdit()"
+            class="jensify-button">
+            <mat-icon>edit</mat-icon>
+            Edit Trip
+          </button>
+        }
+      </div>
+    </div>
+  }
+</div>

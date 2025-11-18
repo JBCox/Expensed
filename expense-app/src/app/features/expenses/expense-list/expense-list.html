@@ -1,0 +1,302 @@
+<div class="jensify-container">
+  <!-- Header with Summary -->
+  <div class="jensify-page-header">
+    <div class="jensify-header-content">
+      <h1 class="jensify-page-title">My Expenses</h1>
+      <div class="jensify-summary-metrics">
+        <div class="jensify-metric">
+          <span class="jensify-metric-value">{{ totalCount() }}</span>
+          <span class="jensify-metric-label">{{ totalCount() === 1 ? 'Expense' : 'Expenses' }}</span>
+        </div>
+        <div class="jensify-metric">
+          <span class="jensify-metric-value">{{ formatCurrency(totalAmount()) }}</span>
+          <span class="jensify-metric-label">Total Amount</span>
+        </div>
+        @if (draftExpenses().length > 0) {
+          <div class="jensify-metric">
+            <span class="jensify-metric-value">{{ draftExpenses().length }}</span>
+            <span class="jensify-metric-label">{{ draftExpenses().length === 1 ? 'Draft' : 'Drafts' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    <button
+      mat-stroked-button
+      class="jensify-export-btn"
+      (click)="exportToCSV()"
+      [disabled]="filteredExpenses().length === 0">
+      <mat-icon>download</mat-icon>
+      Export to CSV
+    </button>
+  </div>
+
+  <!-- Batch Action Bar (appears when expenses are selected) -->
+  @if (selectedCount() > 0) {
+    <div class="jensify-batch-action-bar">
+      <div class="jensify-batch-content">
+        <mat-checkbox
+          [checked]="allDraftsSelected()"
+          [indeterminate]="selectedCount() > 0 && !allDraftsSelected()"
+          (change)="toggleSelectAll()">
+        </mat-checkbox>
+        <span class="jensify-selection-count">
+          {{ selectedCount() }} expense{{ selectedCount() > 1 ? 's' : '' }} selected
+        </span>
+      </div>
+      <div class="jensify-batch-actions">
+        <button mat-button (click)="clearSelection()">
+          <mat-icon>clear</mat-icon>
+          Clear Selection
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="submitSelected()"
+          [disabled]="submittingBatch()">
+          <mat-icon>send</mat-icon>
+          Submit for Approval
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Filters Section -->
+  <mat-card class="jensify-card jensify-filters-card">
+    <!-- Status Filter Chips -->
+    <div class="jensify-filter-section">
+      <label class="jensify-filter-label">Status</label>
+      <mat-chip-set class="jensify-status-chips">
+        @for (option of statusOptions; track option.value) {
+          <mat-chip
+            [class.selected]="selectedStatus() === option.value"
+            (click)="setStatusFilter(option.value)">
+            {{ option.label }}
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </div>
+
+    <!-- Search and Category -->
+    <div class="jensify-filter-row">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Search by merchant or description</mat-label>
+        <input
+          matInput
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Enter merchant name...">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Category</mat-label>
+        <mat-select
+          [(ngModel)]="selectedCategory"
+          (ngModelChange)="selectedCategory.set($event)">
+          @for (option of categoryOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Date Range and Amount Range -->
+    <div class="jensify-filter-row">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>From Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="fromPicker"
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="dateFrom.set($event)">
+        <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #fromPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>To Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="toPicker"
+          [(ngModel)]="dateTo"
+          (ngModelChange)="dateTo.set($event)">
+        <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+        <mat-datepicker #toPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Min Amount</mat-label>
+        <span matPrefix>$</span>
+        <input
+          matInput
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="minAmount"
+          (ngModelChange)="minAmount.set($event)">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Max Amount</mat-label>
+        <span matPrefix>$</span>
+        <input
+          matInput
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="maxAmount"
+          (ngModelChange)="maxAmount.set($event)">
+      </mat-form-field>
+    </div>
+
+    <!-- Clear Filters Button -->
+    <div class="jensify-flex-end jensify-mt-md">
+      <button
+        mat-button
+        (click)="clearFilters()">
+        <mat-icon>clear</mat-icon>
+        Clear Filters
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <app-loading-skeleton />
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <mat-card class="jensify-card error-card">
+      <mat-icon>error</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-raised-button color="primary" (click)="loadExpenses()">Retry</button>
+    </mat-card>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && !error() && filteredExpenses().length === 0 && expenses().length === 0) {
+    <app-empty-state
+      icon="receipt_long"
+      title="No expenses yet"
+      message="Upload your first receipt to get started tracking expenses."
+      actionLabel="Upload Receipt"
+      actionIcon="upload">
+    </app-empty-state>
+  }
+
+  <!-- No Results Empty State -->
+  @if (!loading() && !error() && filteredExpenses().length === 0 && expenses().length > 0) {
+    <app-empty-state
+      icon="filter_alt_off"
+      title="No expenses match your filters"
+      message="Try adjusting your filter criteria to see more results."
+      actionLabel="Clear Filters"
+      actionIcon="clear">
+    </app-empty-state>
+  }
+
+  <!-- Expense Cards List with Virtual Scrolling -->
+  @if (!loading() && !error() && filteredExpenses().length > 0) {
+    <cdk-virtual-scroll-viewport
+      itemSize="220"
+      class="jensify-queue-viewport">
+      <div class="jensify-expense-cards">
+        <mat-card
+          *cdkVirtualFor="let expense of filteredExpenses(); trackBy: trackByExpenseId"
+          class="jensify-card jensify-expense-card"
+          [class.selected]="isSelected(expense.id)">
+          <div class="jensify-expense-card-content">
+            <!-- Selection Checkbox (only for draft expenses) -->
+            @if (expense.status === ExpenseStatus.DRAFT) {
+              <div class="jensify-checkbox-container">
+                <mat-checkbox
+                  [checked]="isSelected(expense.id)"
+                  (change)="toggleSelection(expense)"
+                  (click)="$event.stopPropagation()">
+                </mat-checkbox>
+              </div>
+            }
+
+            <!-- Receipt Thumbnail -->
+            <div class="jensify-thumbnail-container">
+              @if (getReceiptThumbnail(expense)) {
+                <img
+                  [src]="getReceiptThumbnail(expense)"
+                  [alt]="expense.merchant + ' receipt'">
+              } @else {
+                <div class="jensify-thumbnail-placeholder">
+                  <mat-icon>receipt</mat-icon>
+                </div>
+              }
+            </div>
+
+            <!-- Expense Details -->
+            <div class="jensify-expense-details">
+              <div class="jensify-expense-header">
+                <h3 class="jensify-merchant-name">{{ expense.merchant }}</h3>
+                <app-status-badge [status]="getStatusBadge(expense.status)" />
+              </div>
+
+              <div class="jensify-expense-meta">
+                <div class="jensify-meta-item">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ formatDate(expense.expense_date) }}</span>
+                </div>
+                <div class="jensify-meta-item">
+                  <mat-icon>category</mat-icon>
+                  <span>{{ expense.category }}</span>
+                </div>
+              </div>
+
+              @if (expense.notes) {
+                <p class="jensify-expense-notes">{{ expense.notes }}</p>
+              }
+
+              <!-- Amount -->
+              <span class="jensify-expense-amount">{{ formatCurrency(expense.amount) }}</span>
+            </div>
+          </div>
+
+            @if (hasViolations(expense)) {
+            <div class="jensify-violation-banner">
+              <mat-icon>report</mat-icon>
+              <div>
+                <p class="jensify-violation-text">Needs attention</p>
+                <p class="jensify-subtext jensify-mb-0">
+                  {{ expense.policy_violations[0].message }}
+                </p>
+                @if (expense.policy_violations.length > 1) {
+                  <p class="jensify-subtext jensify-mb-0 jensify-mt-xs jensify-text-italic">
+                    +{{ expense.policy_violations.length - 1 }} more issue(s)
+                  </p>
+                }
+              </div>
+              <button mat-stroked-button color="warn" (click)="fixViolations(expense)">
+                Fix Violations
+              </button>
+            </div>
+          }
+
+          <!-- Card Actions -->
+          <div class="jensify-card-actions">
+            <button mat-button (click)="viewReceipt(expense)" [disabled]="!expense.receipt">
+              <mat-icon>description</mat-icon>
+              {{ expense.receipt ? 'View Receipt' : 'No Receipt' }}
+            </button>
+            <button mat-button (click)="goToDetails(expense)">
+              <mat-icon>visibility</mat-icon>
+              View Details
+            </button>
+            @if (expense.status === ExpenseStatus.DRAFT) {
+              <button mat-button color="primary" (click)="goToEdit(expense)">
+                <mat-icon>edit</mat-icon>
+                Edit
+              </button>
+            }
+          </div>
+        </mat-card>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

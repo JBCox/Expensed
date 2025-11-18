@@ -1,11 +1,13 @@
 /**
  * User roles for role-based access control (RBAC)
  * - EMPLOYEE: Standard user, can manage own expenses
+ * - MANAGER: Can approve team expenses, view direct reports
  * - FINANCE: Can view and approve all expenses, mark as reimbursed
- * - ADMIN: Full system access
+ * - ADMIN: Full system access, manage organization and users
  */
 export enum UserRole {
   EMPLOYEE = 'employee',
+  MANAGER = 'manager',
   FINANCE = 'finance',
   ADMIN = 'admin'
 }

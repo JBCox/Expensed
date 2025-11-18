@@ -1,0 +1,70 @@
+<button
+  mat-icon-button
+  class="notification-button"
+  [matMenuTriggerFor]="notificationMenu"
+  [matBadge]="unreadCount()"
+  matBadgeColor="warn"
+  [matBadgeHidden]="unreadCount() === 0"
+  aria-label="Notifications">
+  <mat-icon>{{ unreadCount() ? 'notifications_active' : 'notifications_none' }}</mat-icon>
+</button>
+
+<mat-menu #notificationMenu="matMenu" class="notification-menu" xPosition="before">
+  <div class="menu-header">
+    <div>
+      <p class="title">Notifications</p>
+      <p class="subtitle">Stay on top of receipts and approvals</p>
+    </div>
+    <button mat-button (click)="markAllRead()" [disabled]="unreadCount() === 0">Mark all read</button>
+  </div>
+
+  <div class="notification-list" *ngIf="notificationsSignal().length; else emptyState">
+    <div
+      class="notification-item"
+      *ngFor="let notification of notificationsSignal(); trackBy: trackById"
+      [class.unread]="!notification.read"
+      (click)="markAsRead(notification)">
+      <div class="icon" [class]="notification.type">
+        <mat-icon>{{ iconFor(notification.type) }}</mat-icon>
+      </div>
+      <div class="content">
+        <p class="item-title">{{ notification.title }}</p>
+        <p class="item-message">{{ notification.message }}</p>
+        <span class="timestamp">{{ notification.timestamp | date:'short' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <mat-icon>mark_email_read</mat-icon>
+      <p>You're all caught up.</p>
+    </div>
+  </ng-template>
+
+  <mat-divider></mat-divider>
+
+  <div class="preferences" *ngIf="preferencesSignal() as prefs">
+    <p class="pref-title">Alert me about…</p>
+    <mat-slide-toggle
+      [checked]="prefs.smartScanUpdates"
+      (change)="updatePreference({ smartScanUpdates: $event.checked })">
+      SmartScan progress
+    </mat-slide-toggle>
+    <mat-slide-toggle
+      [checked]="prefs.receiptIssues"
+      (change)="updatePreference({ receiptIssues: $event.checked })">
+      Receipt issues / violations
+    </mat-slide-toggle>
+    <mat-slide-toggle
+      [checked]="prefs.approvals"
+      (change)="updatePreference({ approvals: $event.checked })">
+      Approvals required
+    </mat-slide-toggle>
+    <mat-slide-toggle
+      [checked]="prefs.reimbursements"
+      (change)="updatePreference({ reimbursements: $event.checked })">
+      Reimbursements sent
+    </mat-slide-toggle>
+  </div>
+</mat-menu>

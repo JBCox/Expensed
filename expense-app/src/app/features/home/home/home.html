@@ -1,0 +1,7 @@
+<ng-container *ngIf="userRole$ | async as role">
+  <!-- Debug: Role is {{role}} -->
+  <app-employee-dashboard *ngIf="role === UserRole.EMPLOYEE"></app-employee-dashboard>
+  <app-manager-dashboard *ngIf="role === UserRole.MANAGER"></app-manager-dashboard>
+  <app-finance-dashboard *ngIf="role === UserRole.FINANCE"></app-finance-dashboard>
+  <app-admin-dashboard *ngIf="role === UserRole.ADMIN"></app-admin-dashboard>
+</ng-container>

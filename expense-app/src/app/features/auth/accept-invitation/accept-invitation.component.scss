@@ -1,0 +1,153 @@
+/**
+ * Accept Invitation Component Styles
+ * Uses Jensify design tokens for consistency
+ */
+
+// Card styling
+.invitation-card {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+// Loading state
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--jensify-spacing-md);
+  padding: var(--jensify-spacing-3xl) var(--jensify-spacing-lg);
+
+  p {
+    color: var(--jensify-text-medium);
+    margin: 0;
+  }
+}
+
+// Error state
+.error-card {
+  h2 {
+    color: var(--jensify-danger);
+    margin: var(--jensify-spacing-md) 0;
+  }
+}
+
+.error-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: var(--jensify-danger);
+  margin-bottom: var(--jensify-spacing-md);
+}
+
+// Invitation icon
+.invitation-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: var(--jensify-primary);
+  display: block;
+  margin: 0 auto var(--jensify-spacing-lg);
+}
+
+// Invitation details
+.invitation-details {
+  margin: var(--jensify-spacing-xl) 0;
+  text-align: left;
+}
+
+.invitation-message {
+  font-size: 1.125rem;
+  color: var(--jensify-text-medium);
+  text-align: center;
+  margin-bottom: var(--jensify-spacing-xl);
+
+  strong {
+    color: var(--jensify-primary);
+    font-weight: 600;
+  }
+}
+
+// Info grid
+.invitation-info {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--jensify-spacing-md);
+  margin-top: var(--jensify-spacing-lg);
+
+  @media (min-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jensify-spacing-sm);
+  padding: var(--jensify-spacing-md);
+  background: var(--jensify-surface-soft);
+  border-radius: var(--jensify-radius-md);
+  border: 1px solid var(--jensify-border-subtle);
+
+  mat-icon {
+    color: var(--jensify-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  div {
+    flex: 1;
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--jensify-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--jensify-spacing-xs);
+    }
+
+    span {
+      display: block;
+      font-size: 0.9375rem;
+      color: var(--jensify-text-strong);
+      font-weight: 500;
+    }
+  }
+}
+
+// Action buttons
+.actions {
+  display: flex;
+  gap: var(--jensify-spacing-md);
+  margin-top: var(--jensify-spacing-xl);
+  justify-content: center;
+
+  @media (max-width: 479px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Auth prompt (for unauthenticated users)
+.auth-prompt {
+  margin-top: var(--jensify-spacing-xl);
+  padding: var(--jensify-spacing-lg);
+  background: var(--jensify-info-soft);
+  border-radius: var(--jensify-radius-md);
+  border: 1px solid var(--jensify-info-border);
+
+  p {
+    color: var(--jensify-text-medium);
+    margin: 0 0 var(--jensify-spacing-md) 0;
+    text-align: center;
+  }
+
+  .actions {
+    margin-top: var(--jensify-spacing-md);
+  }
+}

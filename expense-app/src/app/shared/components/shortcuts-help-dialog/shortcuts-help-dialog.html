@@ -1,0 +1,47 @@
+<div class="shortcuts-dialog">
+  <!-- Header -->
+  <div class="shortcuts-header">
+    <div class="shortcuts-title">
+      <mat-icon class="shortcuts-icon">keyboard</mat-icon>
+      <h2>Keyboard Shortcuts</h2>
+    </div>
+    <button mat-icon-button (click)="close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="shortcuts-content" mat-dialog-content>
+    @for (group of shortcutGroups; track group.group) {
+      <div class="shortcut-group">
+        <h3 class="group-title">{{ group.group }}</h3>
+        <div class="shortcuts-list">
+          @for (shortcut of group.shortcuts; track shortcut.key) {
+            <div class="shortcut-item">
+              <kbd class="shortcut-key">{{ shortcut.key }}</kbd>
+              <span class="shortcut-description">{{ shortcut.description }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (shortcutGroups.length === 0) {
+      <div class="no-shortcuts">
+        <mat-icon>info</mat-icon>
+        <p>No keyboard shortcuts available</p>
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="shortcuts-footer" mat-dialog-actions>
+    <p class="footer-hint">
+      <mat-icon>info</mat-icon>
+      Press <kbd>Shift+?</kbd> anytime to show this help
+    </p>
+    <button mat-raised-button color="primary" (click)="close()">
+      Got it
+    </button>
+  </div>
+</div>

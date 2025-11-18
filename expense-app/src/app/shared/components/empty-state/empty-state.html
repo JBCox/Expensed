@@ -1,0 +1,22 @@
+<div class="empty-state">
+  <div class="empty-state-icon">
+    <mat-icon>{{ icon }}</mat-icon>
+  </div>
+
+  <h3 class="empty-state-title">{{ title }}</h3>
+
+  <p class="empty-state-message" *ngIf="message">{{ message }}</p>
+
+  <button
+    mat-raised-button
+    color="primary"
+    *ngIf="actionLabel"
+    (click)="onActionClick()"
+    [attr.aria-label]="actionLabel"
+    class="empty-state-action">
+    <mat-icon *ngIf="actionIcon">{{ actionIcon }}</mat-icon>
+    {{ actionLabel }}
+  </button>
+
+  <ng-content></ng-content>
+</div>

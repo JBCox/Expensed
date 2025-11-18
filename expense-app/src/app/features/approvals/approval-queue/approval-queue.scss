@@ -1,0 +1,52 @@
+/**
+ * Component-specific styles only
+ * Layout, colors, spacing come from global Jensify utilities
+ */
+
+// Prevent text overflow in queue columns
+.jensify-column {
+  min-width: 0; // Allow flex items to shrink below content size
+  
+  .jensify-column-value,
+  .jensify-employee-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.jensify-employee-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jensify-merchant-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+// Mobile card text overflow handling
+.jensify-queue-item-mobile {
+  .jensify-employee-info {
+    min-width: 0;
+    flex: 1;
+    
+    .jensify-employee-name,
+    .jensify-employee-meta {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  
+  .jensify-item-body-mobile {
+    .jensify-merchant-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}

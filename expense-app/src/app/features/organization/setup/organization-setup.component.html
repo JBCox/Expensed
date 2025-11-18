@@ -1,0 +1,144 @@
+<div class="jensify-container-sm">
+  <div class="setup-header jensify-text-center jensify-mb-lg">
+    <mat-icon class="header-icon">business</mat-icon>
+    <h1 class="jensify-page-title">Welcome to Jensify!</h1>
+    <p class="jensify-page-subtitle">Let's set up your organization to get started</p>
+  </div>
+
+  <!-- Pending Invitations Section -->
+  @if (pendingInvitations().length > 0) {
+    <mat-card class="jensify-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>mail</mat-icon>
+          Pending Invitations
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="invitations-description">
+          You have {{ pendingInvitations().length }} pending invitation(s) to join an organization.
+        </p>
+
+        @for (invitation of pendingInvitations(); track invitation.id) {
+          <div class="invitation-item">
+            <div class="invitation-info">
+              <h3>{{ invitation.organization?.name || 'Organization' }}</h3>
+              <p class="invitation-role">
+                Role: <strong>{{ invitation.role }}</strong>
+                @if (invitation.department) {
+                  · Department: <strong>{{ invitation.department }}</strong>
+                }
+              </p>
+              <p class="invitation-meta">
+                Invited by {{ invitation.inviter?.full_name || invitation.invited_by }}
+                · {{ invitation.created_at | date:'short' }}
+              </p>
+            </div>
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="acceptInvitation(invitation)"
+              [disabled]="isLoading()"
+              class="jensify-button">
+              <mat-icon>check_circle</mat-icon>
+              Accept
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <div class="divider-section">
+      <mat-divider></mat-divider>
+      <span class="divider-text">OR</span>
+      <mat-divider></mat-divider>
+    </div>
+  }
+
+  <!-- Create New Organization Section -->
+  <mat-card class="jensify-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>add_business</mat-icon>
+        Create New Organization
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (!showCreateForm()) {
+        <div class="create-org-prompt">
+          <p>Don't have an invitation? Create your own organization.</p>
+          <button
+            mat-raised-button
+            color="accent"
+            (click)="toggleCreateForm()"
+            class="jensify-button">
+            <mat-icon>add</mat-icon>
+            Create Organization
+          </button>
+        </div>
+      } @else {
+        <form [formGroup]="createOrgForm" (ngSubmit)="createOrganization()" class="jensify-form">
+          <mat-form-field appearance="fill" class="jensify-full-width">
+            <mat-label>Organization Name</mat-label>
+            <input
+              matInput
+              formControlName="name"
+              placeholder="e.g., Covaer Manufacturing"
+              autocomplete="organization">
+            <mat-icon matPrefix>business</mat-icon>
+            @if (getFieldError('name')) {
+              <mat-error>{{ getFieldError('name') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="fill" class="jensify-full-width">
+            <mat-label>Email Domain (Optional)</mat-label>
+            <input
+              matInput
+              formControlName="domain"
+              placeholder="e.g., covaer.com"
+              autocomplete="off">
+            <mat-icon matPrefix>language</mat-icon>
+            <mat-hint>Users with this email domain can auto-join your organization</mat-hint>
+            @if (getFieldError('domain')) {
+              <mat-error>{{ getFieldError('domain') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <div class="jensify-form-actions">
+            <button
+              type="button"
+              mat-button
+              (click)="toggleCreateForm()"
+              [disabled]="isLoading()"
+              class="jensify-button">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="isLoading() || createOrgForm.invalid"
+              class="jensify-button">
+              @if (isLoading()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>check</mat-icon>
+              }
+              Create Organization
+            </button>
+          </div>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Help Text -->
+  <div class="help-text">
+    <mat-icon>info</mat-icon>
+    <p>
+      Need help? Contact your administrator or
+      <a href="mailto:support@jensify.com">support@jensify.com</a>
+    </p>
+  </div>
+</div>

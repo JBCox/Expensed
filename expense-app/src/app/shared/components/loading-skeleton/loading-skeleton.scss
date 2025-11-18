@@ -1,0 +1,42 @@
+.skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-sm);
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--jensify-surface-soft) 0%,
+    var(--jensify-border-subtle) 50%,
+    var(--jensify-surface-soft) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  display: block;
+
+  &.text {
+    border-radius: var(--jensify-radius-sm);
+  }
+
+  &.circle {
+    border-radius: 50%;
+  }
+
+  &.rectangle {
+    border-radius: var(--jensify-radius-md);
+  }
+
+  &.card {
+    border-radius: var(--jensify-radius-lg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

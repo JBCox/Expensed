@@ -1,0 +1,48 @@
+/**
+ * Component-specific styles only
+ * Layout, colors, spacing come from global Jensify utilities
+ */
+
+// Override filter row grid to prevent overlapping
+.jensify-filters-card {
+  .jensify-filter-row {
+    // Override global 4-column grid on desktop
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+}
+
+// Fix Material select label overlapping with value - more specific selectors
+:host ::ng-deep {
+  .jensify-filter-row {
+    mat-form-field.mat-mdc-form-field {
+      // Force proper spacing for select fields
+      .mat-mdc-text-field-wrapper.mdc-text-field {
+        padding-top: 16px !important;
+      }
+      
+      .mat-mdc-form-field-infix {
+        min-height: 56px !important;
+        padding-top: 24px !important;
+        padding-bottom: 8px !important;
+      }
+      
+      // Force label to float when field has value
+      .mdc-floating-label {
+        top: 28px !important;
+      }
+      
+      &.mat-focused .mdc-floating-label,
+      &.mat-form-field-should-float .mdc-floating-label {
+        transform: translateY(-106%) scale(0.75) !important;
+        top: 28px !important;
+      }
+      
+      // Ensure select value doesn't overlap label
+      .mat-mdc-select-value {
+        padding-top: 0 !important;
+      }
+    }
+  }
+}

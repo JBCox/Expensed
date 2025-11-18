@@ -1,0 +1,104 @@
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { Observable, map, combineLatest } from 'rxjs';
+import { ExpenseService } from '../../../core/services/expense.service';
+import { OrganizationService } from '../../../core/services/organization.service';
+import { ExpenseStatus } from '../../../core/models/enums';
+import { MetricCard } from '../../../shared/components/metric-card/metric-card';
+
+interface AdminMetrics {
+  totalUsers: number;
+  activeUsers: number;
+  pendingInvitations: number;
+  totalExpenses: number;
+  monthlySpend: number;
+  systemHealth: string;
+}
+
+@Component({
+  selector: 'app-admin-dashboard',
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatIconModule,
+    MetricCard
+  ],
+  templateUrl: './admin-dashboard.html',
+  styleUrl: './admin-dashboard.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class AdminDashboard implements OnInit {
+  metrics$!: Observable<AdminMetrics>;
+  loading = true;
+
+  constructor(
+    private expenseService: ExpenseService,
+    private organizationService: OrganizationService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+  }
+
+  private loadDashboardData(): void {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    // Get organization context first
+    const orgId$ = this.organizationService.currentOrganization$.pipe(
+      map(org => org?.id)
+    );
+
+    // Calculate metrics
+    this.metrics$ = orgId$.pipe(
+      map(orgId => {
+        if (!orgId) {
+          return {
+            totalUsers: 0,
+            activeUsers: 0,
+            pendingInvitations: 0,
+            totalExpenses: 0,
+            monthlySpend: 0,
+            systemHealth: 'Unknown'
+          };
+        }
+
+        // For now, show placeholder metrics
+        // TODO: Implement proper metrics aggregation
+        return {
+          totalUsers: 0,
+          activeUsers: 0,
+          pendingInvitations: 0,
+          totalExpenses: 0,
+          monthlySpend: 0,
+          systemHealth: 'Excellent'
+        };
+      })
+    );
+
+    this.loading = false;
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  }
+
+  onManageUsers(): void {
+    this.router.navigate(['/organization/users']);
+  }
+
+  onViewFinance(): void {
+    this.router.navigate(['/finance']);
+  }
+
+  onViewApprovals(): void {
+    this.router.navigate(['/approvals']);
+  }
+}

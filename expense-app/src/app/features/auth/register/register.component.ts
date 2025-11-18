@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 
 /**
@@ -31,8 +33,13 @@ import { AuthService } from '../../../core/services/auth.service';
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
+,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RegisterComponent implements OnInit {
+export class RegisterComponent implements OnInit, OnDestroy {
+  // Cleanup
+  private destroy$ = new Subject<void>();
+
   registerForm!: FormGroup;
   loading = false;
   errorMessage = '';
@@ -43,7 +50,8 @@ export class RegisterComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -59,6 +67,11 @@ export class RegisterComponent implements OnInit {
     }, {
       validators: this.passwordMatchValidator
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -131,29 +144,33 @@ export class RegisterComponent implements OnInit {
       password,
       full_name: fullName,
       confirm_password: confirmPassword
-    }).subscribe({
-      next: (result) => {
-        if (result.success) {
-          // Redirect to email confirmation page
-          this.router.navigate(['/auth/confirm-email'], {
-            queryParams: { email: email }
-          });
-        } else {
-          this.errorMessage = this.getErrorMessage(result.error || 'Registration failed');
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            // Redirect to email confirmation page
+            this.router.navigate(['/auth/confirm-email'], {
+              queryParams: { email: email }
+            });
+          } else {
+            this.errorMessage = this.getErrorMessage(result.error || 'Registration failed');
+            this.cdr.markForCheck();
+          }
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          // Handle registration errors
+          if (error instanceof Error) {
+            this.errorMessage = this.getErrorMessage(error.message);
+          } else {
+            this.errorMessage = 'An unexpected error occurred. Please try again.';
+          }
+          this.loading = false;
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-      },
-      error: (error) => {
-        // Handle registration errors
-        if (error instanceof Error) {
-          this.errorMessage = this.getErrorMessage(error.message);
-        } else {
-          this.errorMessage = 'An unexpected error occurred. Please try again.';
-        }
-        console.error('Registration error:', error);
-        this.loading = false;
-      }
-    });
+      });
   }
 
   /**

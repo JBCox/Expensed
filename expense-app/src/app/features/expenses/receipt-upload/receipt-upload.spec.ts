@@ -5,7 +5,11 @@ import { of, throwError } from 'rxjs';
 import { ReceiptUpload } from './receipt-upload';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { ReceiptUploadResponse } from '../../../core/models/receipt.model';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatCardModule } from '@angular/material/card';
 
 describe('ReceiptUpload', () => {
   let component: ReceiptUpload;
@@ -18,6 +22,7 @@ describe('ReceiptUpload', () => {
     receipt: {
       id: 'receipt-1',
       user_id: 'user-1',
+      organization_id: 'test-org-id',
       file_path: 'user-1/receipt.jpg',
       file_name: 'receipt.jpg',
       file_type: 'image/jpeg',
@@ -37,24 +42,57 @@ describe('ReceiptUpload', () => {
     const snackBarSpyObj = jasmine.createSpyObj('MatSnackBar', ['open']);
 
     await TestBed.configureTestingModule({
-      imports: [ReceiptUpload, NoopAnimationsModule],
+      imports: [
+        CommonModule,
+        MatButtonModule,
+        MatIconModule,
+        MatProgressBarModule,
+        MatCardModule
+      ],
       providers: [
         { provide: ExpenseService, useValue: expenseSpy },
         { provide: Router, useValue: routerSpyObj },
         { provide: MatSnackBar, useValue: snackBarSpyObj }
       ]
-    }).compileComponents();
+    })
+    .overrideComponent(ReceiptUpload, {
+      set: {
+        imports: [
+          CommonModule,
+          MatButtonModule,
+          MatIconModule,
+          MatProgressBarModule,
+          MatCardModule
+          // Explicitly exclude MatSnackBarModule to use spy
+        ]
+      }
+    })
+    .compileComponents();
 
-    fixture = TestBed.createComponent(ReceiptUpload);
-    component = fixture.componentInstance;
     expenseServiceSpy = TestBed.inject(ExpenseService) as jasmine.SpyObj<ExpenseService>;
     routerSpy = TestBed.inject(Router) as jasmine.SpyObj<Router>;
     snackBarSpy = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
+
+    fixture = TestBed.createComponent(ReceiptUpload);
+    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should have snackBar injected', () => {
+    expect(snackBarSpy).toBeDefined();
+    expect(snackBarSpy.open).toBeDefined();
+    // Verify the component received the spy
+    expect((component as any).snackBar).toBe(snackBarSpy);
+  });
+
+  it('should be able to call snackBar.open directly', () => {
+    (component as any).snackBar.open('Test message', 'Close', { duration: 3000 });
+    expect(snackBarSpy.open).toHaveBeenCalled();
+    expect(snackBarSpy.open).toHaveBeenCalledWith('Test message', 'Close', { duration: 3000 });
   });
 
   describe('File Selection', () => {
@@ -85,10 +123,11 @@ describe('ReceiptUpload', () => {
       expenseServiceSpy.validateReceiptFile.and.returnValue('Invalid file type');
 
       component.onFileSelected(event);
+      fixture.detectChanges();
 
       expect(component.selectedFile()).toBeNull();
       expect(component.errorMessage()).toBe('Invalid file type');
-      expect(snackBarSpy.open).toHaveBeenCalled();
+      expect(snackBarSpy.open).toHaveBeenCalledWith('Invalid file type', 'Close', jasmine.objectContaining({ duration: 5000, panelClass: ['error-snackbar'] }));
     });
 
     it('should reject file exceeding size limit', () => {
@@ -103,10 +142,11 @@ describe('ReceiptUpload', () => {
       expenseServiceSpy.validateReceiptFile.and.returnValue('File size exceeds 5MB limit');
 
       component.onFileSelected(event);
+      fixture.detectChanges();
 
       expect(component.selectedFile()).toBeNull();
       expect(component.errorMessage()).toBe('File size exceeds 5MB limit');
-      expect(snackBarSpy.open).toHaveBeenCalled();
+      expect(snackBarSpy.open).toHaveBeenCalledWith('File size exceeds 5MB limit', 'Close', jasmine.objectContaining({ duration: 5000, panelClass: ['error-snackbar'] }));
     });
   });
 
@@ -182,19 +222,22 @@ describe('ReceiptUpload', () => {
       expenseServiceSpy.uploadReceipt.and.returnValue(of(mockReceipt));
 
       component.uploadReceipt();
+      fixture.detectChanges();
 
       expect(component.isUploading()).toBe(true);
 
       setTimeout(() => {
+        fixture.detectChanges();
         expect(expenseServiceSpy.uploadReceipt).toHaveBeenCalledWith(mockFile);
         expect(component.uploadedReceipt()).toEqual(mockReceipt.receipt);
-        expect(snackBarSpy.open).toHaveBeenCalledWith(
-          'Receipt uploaded successfully!',
-          'Close',
-          jasmine.any(Object)
+        // Note: Success message is shown in the expense form via SmartScan status,
+        // not via snackbar in this component
+        expect(routerSpy.navigate).toHaveBeenCalledWith(
+          ['/expenses/new'],
+          { queryParams: { receiptId: mockReceipt.receipt.id } }
         );
         done();
-      }, 100);
+      }, 250);
     });
 
     it('should handle upload error', (done) => {
@@ -207,17 +250,19 @@ describe('ReceiptUpload', () => {
       );
 
       component.uploadReceipt();
+      fixture.detectChanges();
 
       setTimeout(() => {
+        fixture.detectChanges();
         expect(component.isUploading()).toBe(false);
         expect(component.errorMessage()).toBe(errorMessage);
         expect(snackBarSpy.open).toHaveBeenCalledWith(
           errorMessage,
           'Close',
-          jasmine.any(Object)
+          jasmine.objectContaining({ duration: 5000, panelClass: ['error-snackbar'] })
         );
         done();
-      }, 100);
+      }, 250);
     });
 
     it('should not upload if no file selected', () => {

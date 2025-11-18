@@ -1,0 +1,164 @@
+<div class="jensify-container">
+  <button mat-button class="jensify-back-link jensify-button" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to My Expenses
+  </button>
+
+  @if (loading()) {
+    <div class="jensify-loading">
+      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+      <p>Loading expense...</p>
+    </div>
+  } @else if (error()) {
+    <mat-card class="jensify-card jensify-message-error">
+      <mat-icon>error</mat-icon>
+      <div>
+        <h3>Unable to load expense</h3>
+        <p>{{ error() }}</p>
+        <button mat-stroked-button color="primary" (click)="loadExpense()" class="jensify-button">Try Again</button>
+      </div>
+    </mat-card>
+  } @else if (expense()) {
+    <div class="jensify-detail-layout">
+      <mat-card class="jensify-card">
+        <div class="jensify-flex-col jensify-gap-lg">
+          <div class="jensify-flex-between">
+            <div>
+              <p class="jensify-expense-id">Expense ID: {{ expense()!.id }}</p>
+              <h1 class="jensify-page-title jensify-mb-0">{{ expense()!.merchant }}</h1>
+              <p class="jensify-subtext">
+                {{ formatDate(expense()!.expense_date) }} • {{ expense()!.category }}
+              </p>
+            </div>
+            <div class="jensify-status-block">
+              <app-status-badge [status]="getBadgeStatus(expense()!.status)"></app-status-badge>
+              <p class="jensify-amount">{{ formatCurrency(expense()!.amount) }}</p>
+            </div>
+          </div>
+
+          <div class="jensify-flex jensify-gap-md jensify-flex-wrap">
+            @if (hasViolations()) {
+              <button mat-stroked-button color="warn" (click)="goToEdit(true)" class="jensify-button">
+                <mat-icon>report_problem</mat-icon>
+                Fix Violations
+              </button>
+            }
+            <button mat-stroked-button (click)="goToEdit()" class="jensify-button">
+              <mat-icon>edit</mat-icon>
+              Edit Expense
+            </button>
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="!canSubmit() || submitting()"
+              (click)="submitForApproval()"
+              class="jensify-button">
+              <mat-icon>send</mat-icon>
+              Submit for Approval
+            </button>
+          </div>
+
+          @if (!canSubmit()) {
+            <p class="jensify-subtext jensify-mb-0">
+              Expenses must be Draft and free of violations before submitting.
+            </p>
+          }
+        </div>
+      </mat-card>
+
+      @if (hasViolations()) {
+        <mat-card class="violations-card jensify-card jensify-message-warning">
+          <div class="card-title">
+            <mat-icon color="warn">report</mat-icon>
+            <div>
+              <h3>Policy Violations</h3>
+              <p>Please resolve the following before submitting.</p>
+            </div>
+          </div>
+          <div class="violation-list">
+            @for (violation of expense()!.policy_violations; track violation.rule) {
+              <div class="violation-item">
+                <mat-icon>priority_high</mat-icon>
+                <div>
+                  <p class="violation-message">{{ violation.message }}</p>
+                  @if (violation.limit) {
+                    <p class="violation-meta">Limit: {{ violation.limit }} • Actual: {{ violation.actual }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <button mat-stroked-button color="warn" (click)="goToEdit(true)" class="jensify-button">
+            Fix Violations
+          </button>
+        </mat-card>
+      }
+
+      <div class="detail-grid">
+        <mat-card class="jensify-card">
+          <h3>Expense Details</h3>
+          <div class="detail-row">
+            <span class="label">Merchant</span>
+            <span class="value">{{ expense()!.merchant }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Category</span>
+            <span class="value">{{ expense()!.category }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Expense Date</span>
+            <span class="value">{{ formatDate(expense()!.expense_date) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Notes</span>
+            <span class="value">{{ expense()!.notes || '—' }}</span>
+          </div>
+        </mat-card>
+
+        <mat-card class="jensify-card">
+          <div class="card-title">
+            <mat-icon>receipt_long</mat-icon>
+            <div>
+              <h3>Receipt</h3>
+              <p>{{ expense()!.receipt?.file_name || 'No receipt attached' }}</p>
+            </div>
+          </div>
+          @if (expense()!.receipt) {
+            <p>Type: {{ expense()!.receipt!.file_type }} • Size: {{ (expense()!.receipt!.file_size / 1024).toFixed(0) }} KB</p>
+            <p>SmartScan: {{ ocrLabel() }}</p>
+            <div class="receipt-actions">
+              <button mat-stroked-button (click)="viewReceipt()" class="jensify-button">
+                <mat-icon>visibility</mat-icon>
+                View Receipt
+              </button>
+              <button mat-button (click)="goToEdit()" class="jensify-button">Change Receipt</button>
+            </div>
+          } @else {
+            <p class="muted">No receipt is linked to this expense.</p>
+            <button mat-stroked-button color="primary" (click)="goToEdit()" class="jensify-button">
+              Attach Receipt
+            </button>
+          }
+        </mat-card>
+
+        <mat-card class="jensify-card">
+          <div class="card-title">
+            <mat-icon>timeline</mat-icon>
+            <div>
+              <h3>Timeline</h3>
+              <p>Key milestones for this expense</p>
+            </div>
+          </div>
+          <div class="timeline">
+            @for (item of getTimeline(); track item.label) {
+              <div class="timeline-item">
+                <span class="timeline-label">{{ item.label }}</span>
+                <span class="timeline-value">{{ formatDate(item.value) }}</span>
+              </div>
+            }
+          </div>
+        </mat-card>
+      </div>
+    </div>
+  }
+</div>

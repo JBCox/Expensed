@@ -9,6 +9,8 @@ import { User } from './user.model';
 export interface Expense {
   /** UUID primary key */
   id: string;
+  /** Organization ID (tenant isolation) */
+  organization_id: string;
   /** User who created the expense */
   user_id: string;
   /** Associated receipt (optional) */
@@ -85,6 +87,7 @@ export interface ExpenseWithUser extends Expense {
  * Used by expense creation forms
  */
 export interface CreateExpenseDto {
+  organization_id: string;
   merchant: string;
   amount: number;
   category: string;
@@ -103,7 +106,9 @@ export interface UpdateExpenseDto {
   category?: string;
   expense_date?: string;
   notes?: string;
+  receipt_id?: string | null;
   status?: ExpenseStatus;
+  submitted_at?: string;
 }
 
 /**

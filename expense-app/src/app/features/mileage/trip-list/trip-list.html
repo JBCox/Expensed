@@ -1,0 +1,302 @@
+<div class="jensify-container">
+  <!-- Header with Summary -->
+  <div class="jensify-page-header">
+    <div class="jensify-header-content">
+      <h1 class="jensify-page-title">My Mileage Trips</h1>
+      <div class="jensify-summary-metrics">
+        <div class="jensify-metric">
+          <span class="jensify-metric-value">{{ totalCount() }}</span>
+          <span class="jensify-metric-label">{{ totalCount() === 1 ? 'Trip' : 'Trips' }}</span>
+        </div>
+        <div class="jensify-metric">
+          <span class="jensify-metric-value">{{ totalMiles().toFixed(1) }}</span>
+          <span class="jensify-metric-label">Total Miles</span>
+        </div>
+        <div class="jensify-metric">
+          <span class="jensify-metric-value">{{ formatCurrency(totalReimbursement()) }}</span>
+          <span class="jensify-metric-label">Reimbursement</span>
+        </div>
+        @if (draftTrips().length > 0) {
+          <div class="jensify-metric">
+            <span class="jensify-metric-value">{{ draftTrips().length }}</span>
+            <span class="jensify-metric-label">{{ draftTrips().length === 1 ? 'Draft' : 'Drafts' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="jensify-header-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        class="jensify-button"
+        (click)="addNewTrip()">
+        <mat-icon>add</mat-icon>
+        Add Trip
+      </button>
+      <button
+        mat-stroked-button
+        class="jensify-export-btn jensify-button"
+        (click)="exportToCSV()"
+        [disabled]="filteredTrips().length === 0">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Batch Action Bar (appears when trips are selected) -->
+  @if (selectedCount() > 0) {
+    <mat-card class="jensify-card jensify-batch-action-bar">
+      <div class="jensify-batch-content">
+        <mat-checkbox
+          [checked]="allDraftsSelected()"
+          [indeterminate]="selectedCount() > 0 && !allDraftsSelected()"
+          (change)="toggleSelectAll()">
+        </mat-checkbox>
+        <span class="jensify-selection-count">
+          {{ selectedCount() }} trip{{ selectedCount() > 1 ? 's' : '' }} selected
+        </span>
+      </div>
+      <div class="jensify-batch-actions">
+        <button mat-button (click)="clearSelection()" class="jensify-button">
+          <mat-icon>clear</mat-icon>
+          Clear
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          class="jensify-button"
+          (click)="submitSelected()"
+          [disabled]="submittingBatch()">
+          <mat-icon>send</mat-icon>
+          Submit for Approval
+        </button>
+      </div>
+    </mat-card>
+  }
+
+  <!-- Filters Section -->
+  <mat-card class="jensify-card jensify-filters-card">
+    <!-- Status Filter Chips -->
+    <div class="jensify-filter-section">
+      <label class="jensify-filter-label">Status</label>
+      <mat-chip-set class="jensify-status-chips">
+        @for (option of statusOptions; track option.value) {
+          <mat-chip
+            [class.selected]="selectedStatus() === option.value"
+            (click)="setStatusFilter(option.value)">
+            {{ option.label }}
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </div>
+
+    <!-- Search and Category -->
+    <div class="jensify-filter-row">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Search addresses or purpose</mat-label>
+        <input
+          matInput
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Enter address, purpose, or notes...">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Category</mat-label>
+        <mat-select
+          [(ngModel)]="selectedCategory"
+          (ngModelChange)="selectedCategory.set($event)">
+          @for (option of categoryOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Date Range -->
+    <div class="jensify-filter-row">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>From Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="fromPicker"
+          [(ngModel)]="dateFrom"
+          (ngModelChange)="dateFrom.set($event)">
+        <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #fromPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>To Date</mat-label>
+        <input
+          matInput
+          [matDatepicker]="toPicker"
+          [(ngModel)]="dateTo"
+          (ngModelChange)="dateTo.set($event)">
+        <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+        <mat-datepicker #toPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Clear Filters Button -->
+    <div class="jensify-filter-actions">
+      <button
+        mat-button
+        class="jensify-button"
+        (click)="clearFilters()">
+        <mat-icon>clear</mat-icon>
+        Clear Filters
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <app-loading-skeleton />
+  }
+
+  <!-- Error State -->
+  @if (error() && !loading()) {
+    <mat-card class="jensify-card error-card">
+      <mat-icon>error</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-raised-button color="primary" (click)="loadTrips()">Retry</button>
+    </mat-card>
+  }
+
+  <!-- Empty State -->
+  @if (!loading() && !error() && filteredTrips().length === 0 && trips().length === 0) {
+    <app-empty-state
+      icon="directions_car"
+      title="No trips yet"
+      message="Log your first business trip to start tracking mileage reimbursement."
+      actionLabel="Add Trip"
+      actionIcon="add"
+      (actionClick)="addNewTrip()">
+    </app-empty-state>
+  }
+
+  <!-- No Results Empty State -->
+  @if (!loading() && !error() && filteredTrips().length === 0 && trips().length > 0) {
+    <app-empty-state
+      icon="filter_alt_off"
+      title="No trips match your filters"
+      message="Try adjusting your filter criteria to see more results."
+      actionLabel="Clear Filters"
+      actionIcon="clear"
+      (actionClick)="clearFilters()">
+    </app-empty-state>
+  }
+
+  <!-- Trip Cards List with Virtual Scrolling -->
+  @if (!loading() && !error() && filteredTrips().length > 0) {
+    <cdk-virtual-scroll-viewport
+      itemSize="240"
+      class="jensify-trip-cards-viewport">
+      <div class="jensify-trip-cards">
+        <mat-card
+          *cdkVirtualFor="let trip of filteredTrips(); trackBy: trackByTripId"
+          class="jensify-card jensify-trip-card"
+          [class.selected]="isSelected(trip.id)">
+          <div class="jensify-card-content">
+            <!-- Selection Checkbox (only for draft trips) -->
+            @if (trip.status === 'draft') {
+              <div class="jensify-checkbox-container">
+                <mat-checkbox
+                  [checked]="isSelected(trip.id)"
+                  (change)="toggleSelection(trip)"
+                  (click)="$event.stopPropagation()">
+                </mat-checkbox>
+              </div>
+            }
+
+            <!-- Trip Icon -->
+            <div class="jensify-trip-icon-container">
+              <div class="jensify-trip-icon">
+                <mat-icon>directions_car</mat-icon>
+              </div>
+            </div>
+
+            <!-- Trip Details -->
+            <div class="jensify-trip-details">
+              <div class="jensify-trip-header">
+                <div class="jensify-trip-route">
+                  <div class="jensify-route-item">
+                    <mat-icon class="jensify-route-icon">place</mat-icon>
+                    <span class="jensify-address">{{ trip.origin_address }}</span>
+                  </div>
+                  <mat-icon class="jensify-arrow-icon">arrow_downward</mat-icon>
+                  <div class="jensify-route-item">
+                    <mat-icon class="jensify-route-icon">location_on</mat-icon>
+                    <span class="jensify-address">{{ trip.destination_address }}</span>
+                  </div>
+                </div>
+                <app-status-badge [status]="getStatusBadge(trip.status)" />
+              </div>
+
+              <div class="jensify-trip-meta">
+                <div class="jensify-meta-item">
+                  <mat-icon>event</mat-icon>
+                  <span>{{ formatDate(trip.trip_date) }}</span>
+                </div>
+                <div class="jensify-meta-item">
+                  <mat-icon>business_center</mat-icon>
+                  <span>{{ trip.category }}</span>
+                </div>
+                <div class="jensify-meta-item">
+                  <mat-icon>description</mat-icon>
+                  <span>{{ trip.purpose }}</span>
+                </div>
+              </div>
+
+              <div class="jensify-trip-mileage-info">
+                <div class="jensify-mileage-item">
+                  <span class="jensify-mileage-label">Distance:</span>
+                  <span class="jensify-mileage-value">{{ trip.distance_miles }} mi {{ trip.is_round_trip ? '(round trip)' : '' }}</span>
+                </div>
+                <div class="jensify-mileage-item">
+                  <span class="jensify-mileage-label">Total Miles:</span>
+                  <span class="jensify-mileage-value">{{ trip.total_miles }} mi</span>
+                </div>
+                <div class="jensify-mileage-item">
+                  <span class="jensify-mileage-label">IRS Rate:</span>
+                  <span class="jensify-mileage-value">${{ trip.irs_rate.toFixed(3) }}/mi</span>
+                </div>
+              </div>
+
+              @if (trip.notes) {
+                <p class="jensify-trip-notes">{{ trip.notes }}</p>
+              }
+            </div>
+
+            <!-- Reimbursement Amount -->
+            <div class="jensify-trip-amount">
+              <span class="jensify-amount-value">{{ formatCurrency(trip.reimbursement_amount) }}</span>
+              <span class="jensify-amount-label">Reimbursement</span>
+            </div>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="jensify-card-actions">
+            <button mat-button (click)="goToDetails(trip)" class="jensify-button">
+              <mat-icon>visibility</mat-icon>
+              Details
+            </button>
+            @if (trip.status === 'draft') {
+              <button mat-button color="primary" (click)="goToEdit(trip)" class="jensify-button">
+                <mat-icon>edit</mat-icon>
+                Edit
+              </button>
+              <button mat-button color="warn" (click)="deleteTrip(trip)" class="jensify-button">
+                <mat-icon>delete</mat-icon>
+                Delete
+              </button>
+            }
+          </div>
+        </mat-card>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

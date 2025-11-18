@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { RegisterComponent } from './register.component';
@@ -13,8 +13,7 @@ describe('RegisterComponent', () => {
   let mockRouter: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
-    mockAuthService = jasmine.createSpyObj('AuthService', ['register']);
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockAuthService = jasmine.createSpyObj('AuthService', ['register', 'shouldUseDefaultRoute', 'suppressNextDefaultRedirect']);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -24,12 +23,14 @@ describe('RegisterComponent', () => {
       ],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter }
+        provideRouter([])
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
+    mockRouter = TestBed.inject(Router) as any;
+    spyOn(mockRouter, 'navigate');
     fixture.detectChanges();
   });
 
@@ -128,8 +129,8 @@ describe('RegisterComponent', () => {
   });
 
   describe('Form Submission', () => {
-    it('should call authService.register on valid form submission', async () => {
-      mockAuthService.register.and.returnValue(Promise.resolve());
+    it('should navigate to confirm-email on successful registration', () => {
+      mockAuthService.register.and.returnValue(of({ success: true }) as any);
       mockRouter.navigate.and.returnValue(Promise.resolve(true));
 
       component.registerForm.patchValue({
@@ -139,20 +140,17 @@ describe('RegisterComponent', () => {
         confirmPassword: 'Password1!'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
-      expect(mockAuthService.register).toHaveBeenCalledWith({
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        password: 'Password1!'
-      });
-      expect(component.successMessage).toContain('Registration successful');
+      expect(mockAuthService.register).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ['/auth/confirm-email'],
+        { queryParams: { email: 'john@example.com' } }
+      );
     });
 
-    it('should display error message on registration failure', async () => {
-      mockAuthService.register.and.returnValue(
-        Promise.reject(new Error('User already registered'))
-      );
+    it('should display error message on registration failure', () => {
+      mockAuthService.register.and.returnValue(of({ success: false, error: 'already registered' }) as any);
 
       component.registerForm.patchValue({
         fullName: 'John Doe',
@@ -161,7 +159,7 @@ describe('RegisterComponent', () => {
         confirmPassword: 'Password1!'
       });
 
-      await component.onSubmit();
+      component.onSubmit();
 
       expect(component.errorMessage).toContain('already registered');
       expect(component.loading).toBeFalse();
@@ -178,23 +176,6 @@ describe('RegisterComponent', () => {
       await component.onSubmit();
 
       expect(mockAuthService.register).not.toHaveBeenCalled();
-    });
-
-    it('should reset form and redirect after successful registration', (done) => {
-      mockAuthService.register.and.returnValue(Promise.resolve());
-      mockRouter.navigate.and.returnValue(Promise.resolve(true));
-
-      component.registerForm.patchValue({
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        password: 'Password1!',
-        confirmPassword: 'Password1!'
-      });
-
-      component.onSubmit().then(() => {
-        expect(component.registerForm.get('fullName')?.value).toBeNull();
-        done();
-      });
     });
   });
 

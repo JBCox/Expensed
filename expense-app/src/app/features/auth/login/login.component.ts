@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 
 /**
@@ -30,31 +32,42 @@ import { AuthService } from '../../../core/services/auth.service';
     MatIconModule
   ],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
+  // Cleanup
+  private destroy$ = new Subject<void>();
+
   loginForm!: FormGroup;
   loading = false;
   errorMessage = '';
   hidePassword = true;
-  returnUrl = '/expenses';
+  returnUrl: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    // Get return url from route parameters or default to '/expenses'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/expenses';
+    // Capture return URL if provided, unless it's one of the legacy default routes
+    const incomingReturnUrl = this.route.snapshot.queryParams['returnUrl'] || null;
+    this.returnUrl = this.authService.shouldUseDefaultRoute(incomingReturnUrl) ? null : incomingReturnUrl;
 
     // Initialize the login form with validation
     this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -83,27 +96,36 @@ export class LoginComponent implements OnInit {
 
     const { email, password } = this.loginForm.value;
 
-    this.authService.signIn({ email, password }).subscribe({
-      next: async (result) => {
-        if (result.success) {
-          // Navigate to return URL on success
-          await this.router.navigate([this.returnUrl]);
-        } else {
-          this.errorMessage = this.getErrorMessage(result.error || 'Login failed');
+    this.authService.signIn({ email, password })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: async (result) => {
+          if (result.success) {
+            this.authService.suppressNextDefaultRedirect();
+            await this.authService.refreshUserProfile();
+            const destination =
+              this.returnUrl && !this.authService.shouldUseDefaultRoute(this.returnUrl)
+                ? this.returnUrl
+                : this.authService.getDefaultRoute();
+            await this.router.navigateByUrl(destination);
+          } else {
+            this.errorMessage = this.getErrorMessage(result.error || 'Login failed');
+            this.cdr.markForCheck();
+          }
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          // Handle authentication errors
+          if (error instanceof Error) {
+            this.errorMessage = this.getErrorMessage(error.message);
+          } else {
+            this.errorMessage = 'An unexpected error occurred. Please try again.';
+          }
+          this.loading = false;
+          this.cdr.markForCheck();
         }
-        this.loading = false;
-      },
-      error: (error) => {
-        // Handle authentication errors
-        if (error instanceof Error) {
-          this.errorMessage = this.getErrorMessage(error.message);
-        } else {
-          this.errorMessage = 'An unexpected error occurred. Please try again.';
-        }
-        console.error('Login error:', error);
-        this.loading = false;
-      }
-    });
+      });
   }
 
   /**

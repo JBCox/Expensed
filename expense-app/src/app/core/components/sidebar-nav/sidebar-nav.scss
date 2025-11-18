@@ -1,0 +1,186 @@
+// Sidebar Navigation Styles
+// Uses Jensify design tokens from global styles.scss
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--jensify-overlay);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  &.active {
+    display: block;
+    opacity: 1;
+  }
+
+  @media (min-width: 768px) {
+    display: none !important;
+  }
+}
+
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  background-color: var(--jensify-surface-card);
+  border-right: 1px solid var(--jensify-border-subtle);
+  z-index: 1000;
+  transition: width 0.3s ease, transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 0.2rem;
+  padding-left: 0.1rem;
+  overflow-x: hidden; // Prevent horizontal scrollbar
+
+  &.expanded {
+    width: 210px;
+  }
+
+  &.collapsed {
+    width: 64px;
+  }
+
+  @media (max-width: 767px) {
+    transform: translateX(-100%);
+
+    &.open {
+      transform: translateX(0);
+    }
+
+    &.expanded {
+      transform: translateX(0);
+    }
+  }
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: var(--jensify-spacing-md) 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-sm);
+  padding: var(--jensify-spacing-sm) 0;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  color: var(--jensify-text-secondary);
+
+  &:hover {
+    background-color: var(--jensify-surface-hover);
+    color: var(--jensify-text-primary);
+  }
+
+  &.active {
+    background-color: var(--jensify-primary-background-active);
+    color: var(--jensify-primary-strong);
+    font-weight: 600; // Bolder text
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px; // Wider indicator (was 3px)
+      background-color: var(--jensify-primary);
+    }
+
+    .nav-icon {
+      transform: scale(1.05); // Subtle icon emphasis
+    }
+  }
+
+}
+
+.sidebar.expanded .nav-item {
+  justify-content: flex-start;
+  padding: var(--jensify-spacing-sm) calc(var(--jensify-spacing-md) + 0.4rem);
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+}
+
+.nav-icon {
+  flex-shrink: 0;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+}
+
+.sidebar.expanded .nav-icon {
+  margin-right: var(--jensify-spacing-sm);
+}
+
+.nav-label {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jensify-spacing-sm) var(--jensify-spacing-sm);
+  border-bottom: 1px solid var(--jensify-border-subtle);
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.brand-icon {
+  color: var(--jensify-primary);
+}
+
+.brand-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+  color: var(--jensify-text-primary);
+}
+
+.collapse-toggle {
+  color: var(--jensify-text-muted);
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+.sidebar.collapsed .collapse-toggle {
+  position: absolute;
+  right: var(--jensify-spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.sidebar-footer {
+  border-top: 1px solid var(--jensify-border-subtle);
+  padding: var(--jensify-spacing-sm) 0.5rem;
+  display: flex;
+  justify-content: center;
+}
