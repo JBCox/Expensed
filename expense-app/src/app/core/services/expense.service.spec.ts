@@ -161,8 +161,9 @@ describe('ExpenseService', () => {
     it('should get expense by ID with relations', (done) => {
       const mockResponse = { data: mockExpense, error: null };
       const singleSpy = jasmine.createSpy('single').and.resolveTo(mockResponse);
-      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
-      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      const eqSpy2 = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const eqSpy1 = jasmine.createSpy('eq').and.returnValue({ eq: eqSpy2 });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy1 });
       supabaseServiceSpy.client.from = jasmine.createSpy('from').and.returnValue({
         select: selectSpy
       }) as any;
@@ -172,7 +173,8 @@ describe('ExpenseService', () => {
           expect(expense).toEqual(mockExpense);
           // Updated to match foreign key hint syntax used in implementation
           expect(selectSpy).toHaveBeenCalledWith('*, user:users!user_id(*), receipt:receipts!expenses_receipt_id_fkey(*)');
-          expect(eqSpy).toHaveBeenCalledWith('id', 'expense-1');
+          expect(eqSpy1).toHaveBeenCalledWith('id', 'expense-1');
+          expect(eqSpy2).toHaveBeenCalledWith('organization_id', mockOrgId);
           done();
         },
         error: done.fail
@@ -182,8 +184,9 @@ describe('ExpenseService', () => {
     it('should get expense by ID without relations', (done) => {
       const mockResponse = { data: mockExpense, error: null };
       const singleSpy = jasmine.createSpy('single').and.resolveTo(mockResponse);
-      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
-      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      const eqSpy2 = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const eqSpy1 = jasmine.createSpy('eq').and.returnValue({ eq: eqSpy2 });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy1 });
       supabaseServiceSpy.client.from = jasmine.createSpy('from').and.returnValue({
         select: selectSpy
       }) as any;
@@ -192,6 +195,8 @@ describe('ExpenseService', () => {
         next: (expense) => {
           expect(expense).toEqual(mockExpense);
           expect(selectSpy).toHaveBeenCalledWith('*');
+          expect(eqSpy1).toHaveBeenCalledWith('id', 'expense-1');
+          expect(eqSpy2).toHaveBeenCalledWith('organization_id', mockOrgId);
           done();
         },
         error: done.fail
@@ -359,8 +364,9 @@ describe('ExpenseService', () => {
       const mockResponse = { data: mockExpenses, error: null };
 
       const orderSpy = jasmine.createSpy('order').and.resolveTo(mockResponse);
-      const eqSpy = jasmine.createSpy('eq').and.returnValue({ order: orderSpy });
-      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      const eqSpy2 = jasmine.createSpy('eq').and.returnValue({ order: orderSpy });
+      const eqSpy1 = jasmine.createSpy('eq').and.returnValue({ eq: eqSpy2 });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy1 });
       supabaseServiceSpy.client.from = jasmine.createSpy('from').and.returnValue({
         select: selectSpy
       }) as any;
@@ -368,7 +374,8 @@ describe('ExpenseService', () => {
       service.queryExpenses({ user_id: mockUserId }).subscribe({
         next: (expenses) => {
           expect(expenses).toEqual(mockExpenses);
-          expect(eqSpy).toHaveBeenCalledWith('user_id', mockUserId);
+          expect(eqSpy1).toHaveBeenCalledWith('organization_id', mockOrgId);
+          expect(eqSpy2).toHaveBeenCalledWith('user_id', mockUserId);
           done();
         },
         error: done.fail

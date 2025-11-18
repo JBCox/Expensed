@@ -4,6 +4,25 @@ import { KeyboardShortcutsService, KeyboardShortcut } from './keyboard-shortcuts
 describe('KeyboardShortcutsService', () => {
   let service: KeyboardShortcutsService;
 
+  // Helper function to create a keyboard event for testing
+  function createTestKeyboardEvent(key: string, options: {
+    ctrl?: boolean;
+    alt?: boolean;
+    shift?: boolean;
+    meta?: boolean;
+  } = {}): KeyboardEvent {
+    const event = document.createEvent('KeyboardEvent') as any;
+    Object.defineProperties(event, {
+      key: { value: key, writable: false },
+      ctrlKey: { value: options.ctrl || false, writable: false },
+      altKey: { value: options.alt || false, writable: false },
+      shiftKey: { value: options.shift || false, writable: false },
+      metaKey: { value: options.meta || false, writable: false }
+    });
+    event.initEvent('keydown', true, true);
+    return event;
+  }
+
   beforeEach(() => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(KeyboardShortcutsService);
@@ -76,13 +95,7 @@ describe('KeyboardShortcutsService', () => {
 
     service.registerShortcut(shortcut);
 
-    // Simulate keyboard event
-    const event = new KeyboardEvent('keydown', {
-      key: 't',
-      ctrlKey: true,
-      bubbles: true
-    });
-
+    const event = createTestKeyboardEvent('t', { ctrl: true });
     document.dispatchEvent(event);
 
     // Wait for async event handling
@@ -104,13 +117,7 @@ describe('KeyboardShortcutsService', () => {
 
     service.registerShortcut(shortcut);
 
-    // Simulate keyboard event WITHOUT ctrl key
-    const event = new KeyboardEvent('keydown', {
-      key: 's',
-      ctrlKey: false,
-      bubbles: true
-    });
-
+    const event = createTestKeyboardEvent('s'); // No ctrl key
     document.dispatchEvent(event);
 
     setTimeout(() => {
@@ -133,12 +140,8 @@ describe('KeyboardShortcutsService', () => {
     // Disable shortcuts
     service.disable();
 
-    const event = new KeyboardEvent('keydown', {
-      key: 'g',
-      bubbles: true
-    });
-
-    document.dispatchEvent(event);
+    const event1 = createTestKeyboardEvent('g');
+    document.dispatchEvent(event1);
 
     setTimeout(() => {
       expect(callback).not.toHaveBeenCalled();
@@ -146,11 +149,7 @@ describe('KeyboardShortcutsService', () => {
       // Re-enable shortcuts
       service.enable();
 
-      const event2 = new KeyboardEvent('keydown', {
-        key: 'g',
-        bubbles: true
-      });
-
+      const event2 = createTestKeyboardEvent('g');
       document.dispatchEvent(event2);
 
       setTimeout(() => {
@@ -173,11 +172,7 @@ describe('KeyboardShortcutsService', () => {
     service.registerShortcut(shortcut);
 
     // Trigger without context
-    const event1 = new KeyboardEvent('keydown', {
-      key: 'h',
-      bubbles: true
-    });
-
+    const event1 = createTestKeyboardEvent('h');
     document.dispatchEvent(event1);
 
     setTimeout(() => {
@@ -186,11 +181,7 @@ describe('KeyboardShortcutsService', () => {
       // Set context and trigger again
       service.setContext('expenses');
 
-      const event2 = new KeyboardEvent('keydown', {
-        key: 'h',
-        bubbles: true
-      });
-
+      const event2 = createTestKeyboardEvent('h');
       document.dispatchEvent(event2);
 
       setTimeout(() => {
@@ -226,11 +217,7 @@ describe('KeyboardShortcutsService', () => {
     const listener = jasmine.createSpy('listener');
     window.addEventListener('keyboard:escape', listener);
 
-    const event = new KeyboardEvent('keydown', {
-      key: 'Escape',
-      bubbles: true
-    });
-
+    const event = createTestKeyboardEvent('Escape');
     document.dispatchEvent(event);
 
     setTimeout(() => {
@@ -244,12 +231,7 @@ describe('KeyboardShortcutsService', () => {
     const listener = jasmine.createSpy('listener');
     window.addEventListener('keyboard:show-help', listener);
 
-    const event = new KeyboardEvent('keydown', {
-      key: '?',
-      shiftKey: true,
-      bubbles: true
-    });
-
+    const event = createTestKeyboardEvent('?', { shift: true });
     document.dispatchEvent(event);
 
     setTimeout(() => {
