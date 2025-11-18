@@ -103,7 +103,6 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
           } else {
             this.errorMessage = 'An unexpected error occurred. Please try again.';
           }
-          console.error('Password reset error:', error);
           this.loading = false;
         }
       });
