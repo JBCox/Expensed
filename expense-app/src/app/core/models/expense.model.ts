@@ -3,8 +3,33 @@ import { Receipt } from './receipt.model';
 import { User } from './user.model';
 
 /**
+ * Junction table record linking expenses to receipts
+ * Supports multiple receipts per expense with ordering
+ */
+export interface ExpenseReceipt {
+  /** UUID primary key */
+  id: string;
+  /** Expense ID */
+  expense_id: string;
+  /** Receipt ID */
+  receipt_id: string;
+  /** Display order (0 = first) */
+  display_order: number;
+  /** Primary receipt shown in lists */
+  is_primary: boolean;
+  /** Timestamp when link was created */
+  created_at: string;
+  /** Timestamp when link was last updated */
+  updated_at: string;
+
+  // Populated relations
+  /** Receipt object (populated) */
+  receipt?: Receipt;
+}
+
+/**
  * Expense model matching the database schema
- * Represents a single expense claim with receipt and policy validation
+ * Represents a single expense claim with receipt(s) and policy validation
  */
 export interface Expense {
   /** UUID primary key */
@@ -13,7 +38,11 @@ export interface Expense {
   organization_id: string;
   /** User who created the expense */
   user_id: string;
-  /** Associated receipt (optional) */
+  /** Report linkage (nullable: unreported) */
+  report_id?: string | null;
+  /** Convenience flag for UI */
+  is_reported?: boolean;
+  /** @deprecated Use expense_receipts array instead. Kept for backward compatibility */
   receipt_id?: string;
 
   // Expense details
@@ -55,8 +84,10 @@ export interface Expense {
   // Relations (populated by query)
   /** User object (populated) */
   user?: User;
-  /** Receipt object (populated) */
+  /** @deprecated Use expense_receipts array instead. Kept for backward compatibility */
   receipt?: Receipt;
+  /** Multiple receipts linked via junction table */
+  expense_receipts?: ExpenseReceipt[];
 }
 
 /**

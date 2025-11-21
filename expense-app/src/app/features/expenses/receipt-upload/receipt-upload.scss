@@ -1,6 +1,304 @@
 /**
- * Component-specific styles only
- * Layout, colors, spacing come from global Jensify utilities
+ * Receipt Upload Component Styles
+ * Enhanced with modern drop zone, OCR results, and success states
  */
 
-// Add component-specific overrides here if needed
+// Fix transparency issue - ensure card has solid white background
+mat-card.jensify-card {
+  background-color: var(--jensify-surface-card) !important;
+  opacity: 1 !important;
+}
+
+// Enhanced Drop Zone
+.jensify-drop-zone {
+  position: relative;
+  padding: var(--jensify-spacing-xl);
+  border: 2px dashed var(--jensify-border-subtle);
+  border-radius: var(--jensify-radius-lg);
+  background: linear-gradient(135deg, var(--jensify-surface-subtle), var(--jensify-surface-card));
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--jensify-radius-lg);
+    background: linear-gradient(135deg, var(--jensify-primary-soft), var(--jensify-surface-card));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    border-color: var(--jensify-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--jensify-shadow-md);
+
+    &::before {
+      opacity: 0.3;
+    }
+
+    .jensify-upload-icon {
+      transform: scale(1.1);
+      color: var(--jensify-primary);
+    }
+  }
+
+  &.dragging {
+    border-color: var(--jensify-primary);
+    background: var(--jensify-primary-soft);
+    transform: scale(1.02);
+
+    .jensify-upload-icon {
+      color: var(--jensify-primary);
+      animation: bounce 0.6s ease infinite;
+    }
+  }
+}
+
+.jensify-upload-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: var(--jensify-text-muted);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.jensify-upload-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--jensify-text-strong);
+  margin: var(--jensify-spacing-md) 0 var(--jensify-spacing-xs) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.jensify-upload-subtext {
+  font-size: 0.875rem;
+  color: var(--jensify-text-muted);
+  margin: var(--jensify-spacing-sm) 0;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+// Preview Container
+.jensify-preview-container {
+  .jensify-image-preview {
+    border-radius: var(--jensify-radius-md);
+    overflow: hidden;
+    box-shadow: var(--jensify-shadow-md);
+    margin-bottom: var(--jensify-spacing-md);
+
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+
+  .jensify-pdf-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--jensify-spacing-xl);
+    background: var(--jensify-surface-subtle);
+    border-radius: var(--jensify-radius-md);
+    margin-bottom: var(--jensify-spacing-md);
+
+    .jensify-pdf-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: var(--jensify-error);
+    }
+
+    p {
+      margin-top: var(--jensify-spacing-sm);
+      font-weight: 600;
+      color: var(--jensify-text-body);
+    }
+  }
+}
+
+// OCR Processing Status
+.jensify-ocr-status {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-md);
+  padding: var(--jensify-spacing-md);
+  margin: var(--jensify-spacing-lg) 0;
+  background: linear-gradient(135deg, var(--jensify-info-soft), var(--jensify-surface-card));
+  border: 1px solid var(--jensify-info-border);
+  border-radius: var(--jensify-radius-md);
+  border-left: 4px solid var(--jensify-info);
+
+  p {
+    margin: 0;
+    color: var(--jensify-text-medium);
+    font-weight: 500;
+  }
+}
+
+// OCR Results
+.jensify-ocr-results {
+  padding: var(--jensify-spacing-lg);
+  margin: var(--jensify-spacing-lg) 0;
+  background: linear-gradient(135deg, var(--jensify-success-soft), var(--jensify-surface-card));
+  border: 1px solid var(--jensify-success-border);
+  border-radius: var(--jensify-radius-md);
+  border-left: 4px solid var(--jensify-success);
+  box-shadow: var(--jensify-shadow-sm);
+
+  mat-icon {
+    color: var(--jensify-success-strong);
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  h4 {
+    margin: var(--jensify-spacing-sm) 0;
+    color: var(--jensify-success-strong);
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  .jensify-edit-hint {
+    margin: var(--jensify-spacing-xs) 0;
+    font-size: 0.875rem;
+    color: var(--jensify-text-muted);
+    font-style: italic;
+  }
+}
+
+.jensify-extracted-data {
+  margin-top: var(--jensify-spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-sm);
+
+  .jensify-ocr-field {
+    width: 100%;
+    background: var(--jensify-surface-card);
+    border-radius: var(--jensify-radius-sm);
+  }
+}
+
+// OCR Failed State
+.jensify-ocr-failed {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-md);
+  padding: var(--jensify-spacing-md);
+  margin: var(--jensify-spacing-lg) 0;
+  background: linear-gradient(135deg, var(--jensify-warning-soft), var(--jensify-surface-card));
+  border: 1px solid var(--jensify-warning-border);
+  border-radius: var(--jensify-radius-md);
+  border-left: 4px solid var(--jensify-warning);
+
+  mat-icon {
+    color: var(--jensify-warning-strong);
+    font-size: 24px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--jensify-text-medium);
+  }
+}
+
+// Success Container
+.jensify-success-container {
+  text-align: center;
+  padding: var(--jensify-spacing-lg);
+
+  .jensify-success-icon {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+    color: var(--jensify-success);
+    animation: scaleIn 0.5s ease;
+  }
+
+  h3 {
+    margin: var(--jensify-spacing-md) 0;
+    color: var(--jensify-text-strong);
+    font-weight: 700;
+  }
+
+  .jensify-success-message {
+    margin: var(--jensify-spacing-lg) 0 var(--jensify-spacing-md) 0;
+    color: var(--jensify-text-body);
+    font-weight: 500;
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Success state action buttons
+.jensify-action-buttons {
+  display: flex;
+  gap: var(--jensify-spacing-md);
+  margin-top: var(--jensify-spacing-lg);
+  justify-content: center;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+    width: 100%;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// Help Section
+.jensify-help-section {
+  margin-top: var(--jensify-spacing-xl);
+  padding: var(--jensify-spacing-lg);
+  background: var(--jensify-surface-subtle);
+  border-radius: var(--jensify-radius-md);
+  border-left: 4px solid var(--jensify-info);
+
+  h3 {
+    margin: 0 0 var(--jensify-spacing-md) 0;
+    color: var(--jensify-text-strong);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: var(--jensify-spacing-lg);
+
+    li {
+      margin-bottom: var(--jensify-spacing-xs);
+      color: var(--jensify-text-body);
+      line-height: 1.6;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

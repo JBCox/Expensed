@@ -1,0 +1,142 @@
+<div class="receipt-gallery">
+  <!-- Header -->
+  <div class="gallery-header">
+    <h3 class="gallery-title">
+      <mat-icon>receipt</mat-icon>
+      Receipts
+      @if (expenseReceipts.length > 0) {
+        <span class="receipt-count">({{ expenseReceipts.length }})</span>
+      }
+    </h3>
+
+    @if (showAddButton && canEdit) {
+      <button
+        mat-stroked-button
+        color="primary"
+        (click)="onAddReceipts()"
+        class="add-receipt-btn">
+        <mat-icon>add</mat-icon>
+        Add Receipt
+      </button>
+    }
+  </div>
+
+  <!-- Empty State -->
+  @if (expenseReceipts.length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <p class="empty-message">No receipts attached</p>
+      @if (showAddButton && canEdit) {
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onAddReceipts()"
+          class="empty-action-btn">
+          <mat-icon>add</mat-icon>
+          Add First Receipt
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Receipt Grid -->
+  @if (expenseReceipts.length > 0) {
+    <div class="receipt-grid">
+      @for (expenseReceipt of expenseReceipts; track expenseReceipt.id) {
+        <div class="receipt-card-wrapper">
+          <mat-card class="receipt-card" [class.is-primary]="expenseReceipt.is_primary">
+            <!-- Primary Badge -->
+            @if (expenseReceipt.is_primary) {
+              <div class="primary-badge">
+                <mat-icon>star</mat-icon>
+                Primary
+              </div>
+            }
+
+            <!-- Receipt Thumbnail/Preview -->
+            <div class="receipt-preview" (click)="openReceiptDialog(expenseReceipt)">
+              @if (expenseReceipt.receipt) {
+                @if (isImage(expenseReceipt.receipt)) {
+                  <!-- Image Thumbnail -->
+                  <img
+                    [src]="getReceiptUrl(expenseReceipt.receipt.id)"
+                    [alt]="expenseReceipt.receipt.file_name"
+                    class="receipt-thumbnail"
+                    loading="lazy" />
+                } @else {
+                  <!-- PDF Icon -->
+                  <div class="receipt-icon-preview">
+                    <mat-icon class="file-icon">{{ getFileIcon(expenseReceipt.receipt) }}</mat-icon>
+                    <span class="file-type-label">PDF</span>
+                  </div>
+                }
+
+                <!-- Overlay for click effect -->
+                <div class="preview-overlay">
+                  <mat-icon class="zoom-icon">zoom_in</mat-icon>
+                </div>
+              }
+            </div>
+
+            <!-- Receipt Info -->
+            @if (expenseReceipt.receipt) {
+              <div class="receipt-info">
+                <p class="receipt-filename" [matTooltip]="expenseReceipt.receipt.file_name">
+                  {{ expenseReceipt.receipt.file_name }}
+                </p>
+                <p class="receipt-meta">
+                  {{ getFileSize(expenseReceipt.receipt.file_size) }}
+                </p>
+
+                <!-- OCR Status Chip -->
+                @if (expenseReceipt.receipt.ocr_status === 'completed') {
+                  <mat-chip class="ocr-chip ocr-success">
+                    <mat-icon>check_circle</mat-icon>
+                    Scanned
+                  </mat-chip>
+                } @else if (expenseReceipt.receipt.ocr_status === 'processing') {
+                  <mat-chip class="ocr-chip ocr-processing">
+                    <mat-icon>hourglass_empty</mat-icon>
+                    Processing
+                  </mat-chip>
+                } @else if (expenseReceipt.receipt.ocr_status === 'failed') {
+                  <mat-chip class="ocr-chip ocr-failed">
+                    <mat-icon>error</mat-icon>
+                    Failed
+                  </mat-chip>
+                }
+              </div>
+
+              <!-- Actions -->
+              @if (canEdit) {
+                <div class="receipt-actions">
+                  <!-- Mark as Primary -->
+                  @if (!expenseReceipt.is_primary) {
+                    <button
+                      mat-icon-button
+                      color="primary"
+                      (click)="onSetPrimary(expenseReceipt.receipt.id)"
+                      matTooltip="Set as primary receipt"
+                      class="action-btn">
+                      <mat-icon>star_border</mat-icon>
+                    </button>
+                  }
+
+                  <!-- Remove -->
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    (click)="onRemoveReceipt(expenseReceipt.receipt.id)"
+                    matTooltip="Remove from expense"
+                    class="action-btn">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            }
+          </mat-card>
+        </div>
+      }
+    </div>
+  }
+</div>

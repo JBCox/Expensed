@@ -115,30 +115,16 @@
           </div>
         </mat-card>
 
+        <!-- Receipt Gallery -->
         <mat-card class="jensify-card">
-          <div class="card-title">
-            <mat-icon>receipt_long</mat-icon>
-            <div>
-              <h3>Receipt</h3>
-              <p>{{ expense()!.receipt?.file_name || 'No receipt attached' }}</p>
-            </div>
-          </div>
-          @if (expense()!.receipt) {
-            <p>Type: {{ expense()!.receipt!.file_type }} • Size: {{ (expense()!.receipt!.file_size / 1024).toFixed(0) }} KB</p>
-            <p>SmartScan: {{ ocrLabel() }}</p>
-            <div class="receipt-actions">
-              <button mat-stroked-button (click)="viewReceipt()" class="jensify-button">
-                <mat-icon>visibility</mat-icon>
-                View Receipt
-              </button>
-              <button mat-button (click)="goToEdit()" class="jensify-button">Change Receipt</button>
-            </div>
-          } @else {
-            <p class="muted">No receipt is linked to this expense.</p>
-            <button mat-stroked-button color="primary" (click)="goToEdit()" class="jensify-button">
-              Attach Receipt
-            </button>
-          }
+          <app-receipt-gallery
+            [expenseReceipts]="expense()!.expense_receipts || []"
+            [canEdit]="canEditReceipts()"
+            [showAddButton]="canEditReceipts()"
+            (setPrimary)="onSetPrimaryReceipt($event)"
+            (removeReceipt)="onRemoveReceipt($event)"
+            (addReceipts)="onAddReceipts()">
+          </app-receipt-gallery>
         </mat-card>
 
         <mat-card class="jensify-card">

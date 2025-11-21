@@ -49,12 +49,12 @@
           Clear Selection
         </button>
         <button
-          mat-raised-button
+          mat-stroked-button
           color="primary"
-          (click)="submitSelected()"
+          (click)="addToReport()"
           [disabled]="submittingBatch()">
-          <mat-icon>send</mat-icon>
-          Submit for Approval
+          <mat-icon>folder_open</mat-icon>
+          Add to Report
         </button>
       </div>
     </div>
@@ -224,6 +224,13 @@
                 <img
                   [src]="getReceiptThumbnail(expense)"
                   [alt]="expense.merchant + ' receipt'">
+                <!-- Receipt Count Badge (shows when multiple receipts) -->
+                @if (hasMultipleReceipts(expense)) {
+                  <div class="jensify-receipt-count-badge">
+                    <mat-icon>collections</mat-icon>
+                    <span>{{ getReceiptCount(expense) }}</span>
+                  </div>
+                }
               } @else {
                 <div class="jensify-thumbnail-placeholder">
                   <mat-icon>receipt</mat-icon>
@@ -246,6 +253,10 @@
                 <div class="jensify-meta-item">
                   <mat-icon>category</mat-icon>
                   <span>{{ expense.category }}</span>
+                </div>
+                <div class="jensify-meta-item">
+                  <mat-icon>folder_open</mat-icon>
+                  <span>{{ expense.report_id ? 'In report' : 'Unreported' }}</span>
                 </div>
               </div>
 

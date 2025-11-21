@@ -24,6 +24,26 @@
       (click)="navigate(item.route)">
       <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
       <span class="nav-label" *ngIf="!collapsed()">{{ item.label }}</span>
+      <!-- Badges for key routes -->
+      <span class="nav-badge" *ngIf="!collapsed()">
+        <ng-container [ngSwitch]="item.route">
+          <ng-container *ngSwitchCase="'/expenses'">
+            <ng-container *ngIf="(unreportedCount$ | async) as count">
+              <span class="badge" *ngIf="count > 0">{{ count }}</span>
+            </ng-container>
+          </ng-container>
+          <ng-container *ngSwitchCase="'/reports'">
+            <ng-container *ngIf="(draftReportsCount$ | async) as count">
+              <span class="badge" *ngIf="count > 0">{{ count }}</span>
+            </ng-container>
+          </ng-container>
+          <ng-container *ngSwitchCase="'/approvals'">
+            <ng-container *ngIf="(submittedReportsCount$ | async) as count">
+              <span class="badge" *ngIf="count > 0">{{ count }}</span>
+            </ng-container>
+          </ng-container>
+        </ng-container>
+      </span>
     </div>
   </nav>
   <div class="sidebar-footer" *ngIf="!collapsed()">

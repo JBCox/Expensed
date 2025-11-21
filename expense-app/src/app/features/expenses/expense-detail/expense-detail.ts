@@ -14,6 +14,7 @@ import { ExpenseService } from '../../../core/services/expense.service';
 import { Expense } from '../../../core/models/expense.model';
 import { ExpenseStatus } from '../../../core/models/enums';
 import { StatusBadge, ExpenseStatus as BadgeStatus } from '../../../shared/components/status-badge/status-badge';
+import { ReceiptGalleryComponent } from '../../../shared/components/receipt-gallery/receipt-gallery';
 
 @Component({
   selector: 'app-expense-detail',
@@ -27,7 +28,8 @@ import { StatusBadge, ExpenseStatus as BadgeStatus } from '../../../shared/compo
     MatDividerModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    StatusBadge
+    StatusBadge,
+    ReceiptGalleryComponent
   ],
   templateUrl: './expense-detail.html',
   styleUrl: './expense-detail.scss'
@@ -208,5 +210,63 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
       default:
         return 'SmartScan pending';
     }
+  }
+
+  /**
+   * Handle setting a receipt as primary
+   * @param receiptId Receipt ID to mark as primary
+   */
+  onSetPrimaryReceipt(receiptId: string): void {
+    const expenseId = this.expenseId();
+    if (!expenseId) return;
+
+    this.expenseService.setPrimaryReceipt(expenseId, receiptId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Primary receipt updated.', 'Close', { duration: 3000 });
+          this.loadExpense(); // Reload to get updated data
+        },
+        error: (err) => {
+          this.snackBar.open(err?.message || 'Failed to update primary receipt.', 'Close', { duration: 4000 });
+        }
+      });
+  }
+
+  /**
+   * Handle removing a receipt from the expense
+   * @param receiptId Receipt ID to detach
+   */
+  onRemoveReceipt(receiptId: string): void {
+    const expenseId = this.expenseId();
+    if (!expenseId) return;
+
+    this.expenseService.detachReceipt(expenseId, receiptId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Receipt removed from expense.', 'Close', { duration: 3000 });
+          this.loadExpense(); // Reload to get updated data
+        },
+        error: (err) => {
+          this.snackBar.open(err?.message || 'Failed to remove receipt.', 'Close', { duration: 4000 });
+        }
+      });
+  }
+
+  /**
+   * Handle adding more receipts
+   * Navigate to edit page
+   */
+  onAddReceipts(): void {
+    this.goToEdit();
+  }
+
+  /**
+   * Check if expense can be edited
+   * Only draft expenses can have receipts added/removed
+   */
+  canEditReceipts(): boolean {
+    return this.expense()?.status === ExpenseStatus.DRAFT;
   }
 }

@@ -1,12 +1,75 @@
-# ExpenseApp
+# Jensify - Expense Management Platform
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.10.
+Full-featured expense management platform built with Angular 20+ and Supabase.
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- Supabase account and project
+- Git
+
+## Initial Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/JBCox/Jensify.git
+cd Jensify/expense-app
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+**IMPORTANT:** Environment files contain sensitive credentials and are NOT committed to version control.
+
+Copy the example files and fill in your Supabase credentials:
+
+```bash
+# Copy example files
+copy src\environments\environment.ts.example src\environments\environment.ts
+copy src\environments\environment.development.ts.example src\environments\environment.development.ts
+```
+
+Edit both files and replace placeholders with your actual Supabase credentials:
+
+```typescript
+// src/environments/environment.ts
+export const environment = {
+  production: true,
+  supabase: {
+    url: 'https://your-project-id.supabase.co',  // Replace with your URL
+    anonKey: 'your-anon-key-here'  // Replace with your anon key
+  },
+  simulateOcr: false
+};
+```
+
+**Where to find your Supabase credentials:**
+1. Go to your Supabase project dashboard
+2. Navigate to Settings → API
+3. Copy your Project URL and anon/public key
+
+### 4. Database Setup
+
+Run the database migrations:
+
+```bash
+cd ../supabase
+supabase db push
+```
 
 ## Development server
 
 To start a local development server, run:
 
 ```bash
+npm start
+# or
 ng serve
 ```
 

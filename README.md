@@ -19,7 +19,7 @@ Jensify is a comprehensive expense management solution for tracking all business
 ## 🚀 Current Phase: Phase 0 - Expense Receipt MVP
 
 **Timeline**: 2-3 weeks (Started November 13, 2025)
-**Status**: 🛠️ In Development (80% Complete)
+**Status**: ✅ **98% Complete** (Ready for Staging Deployment)
 **Initial Focus**: Gas receipts for traveling employees
 **Supports**: All expense categories (gas, hotels, flights, meals, office supplies, etc.)
 
@@ -28,12 +28,37 @@ Jensify is a comprehensive expense management solution for tracking all business
 - ✅ **Database schema** with Row Level Security policies
 - ✅ **Navigation** with role-based access
 - ✅ **Receipt upload** (mobile camera & desktop drag-drop) - Complete
-- 🔄 **OCR** with Google Vision API - Next Up
-- 🔄 **Expense form** with category selection
-- 🔄 **Finance dashboard**
-- 🔄 **CSV export** for accounting
+- ✅ **OCR** with Google Vision API - **Complete (November 15, 2025)**
+- ✅ **Expense form** with category selection
+- ✅ **Finance dashboard**
+- ✅ **CSV export** for accounting
 
-### Recently Completed (November 13, 2025)
+### Recently Completed
+**November 18, 2025**:
+- ✅ **Phase 2: Expense Reports (Expensify-style)** - Group multiple expenses into reports
+- ✅ Report creation with name, description, and date range
+- ✅ "Add to Report" dialog with existing report selection or new report creation
+- ✅ Report list with search and status filters
+- ✅ Report detail with expense table and timeline view
+- ✅ Batch add expenses to reports from expense list
+- ✅ Automatic report total calculation via database triggers
+- ✅ Report status workflow (draft → submitted → approved → rejected → paid)
+- ✅ 207 total tests, 194 passing (93.7% pass rate)
+
+**November 15, 2025**:
+- ✅ **Google Vision OCR Integration** - Real receipt text extraction
+- ✅ OCR Service with automatic field parsing (merchant, amount, date, tax)
+- ✅ Confidence scoring for extracted data
+- ✅ Graceful error handling and fallback
+- ✅ Comprehensive setup guide (docs/GOOGLE_VISION_SETUP.md)
+
+**November 14, 2025**:
+- ✅ Fixed RLS infinite recursion bug
+- ✅ Batch expense submission with parallel processing
+- ✅ Enhanced expense list with filters and search
+- ✅ Finance dashboard with reimbursement queue
+
+**November 13, 2025**:
 - ✅ Login, Register, and Forgot Password components
 - ✅ Auth guards for route protection
 - ✅ Mobile-responsive navigation bar
@@ -51,6 +76,24 @@ Jensify is a comprehensive expense management solution for tracking all business
 - **UI Library**: Angular Material + TailwindCSS
 - **State Management**: RxJS + Services
 - **Testing**: Jasmine/Karma + Cypress
+
+## 🎨 Design System
+
+The UI now leans on a small set of CSS design tokens so you can retheme quickly. Edit `expense-app/src/styles.scss` to tweak colors or add new ones.
+
+| Token | Hex | Purpose |
+|-------|-----|---------|
+| `--jensify-primary` | `#2563EB` | Primary actions, highlights |
+| `--jensify-primary-strong` | `#1D4ED8` | Hover/active states |
+| `--jensify-accent` / `--jensify-info` | `#0EA5E9` | Secondary accents + info |
+| `--jensify-surface-soft` | `#F4F6FB` | Page backgrounds |
+| `--jensify-surface-card` | `#FFFFFF` | Cards / panels |
+| `--jensify-border-subtle` | `#E4E7EC` | Neutral strokes |
+| `--jensify-success` | `#15803D` | Positive messaging |
+| `--jensify-danger` | `#B91C1C` | Errors/destructive actions |
+| `--jensify-warning` | `#B45309` | Tips/warnings |
+
+Supporting tokens (e.g., `*-soft`, `*-border`, text/icon colors, focus ring) are also defined there so the palette can be swapped with minimal effort.
 
 ### Backend
 - **Database**: Supabase (PostgreSQL)
@@ -115,12 +158,25 @@ supabase link --project-ref your-project-ref
 supabase db push
 ```
 
-### 4. Set Up Google Vision API
+### 4. Set Up Google Vision API (Required for OCR)
 
+**See [docs/GOOGLE_VISION_SETUP.md](./docs/GOOGLE_VISION_SETUP.md) for detailed instructions.**
+
+Quick setup:
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable the Vision API
-3. Create a service account and download the JSON key
-4. Add the credentials to your Supabase Edge Function environment
+2. Enable the Cloud Vision API
+3. Create an API key
+4. Add the key to `expense-app/src/environments/environment.development.ts`:
+
+```typescript
+export const environment = {
+  // ... other config
+  simulateOcr: false,  // Set to false to use real OCR
+  googleVisionApiKey: 'YOUR_API_KEY_HERE'
+};
+```
+
+**Free Tier**: 1,000 OCR requests/month (resets monthly)
 
 ### 5. Run the Development Server
 
@@ -220,17 +276,20 @@ netlify deploy --prod
 - **[CLAUDE.md](./CLAUDE.md)** - Project constitution and coding standards
 - **[spec.md](./spec.md)** - Comprehensive product specification
 - **[prompt_plan.md](./prompt_plan.md)** - Detailed implementation roadmap
+- **[docs/GOOGLE_VISION_SETUP.md](./docs/GOOGLE_VISION_SETUP.md)** - Google Vision OCR setup guide
+- **[DEPLOYMENT_READY.md](./DEPLOYMENT_READY.md)** - Pre-deployment checklist
 - **[docs/](./docs/)** - Additional technical documentation
 
 ## 🗺️ Roadmap
 
-### 🛠️ Phase 0: Expense Receipt MVP (Weeks 1-3) - 80% Complete
+### ✅ Phase 0: Expense Receipt MVP (Weeks 1-3) - **98% Complete**
 - ✅ User authentication (complete)
 - ✅ Receipt upload for all expense types (complete)
-- 🔄 OCR extraction (in progress)
-- 🔄 Expense form with category selection
-- 🔄 Finance dashboard
-- 🔄 CSV export
+- ✅ **OCR extraction with Google Vision API (complete)**
+- ✅ Expense form with category selection (complete)
+- ✅ Finance dashboard (complete)
+- ✅ CSV export (complete)
+- 🔄 Staging deployment (final step)
 
 **Supported Categories**: Fuel, Meals & Entertainment, Lodging, Airfare, Ground Transportation, Office Supplies, Software/Subscriptions, Miscellaneous
 
@@ -305,4 +364,4 @@ For technical support or questions:
 
 **Built with ❤️ for Covaer Manufacturing**
 
-*Last Updated: November 13, 2025*
+*Last Updated: November 15, 2025*

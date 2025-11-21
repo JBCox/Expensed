@@ -11,21 +11,10 @@
   grid-template-columns: 1.5fr 1fr;
   align-items: center;
   gap: var(--jensify-spacing-xl);
-  padding: var(--jensify-spacing-xl);
-  background: linear-gradient(135deg, #fff, #fff8f3);
+  padding: var(--jensify-spacing-2xl);
+  // Background and styles handled by .jensify-glass-card
   position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    right: -60px;
-    top: -80px;
-    width: 240px;
-    height: 240px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 89, 0, 0.12), transparent 60%);
-    pointer-events: none;
-  }
+  overflow: hidden;
 }
 
 .hero-copy {
@@ -46,9 +35,10 @@
 
   h1 {
     margin: 0;
-    font-size: 2.25rem;
-    line-height: 1.2;
+    font-size: 2.5rem;
+    line-height: 1.1;
     color: var(--jensify-text-strong);
+    letter-spacing: -0.02em;
   }
 
   .subtitle {
@@ -84,10 +74,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--jensify-spacing-lg);
   padding: var(--jensify-spacing-lg);
-  background: var(--jensify-surface-card);
-  border: 1px solid var(--jensify-border-subtle);
-  border-radius: var(--jensify-radius-lg);
-  box-shadow: var(--jensify-shadow-md);
+  // Styles handled by .jensify-glass-card
 
   div {
     display: flex;

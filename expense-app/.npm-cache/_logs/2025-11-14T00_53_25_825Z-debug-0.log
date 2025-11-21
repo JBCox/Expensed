@@ -1,0 +1,97 @@
+0 verbose cli /home/joshua/.nvm/versions/node/v24.11.0/bin/node /home/joshua/.nvm/versions/node/v24.11.0/bin/npm
+1 info using npm@11.6.1
+2 info using node@v24.11.0
+3 silly config load:file:/home/joshua/.nvm/versions/node/v24.11.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/mnt/c/Jensify/expense-app/.npmrc
+5 silly config load:file:/home/joshua/.npmrc
+6 silly config load:file:/home/joshua/.nvm/versions/node/v24.11.0/etc/npmrc
+7 verbose title npm ci
+8 verbose argv "ci" "--loglevel" "silent"
+9 verbose logfile logs-max:10 dir:/mnt/c/Jensify/expense-app/.npm-cache/_logs/2025-11-14T00_53_25_825Z-
+10 verbose logfile /mnt/c/Jensify/expense-app/.npm-cache/_logs/2025-11-14T00_53_25_825Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+13 silly idealTree buildDeps
+14 silly fetch manifest @angular/animations@^20.3.0
+15 silly packumentCache full:https://registry.npmjs.org/@angular%2fanimations cache-miss
+16 http fetch GET 200 https://registry.npmjs.org/npm 522ms
+17 http fetch GET 200 https://registry.npmjs.org/@angular%2fanimations 432ms (cache miss)
+18 silly packumentCache full:https://registry.npmjs.org/@angular%2fanimations set size:undefined disposed:false
+19 silly fetch manifest @angular/core@^20.3.0
+20 silly packumentCache full:https://registry.npmjs.org/@angular%2fcore cache-miss
+21 http fetch GET 200 https://registry.npmjs.org/@angular%2fcore 206ms (cache miss)
+22 silly packumentCache full:https://registry.npmjs.org/@angular%2fcore set size:undefined disposed:false
+23 silly fetch manifest @angular/compiler@^20.3.0
+24 silly packumentCache full:https://registry.npmjs.org/@angular%2fcompiler cache-miss
+25 http fetch GET 200 https://registry.npmjs.org/@angular%2fcompiler 228ms (cache miss)
+26 silly packumentCache full:https://registry.npmjs.org/@angular%2fcompiler set size:undefined disposed:false
+27 silly fetch manifest rxjs@~7.8.0
+28 silly packumentCache full:https://registry.npmjs.org/rxjs cache-miss
+29 http fetch GET 200 https://registry.npmjs.org/rxjs 143ms (cache miss)
+30 silly packumentCache full:https://registry.npmjs.org/rxjs set size:undefined disposed:false
+31 silly fetch manifest zone.js@~0.15.0
+32 silly packumentCache full:https://registry.npmjs.org/zone.js cache-miss
+33 http fetch GET 200 https://registry.npmjs.org/zone.js 131ms (cache miss)
+34 silly packumentCache full:https://registry.npmjs.org/zone.js set size:undefined disposed:false
+35 silly placeDep ROOT @angular/animations@20.3.11 OK for: expense-app@0.0.0 want: ^20.3.0
+36 verbose stack Error: 
+36 verbose stack `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+36 verbose stack
+36 verbose stack Missing: @angular/animations@20.3.11 from lock file
+36 verbose stack
+36 verbose stack Clean install a project
+36 verbose stack
+36 verbose stack Usage:
+36 verbose stack npm ci
+36 verbose stack
+36 verbose stack Options:
+36 verbose stack [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+36 verbose stack [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+36 verbose stack [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+36 verbose stack [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+36 verbose stack [--no-bin-links] [--no-fund] [--dry-run]
+36 verbose stack [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+36 verbose stack [--workspaces] [--include-workspace-root] [--install-links]
+36 verbose stack
+36 verbose stack aliases: clean-install, ic, install-clean, isntall-clean
+36 verbose stack
+36 verbose stack Run "npm help ci" for more info
+36 verbose stack     at CI.usageError (/home/joshua/.nvm/versions/node/v24.11.0/lib/node_modules/npm/lib/base-cmd.js:111:26)
+36 verbose stack     at CI.exec (/home/joshua/.nvm/versions/node/v24.11.0/lib/node_modules/npm/lib/commands/ci.js:70:18)
+36 verbose stack     at async Npm.exec (/home/joshua/.nvm/versions/node/v24.11.0/lib/node_modules/npm/lib/npm.js:208:9)
+36 verbose stack     at async module.exports (/home/joshua/.nvm/versions/node/v24.11.0/lib/node_modules/npm/lib/cli/entry.js:67:5)
+37 error code EUSAGE
+38 error
+38 error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
+38 error
+38 error Missing: @angular/animations@20.3.11 from lock file
+38 error
+38 error Clean install a project
+38 error
+38 error Usage:
+38 error npm ci
+38 error
+38 error Options:
+38 error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
+38 error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
+38 error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
+38 error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
+38 error [--no-bin-links] [--no-fund] [--dry-run]
+38 error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
+38 error [--workspaces] [--include-workspace-root] [--install-links]
+38 error
+38 error aliases: clean-install, ic, install-clean, isntall-clean
+38 error
+38 error Run "npm help ci" for more info
+39 verbose cwd /mnt/c/Jensify/expense-app
+40 verbose os Linux 6.6.87.2-microsoft-standard-WSL2
+41 verbose node v24.11.0
+42 verbose npm  v11.6.1
+43 notice
+43 notice New patch version of npm available! 11.6.1 -> 11.6.2
+43 notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+43 notice To update run: npm install -g npm@11.6.2
+43 notice  { force: true, Symbol(proc-log.meta): true }
+44 verbose exit 1
+45 verbose code 1
+46 error A complete log of this run can be found in: /mnt/c/Jensify/expense-app/.npm-cache/_logs/2025-11-14T00_53_25_825Z-debug-0.log

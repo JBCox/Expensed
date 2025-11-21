@@ -8,10 +8,11 @@
   right: 0;
   z-index: 1001;
   height: 60px;
-  background: var(--jensify-surface-frosted) !important;
-  border-bottom: 1px solid var(--jensify-border-subtle);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  backdrop-filter: blur(12px);
+  background: var(--jensify-surface-glass-nav) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--jensify-text-strong);
 }
 
@@ -142,7 +143,8 @@
 // Main content area
 .app-content {
   min-height: 100vh;
-  background-color: var(--jensify-surface-soft);
+  width: auto; // Override 100% to prevent overflow with margin
+  // background-color: var(--jensify-surface-soft); // Removed to allow mesh gradient
 
   &.with-toolbar {
     padding-top: 60px;

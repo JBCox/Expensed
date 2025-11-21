@@ -6,7 +6,11 @@ import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
-import { Subject, filter, takeUntil } from 'rxjs';
+import { ExpenseService } from '../../services/expense.service';
+import { ReportService } from '../../services/report.service';
+import { Subject, filter, takeUntil, map, shareReplay, Observable } from 'rxjs';
+import { Expense } from '../../models/expense.model';
+import { ReportStatus, ExpenseReport } from '../../models/report.model';
 
 interface NavItem {
   icon: string;
@@ -35,13 +39,18 @@ export class SidebarNav implements OnDestroy {
   collapsed = signal(false);
   private readonly destroy$ = new Subject<void>();
 
+  // Badge counts
+  unreportedCount$: Observable<number>;
+  draftReportsCount$: Observable<number>;
+  submittedReportsCount$: Observable<number>;
+
   navItems: NavItem[] = [
+    // Dashboard & Admin
     {
       icon: 'dashboard',
       label: 'Dashboard',
       route: '/home'
     },
-    // Manager/Finance/Admin items (higher priority for those roles)
     {
       icon: 'task_alt',
       label: 'Approvals',
@@ -54,16 +63,16 @@ export class SidebarNav implements OnDestroy {
       route: '/organization/users',
       requiredRole: 'admin'
     },
-    // Employee-focused items (everyone can use these)
+    // Natural expense workflow: Upload → Receipts → Create → View → Report → Mileage
     {
       icon: 'receipt_long',
       label: 'Upload Receipt',
       route: '/expenses/upload'
     },
     {
-      icon: 'list_alt',
-      label: 'My Expenses',
-      route: '/expenses'
+      icon: 'inventory_2',
+      label: 'Receipts',
+      route: '/receipts'
     },
     {
       icon: 'playlist_add',
@@ -71,9 +80,14 @@ export class SidebarNav implements OnDestroy {
       route: '/expenses/new'
     },
     {
-      icon: 'inventory_2',
-      label: 'Receipts',
-      route: '/receipts'
+      icon: 'list_alt',
+      label: 'My Expenses',
+      route: '/expenses'
+    },
+    {
+      icon: 'folder_open',
+      label: 'Reports',
+      route: '/reports'
     },
     {
       icon: 'commute',
@@ -86,8 +100,25 @@ export class SidebarNav implements OnDestroy {
     private router: Router,
     private authService: AuthService,
     private organizationService: OrganizationService,
+    private expenseService: ExpenseService,
+    private reportService: ReportService,
     private cdr: ChangeDetectorRef
   ) {
+    this.unreportedCount$ = this.expenseService.getMyExpenses().pipe(
+      map((list: Expense[]) => list.filter((e: Expense) => !e.is_reported).length),
+      shareReplay(1)
+    );
+
+    this.draftReportsCount$ = this.reportService.getReports().pipe(
+      map((list: ExpenseReport[]) => list.filter(r => r.status === ReportStatus.DRAFT).length),
+      shareReplay(1)
+    );
+
+    this.submittedReportsCount$ = this.reportService.getReports({ status: ReportStatus.SUBMITTED }).pipe(
+      map((list: ExpenseReport[]) => list.length),
+      shareReplay(1)
+    );
+
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),

@@ -1,0 +1,46 @@
+0 verbose cli /home/joshua/.nvm/versions/node/v24.11.0/bin/node /home/joshua/.nvm/versions/node/v24.11.0/bin/npm
+1 info using npm@11.6.1
+2 info using node@v24.11.0
+3 silly config load:file:/home/joshua/.nvm/versions/node/v24.11.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/mnt/c/Jensify/expense-app/.npmrc
+5 silly config load:file:/home/joshua/.npmrc
+6 silly config load:file:/home/joshua/.nvm/versions/node/v24.11.0/etc/npmrc
+7 verbose title npm install
+8 verbose argv "install" "--no-audit" "--no-fund"
+9 verbose logfile logs-max:10 dir:/mnt/c/Jensify/expense-app/.npm-cache/_logs/2025-11-14T00_53_44_946Z-
+10 verbose logfile /mnt/c/Jensify/expense-app/.npm-cache/_logs/2025-11-14T00_53_44_946Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+13 silly idealTree buildDeps
+14 silly fetch manifest @angular/animations@^20.3.0
+15 silly packumentCache full:https://registry.npmjs.org/@angular%2fanimations cache-miss
+16 http cache https://registry.npmjs.org/@angular%2fanimations -1248ms (cache hit)
+17 silly packumentCache full:https://registry.npmjs.org/@angular%2fanimations set size:2629400 disposed:false
+18 silly fetch manifest @angular/core@^20.3.0
+19 silly packumentCache full:https://registry.npmjs.org/@angular%2fcore cache-miss
+20 http cache https://registry.npmjs.org/@angular%2fcore 42ms (cache hit)
+21 silly packumentCache full:https://registry.npmjs.org/@angular%2fcore set size:2758343 disposed:false
+22 silly fetch manifest @angular/compiler@^20.3.0
+23 silly packumentCache full:https://registry.npmjs.org/@angular%2fcompiler cache-miss
+24 http cache https://registry.npmjs.org/@angular%2fcompiler 41ms (cache hit)
+25 silly packumentCache full:https://registry.npmjs.org/@angular%2fcompiler set size:2542456 disposed:false
+26 silly fetch manifest rxjs@~7.8.0
+27 silly packumentCache full:https://registry.npmjs.org/rxjs cache-miss
+28 http cache https://registry.npmjs.org/rxjs 35ms (cache hit)
+29 silly packumentCache full:https://registry.npmjs.org/rxjs set size:980097 disposed:false
+30 silly fetch manifest zone.js@~0.15.0
+31 silly packumentCache full:https://registry.npmjs.org/zone.js cache-miss
+32 http cache https://registry.npmjs.org/zone.js 27ms (cache hit)
+33 silly packumentCache full:https://registry.npmjs.org/zone.js set size:365274 disposed:false
+34 silly placeDep ROOT @angular/animations@20.3.11 OK for: expense-app@0.0.0 want: ^20.3.0
+35 silly reify moves {}
+36 http cache @angular/animations@https://registry.npmjs.org/@angular/animations/-/animations-20.3.11.tgz 0ms (cache hit)
+37 silly tarball no local data for @angular/animations@https://registry.npmjs.org/@angular/animations/-/animations-20.3.11.tgz. Extracting by manifest.
+38 http fetch GET 200 https://registry.npmjs.org/@angular/animations/-/animations-20.3.11.tgz 326ms (cache miss)
+39 silly ADD node_modules/@angular/animations
+40 verbose cwd /mnt/c/Jensify/expense-app
+41 verbose os Linux 6.6.87.2-microsoft-standard-WSL2
+42 verbose node v24.11.0
+43 verbose npm  v11.6.1
+44 verbose exit 0
+45 info ok

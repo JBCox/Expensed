@@ -4,3 +4,4 @@ export * from './organization.model';
 export * from './expense.model';
 export * from './receipt.model';
 export * from './mileage.model';
+export * from './report.model';

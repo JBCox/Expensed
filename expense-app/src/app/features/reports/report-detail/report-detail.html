@@ -1,0 +1,200 @@
+<div class="jensify-container">
+  <!-- Back Button -->
+  <button mat-button class="jensify-back-link jensify-button" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Reports
+  </button>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="jensify-loading">
+      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+      <p>Loading report...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <mat-card class="jensify-card jensify-message-error">
+      <mat-icon>error</mat-icon>
+      <div>
+        <h3>Unable to load report</h3>
+        <p>{{ error() }}</p>
+        <button mat-stroked-button color="primary" (click)="loadReport()" class="jensify-button">Try Again</button>
+      </div>
+    </mat-card>
+  }
+
+  <!-- Report Detail -->
+  @if (report()) {
+    <div class="report-detail-layout">
+      <!-- Header Card -->
+      <mat-card class="jensify-card header-card">
+        <div class="header-content">
+          <div class="header-left">
+            <h1 class="jensify-page-title jensify-mb-0">{{ report()!.name }}</h1>
+            @if (report()!.description) {
+              <p class="report-description">{{ report()!.description }}</p>
+            }
+            @if (report()!.start_date || report()!.end_date) {
+              <p class="date-range">
+                <mat-icon>date_range</mat-icon>
+                {{ formatDate(report()!.start_date) }} - {{ formatDate(report()!.end_date) }}
+              </p>
+            }
+          </div>
+          <div class="header-right">
+            <app-status-badge [status]="getBadgeStatus(report()!.status)"></app-status-badge>
+            <div class="total-amount">
+              <span class="amount-label">Total</span>
+              <span class="amount-value">{{ formatCurrency(report()!.total_amount) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="header-actions">
+          @if (canSubmit()) {
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="submitting()"
+              (click)="submitReport()"
+              class="jensify-button">
+              <mat-icon>send</mat-icon>
+              Submit for Approval
+            </button>
+          }
+
+          @if (canDelete()) {
+            <button
+              mat-stroked-button
+              color="warn"
+              (click)="deleteReport()"
+              class="jensify-button">
+              <mat-icon>delete</mat-icon>
+              Delete Report
+            </button>
+          }
+        </div>
+
+        @if (!canSubmit() && canEdit()) {
+          <p class="jensify-subtext jensify-mb-0">
+            Add expenses to this report before submitting for approval.
+          </p>
+        }
+      </mat-card>
+
+      <!-- Main Content Grid -->
+      <div class="content-grid">
+        <!-- Expenses List -->
+        <mat-card class="jensify-card expenses-card">
+          <div class="card-header">
+            <div class="header-title">
+              <mat-icon>receipt</mat-icon>
+              <h3>Expenses ({{ expenses().length }})</h3>
+            </div>
+          </div>
+
+          @if (!hasExpenses()) {
+            <div class="empty-expenses">
+              <mat-icon>receipt_long</mat-icon>
+              <p>No expenses in this report</p>
+              @if (canEdit()) {
+                <button mat-raised-button color="primary" class="jensify-button">
+                  <mat-icon>add</mat-icon>
+                  Add Expenses
+                </button>
+              }
+            </div>
+          } @else {
+            <!-- Expenses Table -->
+            <div class="expenses-table-container">
+              <table mat-table [dataSource]="expenses()" class="expenses-table">
+                <!-- Merchant Column -->
+                <ng-container matColumnDef="merchant">
+                  <th mat-header-cell *matHeaderCellDef>Merchant</th>
+                  <td mat-cell *matCellDef="let expense">{{ expense.merchant }}</td>
+                </ng-container>
+
+                <!-- Category Column -->
+                <ng-container matColumnDef="category">
+                  <th mat-header-cell *matHeaderCellDef>Category</th>
+                  <td mat-cell *matCellDef="let expense">{{ expense.category }}</td>
+                </ng-container>
+
+                <!-- Date Column -->
+                <ng-container matColumnDef="date">
+                  <th mat-header-cell *matHeaderCellDef>Date</th>
+                  <td mat-cell *matCellDef="let expense">{{ formatDate(expense.expense_date) }}</td>
+                </ng-container>
+
+                <!-- Amount Column -->
+                <ng-container matColumnDef="amount">
+                  <th mat-header-cell *matHeaderCellDef>Amount</th>
+                  <td mat-cell *matCellDef="let expense">
+                    <span class="expense-amount">{{ formatCurrency(expense.amount) }}</span>
+                  </td>
+                </ng-container>
+
+                <!-- Status Column -->
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let expense">
+                    <app-status-badge [status]="getBadgeStatus(expense.status)" size="small"></app-status-badge>
+                  </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let expense">
+                    <div class="action-buttons">
+                      <button
+                        mat-icon-button
+                        (click)="viewExpense(expense)"
+                        matTooltip="View expense">
+                        <mat-icon>visibility</mat-icon>
+                      </button>
+                      @if (canEdit()) {
+                        <button
+                          mat-icon-button
+                          color="warn"
+                          (click)="removeExpense(expense)"
+                          matTooltip="Remove from report">
+                          <mat-icon>remove_circle</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns" class="expense-row"></tr>
+              </table>
+            </div>
+          }
+        </mat-card>
+
+        <!-- Timeline Card -->
+        <mat-card class="jensify-card timeline-card">
+          <div class="card-header">
+            <div class="header-title">
+              <mat-icon>timeline</mat-icon>
+              <h3>Timeline</h3>
+            </div>
+          </div>
+
+          <div class="timeline">
+            @for (item of getTimeline(); track item.label) {
+              <div class="timeline-item">
+                <span class="timeline-label">{{ item.label }}</span>
+                <span class="timeline-value">{{ formatDate(item.value) }}</span>
+              </div>
+            }
+          </div>
+        </mat-card>
+      </div>
+    </div>
+  }
+</div>

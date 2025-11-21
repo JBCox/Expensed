@@ -1,0 +1,86 @@
+/**
+ * Create Report Dialog Styles
+ * Uses Jensify design tokens
+ */
+
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-sm);
+  color: var(--jensify-text-strong);
+  font-weight: 600;
+
+  mat-icon {
+    color: var(--jensify-primary);
+  }
+}
+
+mat-dialog-content {
+  min-width: 500px;
+  padding: var(--jensify-spacing-lg) var(--jensify-spacing-xl) !important;
+
+  @media (max-width: 767px) {
+    min-width: unset;
+    width: 90vw;
+    padding: var(--jensify-spacing-md) !important;
+  }
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-md);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.date-range-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--jensify-spacing-md);
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.date-field {
+  width: 100%;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--jensify-spacing-sm);
+  padding: var(--jensify-spacing-md);
+  background: var(--jensify-error-soft);
+  color: var(--jensify-error);
+  border-radius: var(--jensify-radius-md);
+  font-size: 0.875rem;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+mat-dialog-actions {
+  padding: var(--jensify-spacing-md) var(--jensify-spacing-xl) !important;
+  border-top: 1px solid var(--jensify-border-subtle);
+
+  @media (max-width: 767px) {
+    padding: var(--jensify-spacing-md) !important;
+  }
+
+  button {
+    min-width: 120px;
+
+    mat-spinner {
+      display: inline-block;
+      margin-right: var(--jensify-spacing-xs);
+    }
+  }
+}

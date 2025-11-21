@@ -9,6 +9,7 @@
   position: relative;
   margin-bottom: var(--jensify-spacing-xl, 2rem);
   border-radius: var(--jensify-radius-lg, 8px);
+  overflow: hidden; // Clip decorative circle
 
   &::after {
     content: '';

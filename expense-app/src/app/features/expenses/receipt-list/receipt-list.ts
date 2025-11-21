@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterModule } from '@angular/router';
 import { ExpenseService } from '../../../core/services/expense.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
 import { Observable } from 'rxjs';
 import { Receipt } from '../../../core/models/receipt.model';
 import { OcrStatus } from '../../../core/models/enums';
@@ -32,7 +33,8 @@ export class ReceiptList {
 
   constructor(
     private readonly expenseService: ExpenseService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly supabase: SupabaseService
   ) {
     this.receipts$ = this.expenseService.getMyReceipts();
   }
@@ -41,9 +43,15 @@ export class ReceiptList {
     this.router.navigate(['/expenses/new'], { queryParams: { receiptId: receipt.id } });
   }
 
-  viewReceipt(receipt: Receipt): void {
-    const url = this.expenseService.getReceiptUrl(receipt.file_path);
-    window.open(url, '_blank');
+  async viewReceipt(receipt: Receipt): Promise<void> {
+    try {
+      const { signedUrl } = await this.supabase.getSignedUrl('receipts', receipt.file_path, 86400); // 24 hours
+      if (signedUrl) {
+        window.open(signedUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Failed to get receipt URL:', error);
+    }
   }
 
   getStatusLabel(receipt: Receipt): string {

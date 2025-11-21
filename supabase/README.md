@@ -2,15 +2,120 @@
 
 This directory contains database migrations and setup instructions for the Jensify expense management system.
 
-## Quick Start
+## 🚀 Quick Start - Local Development (Recommended)
 
-### Option 1: Using Supabase Dashboard (Recommended for beginners)
+### Prerequisites
+- Docker Desktop installed and running
+- Supabase CLI installed: `npm install -g supabase`
 
-1. Go to your Supabase project dashboard: https://supabase.com/dashboard
-2. Select your project
-3. Click on **SQL Editor** in the left sidebar
-4. Click **New Query**
-5. Copy the entire contents of `migrations/20251113_phase0_initial_schema.sql`
+### Start Local Supabase
+```powershell
+cd C:\Jensify
+supabase start
+```
+
+This automatically runs all 7 migrations and starts local Supabase at:
+- **API**: http://127.0.0.1:54321
+- **Studio**: http://127.0.0.1:54323
+- **Database**: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+### Run Angular with Local Backend
+```powershell
+cd C:\Jensify\expense-app
+ng serve --configuration=development
+```
+
+Visit http://localhost:4200 - your app now uses local Supabase!
+
+---
+
+## 📝 Creating New Migrations
+
+### Use the Helper Script (Recommended)
+```powershell
+cd C:\Jensify\supabase
+.\new-migration.ps1 "add user preferences"
+```
+
+This will:
+1. Generate a unique timestamp
+2. Check for similar existing migrations
+3. Create a template migration file
+4. Open it in VS Code
+
+### Manual Creation
+```powershell
+cd C:\Jensify\supabase\migrations
+$timestamp = Get-Date -Format "yyyyMMddHHmmss"
+New-Item "${timestamp}_your_feature.sql"
+```
+
+**⚠️ IMPORTANT**: Always include hours/minutes/seconds in timestamp to avoid conflicts!
+
+---
+
+## 🧪 Testing Migrations
+
+### Before Committing - ALWAYS Test Locally!
+```powershell
+cd C:\Jensify\supabase
+.\test-migrations.ps1
+```
+
+This will:
+1. Stop local Supabase
+2. Start fresh and run all migrations
+3. Report success or show which migration failed
+
+### Manual Testing
+```powershell
+cd C:\Jensify
+supabase db reset  # Drops everything and re-runs all migrations
+```
+
+If it fails:
+- **FIX THE MIGRATION FILE DIRECTLY**
+- **DO NOT create a "fix" migration**
+- Run `supabase db reset` again
+- Repeat until it works
+
+---
+
+## 📋 Migration Best Practices
+
+See **[MIGRATION_GUIDELINES.md](./MIGRATION_GUIDELINES.md)** for detailed rules.
+
+### Key Rules
+1. ✅ Test locally with `supabase db reset` BEFORE committing
+2. ✅ One feature = one migration (no separate "fix" migrations)
+3. ✅ Use unique timestamps: `yyyyMMddHHmmss`
+4. ✅ Always use `IF EXISTS` / `IF NOT EXISTS`
+5. ✅ Only touch `public` schema (not `auth` or `storage` internals)
+6. ❌ Never modify deployed migrations - create new ones instead
+
+---
+
+## 📊 Current Migration List
+
+Clean, tested migrations (in order):
+
+1. `20251113000001_phase0_initial_schema.sql` - Base tables (users, expenses, receipts)
+2. `20251113000002_storage_policies.sql` - Receipt storage bucket
+3. `20251113000003_handle_new_user_signup.sql` - Auto-create user profiles
+4. `20251115000001_organization_multi_tenancy.sql` - Organizations & roles
+5. `20251115000002_organization_helper_functions.sql` - Org utilities
+6. `20251116184702_mileage_tracking_module.sql` - Mileage tracking
+7. `20251117000001_fix_rls_policies_consolidated.sql` - Final RLS policies
+
+**Backups**: Previous migrations saved in `migrations_backup_current/`
+
+---
+
+## 🏗️ Production Deployment
+
+### Option 1: Using Supabase Dashboard
+
+1. Go to https://supabase.com/dashboard → Your Project → SQL Editor
 6. Paste into the SQL Editor
 7. Click **Run** (or press Cmd/Ctrl + Enter)
 8. You should see success messages in the Results panel

@@ -1,0 +1,12 @@
+export const environment = {
+  production: false,
+  supabase: {
+    url: 'YOUR_SUPABASE_URL_HERE',
+    anonKey: 'YOUR_SUPABASE_ANON_KEY_HERE'
+  },
+  apiUrl: 'http://localhost:4200',
+  simulateOcr: false
+  // Google Vision API key removed - now handled securely in Supabase Edge Function
+  // The API key is stored as a Supabase secret: supabase secrets set GOOGLE_VISION_API_KEY=your_key
+  // OCR processing is done server-side via Edge Function: /functions/v1/process-receipt
+};

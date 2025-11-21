@@ -1,0 +1,239 @@
+/**
+ * Report Detail Component Styles
+ * Uses Jensify design tokens
+ */
+
+.report-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-lg);
+  margin-top: var(--jensify-spacing-lg);
+}
+
+// Header Card
+.header-card {
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--jensify-spacing-lg);
+    margin-bottom: var(--jensify-spacing-lg);
+
+    @media (max-width: 767px) {
+      flex-direction: column;
+    }
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0; // Allow text truncation
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--jensify-spacing-md);
+
+    @media (max-width: 767px) {
+      align-items: flex-start;
+      width: 100%;
+    }
+  }
+
+  .report-description {
+    font-size: 1rem;
+    color: var(--jensify-text-muted);
+    margin: var(--jensify-spacing-sm) 0 0 0;
+  }
+
+  .date-range {
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-xs);
+    font-size: 0.875rem;
+    color: var(--jensify-text-muted);
+    margin: var(--jensify-spacing-sm) 0 0 0;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .total-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: var(--jensify-spacing-md);
+    background: var(--jensify-surface-subtle);
+    border-radius: var(--jensify-radius-md);
+    min-width: 150px;
+
+    @media (max-width: 767px) {
+      width: 100%;
+      align-items: flex-start;
+    }
+  }
+
+  .amount-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--jensify-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .amount-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--jensify-primary);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: var(--jensify-spacing-md);
+    flex-wrap: wrap;
+    padding-top: var(--jensify-spacing-md);
+    border-top: 1px solid var(--jensify-border-subtle);
+
+    @media (max-width: 767px) {
+      button {
+        flex: 1;
+      }
+    }
+  }
+}
+
+// Content Grid
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--jensify-spacing-lg);
+
+  @media (max-width: 1023px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Card Headers
+.card-header {
+  padding-bottom: var(--jensify-spacing-md);
+  border-bottom: 2px solid var(--jensify-border-medium);
+  margin-bottom: var(--jensify-spacing-lg);
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-sm);
+
+    mat-icon {
+      color: var(--jensify-primary);
+    }
+
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--jensify-text-strong);
+      margin: 0;
+    }
+  }
+}
+
+// Empty Expenses State
+.empty-expenses {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jensify-spacing-2xl) var(--jensify-spacing-lg);
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--jensify-text-disabled);
+    margin-bottom: var(--jensify-spacing-md);
+  }
+
+  p {
+    font-size: 1rem;
+    color: var(--jensify-text-muted);
+    margin: 0 0 var(--jensify-spacing-lg) 0;
+  }
+}
+
+// Expenses Table
+.expenses-table-container {
+  overflow-x: auto;
+}
+
+.expenses-table {
+  width: 100%;
+
+  th {
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+    background: var(--jensify-surface-subtle);
+  }
+
+  td {
+    color: var(--jensify-text-body);
+  }
+
+  .expense-amount {
+    font-weight: 600;
+    color: var(--jensify-primary);
+  }
+
+  .expense-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: var(--jensify-surface-subtle);
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: var(--jensify-spacing-xs);
+  }
+}
+
+// Timeline
+.timeline-card {
+  height: fit-content;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-md);
+}
+
+.timeline-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--jensify-spacing-sm) 0;
+  border-bottom: 1px solid var(--jensify-border-subtle);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.timeline-label {
+  font-weight: 500;
+  color: var(--jensify-text-muted);
+  font-size: 0.875rem;
+}
+
+.timeline-value {
+  font-weight: 400;
+  color: var(--jensify-text-body);
+  font-size: 0.875rem;
+}

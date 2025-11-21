@@ -135,10 +135,98 @@
 
       <!-- Success State -->
       @if (uploadedReceipt() && !isUploading()) {
-        <div class="jensify-message-success">
+        <div class="jensify-success-container">
           <mat-icon class="jensify-success-icon">check_circle</mat-icon>
-          <p class="jensify-success-text">Receipt uploaded successfully!</p>
-          <p class="jensify-redirect-text">Redirecting to expense form...</p>
+          <h3>Receipt Uploaded Successfully!</h3>
+
+          <!-- OCR Processing Status -->
+          @if (ocrProcessing()) {
+            <div class="jensify-ocr-status">
+              <mat-spinner diameter="24"></mat-spinner>
+              <p>SmartScan is extracting receipt details...</p>
+            </div>
+          }
+
+          <!-- OCR Results (Editable) -->
+          @if (ocrCompleted()) {
+            <div class="jensify-ocr-results">
+              <mat-icon>auto_awesome</mat-icon>
+              <h4>SmartScan Results</h4>
+              <p class="jensify-edit-hint">Review and edit if needed</p>
+
+              <div class="jensify-extracted-data">
+                <mat-form-field appearance="fill" class="jensify-ocr-field">
+                  <mat-label>Merchant</mat-label>
+                  <input matInput
+                    [ngModel]="extractedMerchant()"
+                    (ngModelChange)="extractedMerchant.set($event)"
+                    placeholder="Merchant name">
+                </mat-form-field>
+
+                <mat-form-field appearance="fill" class="jensify-ocr-field">
+                  <mat-label>Amount</mat-label>
+                  <span matPrefix>$</span>
+                  <input matInput
+                    type="number"
+                    step="0.01"
+                    [ngModel]="extractedAmount()"
+                    (ngModelChange)="extractedAmount.set($event)"
+                    placeholder="0.00">
+                </mat-form-field>
+
+                <mat-form-field appearance="fill" class="jensify-ocr-field">
+                  <mat-label>Date</mat-label>
+                  <input matInput
+                    [ngModel]="extractedDate()"
+                    (ngModelChange)="extractedDate.set($event)"
+                    placeholder="YYYY-MM-DD">
+                </mat-form-field>
+
+                <mat-form-field appearance="fill" class="jensify-ocr-field">
+                  <mat-label>Category</mat-label>
+                  <mat-select
+                    [ngModel]="extractedCategory()"
+                    (ngModelChange)="extractedCategory.set($event)">
+                    @for (option of categoryOptions; track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          }
+
+          <!-- OCR Failed -->
+          @if (ocrFailed()) {
+            <div class="jensify-ocr-failed">
+              <mat-icon>warning</mat-icon>
+              <p>SmartScan couldn't extract details. You can enter them manually.</p>
+            </div>
+          }
+
+          <!-- Next Actions -->
+          @if (!ocrProcessing()) {
+            <p class="jensify-success-message">What would you like to do next?</p>
+            <div class="jensify-action-buttons">
+              <button
+                mat-stroked-button
+                color="primary"
+                (click)="resetForAnotherUpload()"
+                class="jensify-button">
+                <mat-icon>upload</mat-icon>
+                Upload Another Receipt
+              </button>
+
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="navigateToExpenseForm()"
+                class="jensify-button">
+                <mat-icon>receipt_long</mat-icon>
+                Create Expense Now
+              </button>
+            </div>
+          }
         </div>
       }
     </mat-card-content>

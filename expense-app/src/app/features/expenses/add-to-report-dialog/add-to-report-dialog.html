@@ -1,0 +1,120 @@
+<h2 mat-dialog-title>
+  <mat-icon>folder_open</mat-icon>
+  Add to Report
+</h2>
+
+<mat-dialog-content>
+  <!-- Expense Summary -->
+  <div class="expense-summary">
+    <div class="summary-item">
+      <mat-icon>receipt_long</mat-icon>
+      <div>
+        <span class="summary-label">Expenses</span>
+        <span class="summary-value">{{ expenseIds.length }}</span>
+      </div>
+    </div>
+    <div class="summary-item">
+      <mat-icon>attach_money</mat-icon>
+      <div>
+        <span class="summary-label">Total Amount</span>
+        <span class="summary-value">{{ formatCurrency(totalAmount) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading reports...</p>
+    </div>
+  }
+
+  <!-- Report Selection -->
+  @if (!loading()) {
+    <div class="report-selection">
+      <label class="selection-label">Choose a report</label>
+
+      <mat-radio-group [(ngModel)]="selectedOption" class="report-radio-group">
+        <!-- Create New Report Option -->
+        <mat-radio-button value="new" class="report-option new-report-option">
+          <div class="option-content">
+            <div class="option-header">
+              <mat-icon>add_circle</mat-icon>
+              <span class="option-title">Create New Report</span>
+            </div>
+            <p class="option-description">
+              Creates a new draft report with the selected expenses
+            </p>
+          </div>
+        </mat-radio-button>
+
+        <!-- Existing Draft Reports -->
+        @if (draftReports().length > 0) {
+          <div class="divider-text">
+            <span>Or add to existing report</span>
+          </div>
+
+          @for (report of draftReports(); track report.id) {
+            <mat-radio-button [value]="report.id" class="report-option">
+              <div class="option-content">
+                <div class="option-header">
+                  <mat-icon>folder</mat-icon>
+                  <span class="option-title">{{ report.name }}</span>
+                </div>
+                <div class="report-meta">
+                  <span class="meta-item">
+                    <mat-icon>event</mat-icon>
+                    {{ formatDate(report.created_at) }}
+                  </span>
+                  <span class="meta-item">
+                    <mat-icon>attach_money</mat-icon>
+                    {{ formatCurrency(report.total_amount) }}
+                  </span>
+                  @if (report.description) {
+                    <span class="meta-item description">{{ report.description }}</span>
+                  }
+                </div>
+              </div>
+            </mat-radio-button>
+          }
+        } @else {
+          <p class="no-reports-message">
+            You don't have any draft reports yet. Select "Create New Report" above.
+          </p>
+        }
+      </mat-radio-group>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="error-message">
+      <mat-icon>error</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    (click)="onCancel()"
+    [disabled]="submitting()">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onSubmit()"
+    [disabled]="loading() || submitting() || !selectedOption">
+    @if (submitting()) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      <mat-icon>{{ selectedOption === 'new' ? 'add' : 'folder_open' }}</mat-icon>
+    }
+    {{ selectedOption === 'new' ? 'Create Report' : 'Add to Report' }}
+  </button>
+</mat-dialog-actions>

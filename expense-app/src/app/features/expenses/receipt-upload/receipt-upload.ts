@@ -1,14 +1,21 @@
 import { Component, signal, computed, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { ExpenseService } from '../../../core/services/expense.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { Receipt, ReceiptUploadResponse } from '../../../core/models/receipt.model';
-import { Subject, takeUntil } from 'rxjs';
+import { OcrStatus, ExpenseCategory } from '../../../core/models/enums';
+import { Subject, interval, takeUntil, take } from 'rxjs';
 
 /**
  * Receipt Upload Component
@@ -20,11 +27,16 @@ import { Subject, takeUntil } from 'rxjs';
   selector: 'app-receipt-upload',
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatCardModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule
   ],
   templateUrl: './receipt-upload.html',
   styleUrl: './receipt-upload.scss',
@@ -40,25 +52,59 @@ export class ReceiptUpload implements OnDestroy {
   uploadProgress = signal<number>(0);
   uploadedReceipt = signal<Receipt | null>(null);
   errorMessage = signal<string | null>(null);
+  ocrProcessing = signal<boolean>(false);
+
+  // Editable extracted data signals
+  extractedMerchant = signal<string>('');
+  extractedAmount = signal<number | null>(null);
+  extractedDate = signal<string>('');
+  extractedCategory = signal<ExpenseCategory>(ExpenseCategory.MISCELLANEOUS);
 
   // Computed values
   canUpload = computed(() => this.selectedFile() !== null && !this.isUploading());
   hasPreview = computed(() => this.previewUrl() !== null);
   showProgress = computed(() => this.isUploading());
+  ocrCompleted = computed(() => {
+    const receipt = this.uploadedReceipt();
+    return receipt?.ocr_status === OcrStatus.COMPLETED;
+  });
+  ocrFailed = computed(() => {
+    const receipt = this.uploadedReceipt();
+    return receipt?.ocr_status === OcrStatus.FAILED;
+  });
 
   // File validation constants
   readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
   readonly ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
 
+  // Enums for template
+  readonly OcrStatus = OcrStatus;
+  readonly ExpenseCategory = ExpenseCategory;
+
+  // Category options for dropdown
+  readonly categoryOptions = [
+    { value: ExpenseCategory.FUEL, label: 'Fuel/Gas' },
+    { value: ExpenseCategory.MEALS, label: 'Meals & Entertainment' },
+    { value: ExpenseCategory.LODGING, label: 'Lodging/Hotels' },
+    { value: ExpenseCategory.AIRFARE, label: 'Airfare' },
+    { value: ExpenseCategory.GROUND_TRANSPORTATION, label: 'Ground Transportation' },
+    { value: ExpenseCategory.OFFICE_SUPPLIES, label: 'Office Supplies' },
+    { value: ExpenseCategory.SOFTWARE, label: 'Software/Subscriptions' },
+    { value: ExpenseCategory.MISCELLANEOUS, label: 'Miscellaneous' }
+  ];
+
   // Subject for subscription cleanup
   private destroy$ = new Subject<void>();
   private progressIntervalId: number | null = null;
+  private ocrPollIntervalId: number | null = null;
+  private hasPopulatedOcrFields = false;
 
   constructor(
     private expenseService: ExpenseService,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private logger: LoggerService
   ) {}
 
   /**
@@ -68,6 +114,7 @@ export class ReceiptUpload implements OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.clearProgressInterval();
+    this.clearOcrPollInterval();
   }
 
   /**
@@ -193,12 +240,10 @@ export class ReceiptUpload implements OnDestroy {
           this.clearProgressInterval();
           this.uploadProgress.set(100);
           this.uploadedReceipt.set(response.receipt);
-
-          // Navigate to expense form with receipt ID
-          // Success message will be shown in the expense form via SmartScan status
-          this.router.navigate(['/expenses/new'], {
-            queryParams: { receiptId: response.receipt.id }
-          });
+          this.isUploading.set(false);  // Reset loading state
+          this.showSuccess('Receipt uploaded successfully!');
+          // Start polling for OCR completion
+          this.startOcrPolling(response.receipt.id);
         },
         error: (error: Error) => {
           this.clearProgressInterval();
@@ -233,6 +278,53 @@ export class ReceiptUpload implements OnDestroy {
   }
 
   /**
+   * Reset form to upload another receipt
+   */
+  resetForAnotherUpload(): void {
+    this.clearOcrPollInterval();
+    this.selectedFile.set(null);
+    this.previewUrl.set(null);
+    this.uploadProgress.set(0);
+    this.uploadedReceipt.set(null);
+    this.errorMessage.set(null);
+    this.ocrProcessing.set(false);
+    this.extractedMerchant.set('');
+    this.extractedAmount.set(null);
+    this.extractedDate.set('');
+    this.extractedCategory.set(ExpenseCategory.MISCELLANEOUS);
+    this.hasPopulatedOcrFields = false;
+  }
+
+  /**
+   * Navigate to expense form with receipt and edited OCR data
+   */
+  navigateToExpenseForm(): void {
+    const receipt = this.uploadedReceipt();
+    if (!receipt) return;
+
+    const queryParams: any = { receiptId: receipt.id };
+
+    // Pass edited values as query params (expense form will use these instead of receipt values)
+    if (this.ocrCompleted()) {
+      if (this.extractedMerchant()) {
+        queryParams.merchant = this.extractedMerchant();
+      }
+      if (this.extractedAmount()) {
+        queryParams.amount = this.extractedAmount();
+      }
+      if (this.extractedDate()) {
+        queryParams.date = this.extractedDate();
+      }
+      if (this.extractedCategory()) {
+        queryParams.category = this.extractedCategory();
+      }
+    }
+
+    // Navigate to expense form
+    this.router.navigate(['/expenses/new'], { queryParams });
+  }
+
+  /**
    * Get file size in human-readable format
    */
   getFileSizeLabel(): string {
@@ -252,6 +344,56 @@ export class ReceiptUpload implements OnDestroy {
   isPdf(): boolean {
     const file = this.selectedFile();
     return file?.type === 'application/pdf' || false;
+  }
+
+  /**
+   * Start polling for OCR completion
+   */
+  private startOcrPolling(receiptId: string): void {
+    this.ocrProcessing.set(true);
+
+    // Poll every 2 seconds for up to 30 seconds (15 attempts)
+    interval(2000)
+      .pipe(
+        take(15),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.expenseService.getReceiptById(receiptId)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (receipt: Receipt) => {
+              this.uploadedReceipt.set(receipt);
+
+              // Stop polling if OCR completed or failed
+              if (receipt.ocr_status === OcrStatus.COMPLETED || receipt.ocr_status === OcrStatus.FAILED) {
+                this.ocrProcessing.set(false);
+                this.clearOcrPollInterval();
+
+                // Populate editable fields with extracted data ONLY ONCE (prevent overwriting user edits)
+                if (receipt.ocr_status === OcrStatus.COMPLETED && !this.hasPopulatedOcrFields) {
+                  this.extractedMerchant.set(receipt.extracted_merchant || '');
+                  this.extractedAmount.set(receipt.extracted_amount || null);
+                  this.extractedDate.set(receipt.extracted_date || '');
+                  this.hasPopulatedOcrFields = true;
+                }
+              }
+            },
+            error: (err: Error) => {
+              this.logger.error('Failed to poll OCR status', err);
+            }
+          });
+      });
+  }
+
+  /**
+   * Clear OCR polling interval
+   */
+  private clearOcrPollInterval(): void {
+    if (this.ocrPollIntervalId !== null) {
+      clearInterval(this.ocrPollIntervalId);
+      this.ocrPollIntervalId = null;
+    }
   }
 
   /**

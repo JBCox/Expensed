@@ -1,0 +1,92 @@
+<h2 mat-dialog-title>
+  <mat-icon>add</mat-icon>
+  Create New Report
+</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="report-form">
+    <!-- Name Field -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Report Name</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        placeholder="e.g., Dallas Business Trip - Nov 2025"
+        required>
+      <mat-icon matPrefix>title</mat-icon>
+      @if (form.get('name')?.invalid && form.get('name')?.touched) {
+        <mat-error>{{ getErrorMessage('name') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Description Field -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Description (Optional)</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        rows="3"
+        placeholder="Brief description of the trip or purpose"></textarea>
+      <mat-icon matPrefix>description</mat-icon>
+      @if (form.get('description')?.invalid && form.get('description')?.touched) {
+        <mat-error>{{ getErrorMessage('description') }}</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Date Range -->
+    <div class="date-range-group">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Start Date (Optional)</mat-label>
+        <input
+          matInput
+          [matDatepicker]="startPicker"
+          formControlName="start_date"
+          placeholder="MM/DD/YYYY">
+        <mat-datepicker-toggle matPrefix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>End Date (Optional)</mat-label>
+        <input
+          matInput
+          [matDatepicker]="endPicker"
+          formControlName="end_date"
+          placeholder="MM/DD/YYYY">
+        <mat-datepicker-toggle matPrefix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Error Message -->
+    @if (error()) {
+      <div class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    (click)="onCancel()"
+    [disabled]="loading()"
+    class="jensify-button">
+    Cancel
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onSubmit()"
+    [disabled]="loading() || form.invalid"
+    class="jensify-button">
+    @if (loading()) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      <mat-icon>add</mat-icon>
+    }
+    Create Report
+  </button>
+</mat-dialog-actions>

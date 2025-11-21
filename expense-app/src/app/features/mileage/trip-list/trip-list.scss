@@ -1,6 +1,6 @@
 /**
- * Component-specific styles only
- * Layout, colors, spacing come from global Jensify utilities
+ * Mileage Trip List Component Styles
+ * Enhanced with modern card designs and interactive states
  */
 
 // Override filter row grid to prevent overlapping
@@ -13,36 +13,193 @@
   }
 }
 
-// Fix Material select label overlapping with value - more specific selectors
-:host ::ng-deep {
-  .jensify-filter-row {
-    mat-form-field.mat-mdc-form-field {
-      // Force proper spacing for select fields
-      .mat-mdc-text-field-wrapper.mdc-text-field {
-        padding-top: 16px !important;
-      }
-      
-      .mat-mdc-form-field-infix {
-        min-height: 56px !important;
-        padding-top: 24px !important;
-        padding-bottom: 8px !important;
-      }
-      
-      // Force label to float when field has value
-      .mdc-floating-label {
-        top: 28px !important;
-      }
-      
-      &.mat-focused .mdc-floating-label,
-      &.mat-form-field-should-float .mdc-floating-label {
-        transform: translateY(-106%) scale(0.75) !important;
-        top: 28px !important;
-      }
-      
-      // Ensure select value doesn't overlap label
-      .mat-mdc-select-value {
-        padding-top: 0 !important;
-      }
+// Status Filter Chips
+.jensify-status-chips {
+  mat-chip {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+
+    &:hover {
+      background: var(--jensify-surface-hover) !important;
+      transform: translateY(-1px);
     }
+
+    &.selected {
+      background: var(--jensify-primary) !important;
+      color: white !important;
+      border-color: var(--jensify-primary);
+      box-shadow: var(--jensify-shadow-sm);
+    }
+  }
+}
+
+// Batch Action Bar
+.jensify-batch-action-bar {
+  background: linear-gradient(135deg, var(--jensify-primary-soft) 0%, var(--jensify-surface-card) 100%);
+  border-left: 4px solid var(--jensify-primary);
+  animation: jensify-animate-slide-down 0.3s ease;
+}
+
+// Trip Cards Viewport
+.jensify-trip-cards-viewport {
+  height: 600px;
+  margin-top: var(--jensify-spacing-lg);
+
+  @media (max-width: 767px) {
+    height: 500px;
+  }
+}
+
+// Trip Card Enhancements
+.jensify-trip-card {
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--jensify-primary), var(--jensify-primary-soft));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--jensify-shadow-lg) !important;
+    border-left-color: var(--jensify-primary);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &.selected {
+    background: var(--jensify-primary-soft);
+    border-left-color: var(--jensify-primary);
+  }
+}
+
+// Trip Icon
+.jensify-trip-icon {
+  background: linear-gradient(135deg, var(--jensify-primary-soft), var(--jensify-primary));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+
+  mat-icon {
+    color: white;
+    font-size: 24px;
+  }
+}
+
+// Trip Route Display
+.jensify-trip-route {
+  .jensify-route-icon {
+    color: var(--jensify-primary);
+  }
+
+  .jensify-arrow-icon {
+    color: var(--jensify-text-muted);
+    font-size: 20px;
+    margin: var(--jensify-spacing-xs) 0;
+  }
+
+  .jensify-address {
+    font-weight: 500;
+    color: var(--jensify-text-body);
+  }
+}
+
+// Trip Meta Items
+.jensify-trip-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jensify-spacing-md);
+  margin-top: var(--jensify-spacing-sm);
+
+  .jensify-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-xs);
+    font-size: 0.875rem;
+    color: var(--jensify-text-body);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--jensify-text-muted);
+    }
+  }
+}
+
+// Mileage Info Section
+.jensify-trip-mileage-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--jensify-spacing-sm);
+  padding: var(--jensify-spacing-md);
+  background: var(--jensify-surface-subtle);
+  border-radius: var(--jensify-radius-md);
+  margin-top: var(--jensify-spacing-md);
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.jensify-mileage-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-xs);
+
+  .jensify-mileage-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--jensify-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .jensify-mileage-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--jensify-text-strong);
+  }
+}
+
+// Trip Amount Display
+.jensify-trip-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--jensify-spacing-xs);
+  padding: var(--jensify-spacing-md);
+  background: linear-gradient(135deg, var(--jensify-success-soft), var(--jensify-surface-card));
+  border-radius: var(--jensify-radius-md);
+  border: 1px solid var(--jensify-success-border);
+
+  .jensify-amount-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--jensify-success-strong);
+  }
+
+  .jensify-amount-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--jensify-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 }

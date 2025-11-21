@@ -1,12 +1,11 @@
 <div class="jensify-container">
-  <!-- Header with Summary and Batch Actions -->
   <div class="jensify-page-header">
     <div class="jensify-header-content">
       <h1 class="jensify-page-title">Approval Queue</h1>
       <div class="jensify-summary-metrics">
         <div class="jensify-metric">
           <span class="jensify-metric-value">{{ totalPending() }}</span>
-          <span class="jensify-metric-label">Pending</span>
+          <span class="jensify-metric-label">Submitted Reports</span>
         </div>
         <div class="jensify-metric">
           <span class="jensify-metric-value">{{ formatCurrency(totalAmount()) }}</span>
@@ -15,21 +14,14 @@
       </div>
     </div>
 
-    <!-- Batch Actions -->
     @if (selectedCount() > 0) {
       <div class="jensify-batch-actions">
         <span class="jensify-selection-count">{{ selectedCount() }} selected</span>
-        <button
-          mat-raised-button
-          class="jensify-approve-btn"
-          (click)="approveSelected()">
+        <button mat-raised-button class="jensify-approve-btn" (click)="approveSelected()">
           <mat-icon>done_all</mat-icon>
           Approve Selected
         </button>
-        <button
-          mat-stroked-button
-          color="warn"
-          (click)="rejectSelected()">
+        <button mat-stroked-button color="warn" (click)="rejectSelected()">
           <mat-icon>close</mat-icon>
           Reject Selected
         </button>
@@ -37,198 +29,81 @@
     }
   </div>
 
-  <!-- Filters -->
   <mat-card class="jensify-card jensify-filters-card">
     <div class="jensify-filter-row">
-      <mat-form-field appearance="fill" floatLabel="always">
+      <mat-form-field appearance="fill" floatLabel="always" class="full-width">
         <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Search by employee or merchant</mat-label>
-        <input
-          matInput
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="searchQuery.set($event)">
+        <mat-label>Search by report or employee</mat-label>
+        <input matInput [(ngModel)]="searchQuery" (ngModelChange)="searchQuery.set($event)">
       </mat-form-field>
-
-      <mat-form-field appearance="fill" floatLabel="always">
-        <mat-label>Category</mat-label>
-        <mat-select
-          [(ngModel)]="selectedCategory"
-          (ngModelChange)="selectedCategory.set($event)">
-          @for (option of categoryOptions; track option.value) {
-            <mat-option [value]="option.value">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" floatLabel="always">
-        <mat-label>From Date</mat-label>
-        <input
-          matInput
-          [matDatepicker]="fromPicker"
-          [(ngModel)]="dateFrom"
-          (ngModelChange)="dateFrom.set($event)">
-        <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
-        <mat-datepicker #fromPicker></mat-datepicker>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" floatLabel="always">
-        <mat-label>To Date</mat-label>
-        <input
-          matInput
-          [matDatepicker]="toPicker"
-          [(ngModel)]="dateTo"
-          (ngModelChange)="dateTo.set($event)">
-        <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
-        <mat-datepicker #toPicker></mat-datepicker>
-      </mat-form-field>
-    </div>
-
-    <div class="jensify-flex-end jensify-mt-md">
       <button mat-button (click)="clearFilters()">
         <mat-icon>clear</mat-icon>
-        Clear Filters
+        Clear
       </button>
     </div>
   </mat-card>
 
-  <!-- Loading State -->
   @if (loading()) {
     <app-loading-skeleton />
   }
 
-  <!-- Error State -->
   @if (error() && !loading()) {
     <mat-card class="jensify-card error-card">
       <mat-icon>error</mat-icon>
       <p>{{ error() }}</p>
-      <button mat-raised-button color="primary" (click)="loadPendingExpenses()">Retry</button>
+      <button mat-raised-button color="primary" (click)="loadSubmittedReports()">Retry</button>
     </mat-card>
   }
 
-  <!-- Empty State -->
-  @if (!loading() && !error() && filteredExpenses().length === 0) {
+  @if (!loading() && !error() && filteredReports().length === 0) {
     <app-empty-state
       icon="celebration"
       title="All caught up!"
-      message="No pending expenses to review at this time.">
+      message="No submitted reports to review.">
     </app-empty-state>
   }
 
-  <!-- Approval Queue Table -->
-  @if (!loading() && !error() && filteredExpenses().length > 0) {
+  @if (!loading() && !error() && filteredReports().length > 0) {
     <mat-card class="jensify-card">
-      <!-- Mobile: Cards with Virtual Scrolling -->
-      <cdk-virtual-scroll-viewport itemSize="200" class="jensify-queue-viewport jensify-hide-desktop">
-        <div class="jensify-mobile-queue">
-          <div
-            *cdkVirtualFor="let expense of filteredExpenses(); trackBy: trackByExpenseId"
-            class="jensify-queue-item-mobile">
-            <div class="jensify-item-header-mobile">
-              <mat-checkbox
-                [checked]="isSelected(expense.id)"
-                (change)="toggleSelection(expense.id)">
-              </mat-checkbox>
-              <div class="jensify-employee-info">
-                <span class="jensify-employee-name">{{ expense.user.full_name || 'Unknown' }}</span>
-                <span class="jensify-employee-meta">{{ formatDate(expense.expense_date) }}</span>
+      <div class="jensify-report-list">
+        @for (report of filteredReports(); track trackByReportId($index, report)) {
+          <div class="jensify-report-row" (click)="toggleSelection(report.id)">
+            <mat-checkbox
+              [checked]="isSelected(report.id)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleSelection(report.id)">
+            </mat-checkbox>
+
+            <div class="jensify-report-main">
+              <div class="jensify-report-title">
+                <span class="name">{{ report.name }}</span>
+                <span class="employee" *ngIf="report.user?.full_name">
+                  • {{ report.user?.full_name }} <span class="muted">({{ report.user?.email }})</span>
+                </span>
+              </div>
+              <div class="jensify-report-meta">
+                <span>Submitted {{ formatDate(report.submitted_at) }}</span>
+                <span *ngIf="report.expense_count">{{ report.expense_count }} expenses</span>
               </div>
             </div>
 
-            <div class="jensify-item-body-mobile">
-              <div class="jensify-flex-col jensify-gap-sm">
-                <span class="jensify-merchant-name">{{ expense.merchant }}</span>
-                <span class="jensify-employee-meta">{{ expense.category }}</span>
-              </div>
-              <span class="jensify-amount">{{ formatCurrency(expense.amount) }}</span>
+            <div class="jensify-report-amount">
+              {{ formatCurrency(report.total_amount || 0) }}
             </div>
 
-            <div class="jensify-flex jensify-gap-sm jensify-mt-sm">
-              <button
-                mat-button
-                (click)="viewReceipt(expense)"
-                [disabled]="!expense.receipt"
-                class="jensify-full-width">
-                <mat-icon>description</mat-icon>
-                {{ expense.receipt ? 'Receipt' : 'No Receipt' }}
-              </button>
-              <button
-                mat-raised-button
-                class="jensify-approve-btn jensify-button-sm jensify-full-width"
-                (click)="approveExpense(expense.id)">
-                <mat-icon>done</mat-icon>
-                Approve
-              </button>
-              <button
-                mat-stroked-button
-                color="warn"
-                class="jensify-button-sm jensify-full-width"
-                (click)="rejectExpense(expense.id)">
+            <div class="jensify-report-actions">
+              <button mat-stroked-button color="warn" (click)="rejectReport(report.id); $event.stopPropagation();">
                 <mat-icon>close</mat-icon>
                 Reject
               </button>
-            </div>
-          </div>
-        </div>
-      </cdk-virtual-scroll-viewport>
-
-      <!-- Desktop: Table with Virtual Scrolling -->
-      <cdk-virtual-scroll-viewport itemSize="80" class="jensify-queue-viewport jensify-hide-mobile">
-        <div class="jensify-desktop-queue">
-          <div
-            *cdkVirtualFor="let expense of filteredExpenses(); trackBy: trackByExpenseId"
-            class="jensify-queue-row">
-            <mat-checkbox
-              [checked]="isSelected(expense.id)"
-              (change)="toggleSelection(expense.id)">
-            </mat-checkbox>
-
-            <div class="jensify-column">
-              <span class="jensify-employee-name">{{ expense.user.full_name || 'Unknown' }}</span>
-            </div>
-
-            <div class="jensify-column">
-              <span class="jensify-column-value">{{ expense.merchant }}</span>
-              <span class="jensify-employee-meta">{{ expense.category }}</span>
-            </div>
-
-            <div class="jensify-column">
-              <span class="jensify-column-value">{{ formatDate(expense.expense_date) }}</span>
-            </div>
-
-            <div class="jensify-column">
-              <span class="jensify-amount">{{ formatCurrency(expense.amount) }}</span>
-            </div>
-
-            <div class="jensify-column">
-              <button
-                mat-stroked-button
-                class="jensify-button-sm"
-                (click)="viewReceipt(expense)"
-                [disabled]="!expense.receipt">
-                <mat-icon>description</mat-icon>
-                Receipt
-              </button>
-            </div>
-
-            <div class="jensify-column jensify-flex jensify-gap-sm">
-              <button
-                mat-icon-button
-                class="jensify-approve-btn"
-                (click)="approveExpense(expense.id)"
-                matTooltip="Approve">
+              <button mat-raised-button class="jensify-approve-btn" (click)="approveReport(report.id); $event.stopPropagation();">
                 <mat-icon>done</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="rejectExpense(expense.id)"
-                matTooltip="Reject">
-                <mat-icon>close</mat-icon>
+                Approve
               </button>
             </div>
           </div>
-        </div>
-      </cdk-virtual-scroll-viewport>
+        }
+      </div>
     </mat-card>
   }
 </div>

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,6 +22,7 @@ import { Subject, interval, takeUntil, switchMap, takeWhile, tap } from 'rxjs';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -88,7 +89,20 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     const dto = { ...this.form.value, receipt_id: this.receiptId || undefined };
 
     this.expenses.createExpense(dto as any)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((expense) => {
+          // If there's a receipt attached, also create junction table record
+          if (this.receiptId) {
+            return this.expenses.attachReceipt(expense.id, this.receiptId, true).pipe(
+              // Return the expense after attaching receipt
+              switchMap(() => [expense])
+            );
+          }
+          // No receipt, just return the expense
+          return [expense];
+        })
+      )
       .subscribe({
         next: () => {
           this.successMessage = 'Expense created.';

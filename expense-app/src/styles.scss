@@ -1,9 +1,9 @@
 // Import Angular Material theme utilities once
-@use '@angular/material' as mat;
+@use "@angular/material" as mat;
 
 // Forward Jensify universal utility classes (modern Sass approach)
 // Using @forward instead of deprecated @import to make utilities globally available
-@forward './utilities';
+@forward "./utilities";
 
 // Then include Tailwind directives
 @tailwind base;
@@ -14,32 +14,34 @@
 // Custom orange palette for Jensify (Brex-inspired)
 $jensify-orange-palette: (
   0: #000000,
-  10: #3A0E00,
-  20: #5F1A00,
+  10: #3a0e00,
+  20: #5f1a00,
   25: #702000,
   30: #822600,
-  35: #942C00,
-  40: #A63300,
-  50: #CB4100,
-  60: #F24F00,
-  70: #FF5900,
-  80: #FF6A1A,
-  90: #FF8A4D,
-  95: #FFB380,
-  98: #FFE5D6,
-  99: #FFF4ED,
-  100: #FFFFFF,
+  35: #942c00,
+  40: #a63300,
+  50: #cb4100,
+  60: #f24f00,
+  70: #ff5900,
+  80: #ff6a1a,
+  90: #ff8a4d,
+  95: #ffb380,
+  98: #ffe5d6,
+  99: #fff4ed,
+  100: #ffffff,
 );
 
 html {
-  @include mat.theme((
-    color: (
-      primary: $jensify-orange-palette,
-      tertiary: mat.$orange-palette,
+  @include mat.theme(
+    (
+      color: (
+        primary: $jensify-orange-palette,
+        tertiary: mat.$orange-palette,
+      ),
+      typography: Roboto,
+      density: 0,
     ),
-    typography: Roboto,
-    density: 0,
-  ));
+  );
 }
 
 // Shared helpers for Angular Material form fields
@@ -65,93 +67,109 @@ html {
 // Brex-inspired orange color palette
 :root {
   // Primary Orange (Brex-inspired)
-  --jensify-primary: #FF5900;
-  --jensify-primary-strong: #E54F00;
-  --jensify-primary-hover: #FF6A1A;
-  --jensify-primary-soft: #FFF4ED;
-  --jensify-primary-border: #FFCFB3;
-  --jensify-primary-background-active: #FFE5D6;
+  --jensify-primary: #ff5900;
+  --jensify-primary-strong: #e54f00;
+  --jensify-primary-hover: #ff6a1a;
+  --jensify-primary-soft: #fff4ed;
+  --jensify-primary-border: #ffcfb3;
+  --jensify-primary-background-active: #ffe5d6;
 
   // Accent & Secondary
-  --jensify-accent: #FF7A33;
-  --jensify-secondary: #3B82F6;
+  --jensify-accent: #ff7a33;
+  --jensify-secondary: #3b82f6;
 
   // Surface & Background
-  --jensify-surface-soft: #F9FAFB;
-  --jensify-surface-card: #FFFFFF;
-  --jensify-surface-raised: #FFFFFF;
-  --jensify-background-dark: #1A1A1A;
+  --jensify-surface-soft: #f9fafb;
+  --jensify-surface-card: #ffffff;
+  --jensify-surface-raised: #ffffff;
+  --jensify-background-dark: #1a1a1a;
 
   // Borders
-  --jensify-border-subtle: #E5E7EB;
-  --jensify-border-medium: #D1D5DB;
-  --jensify-border-strong: #9CA3AF;
+  --jensify-border-subtle: #e5e7eb;
+  --jensify-border-medium: #d1d5db;
+  --jensify-border-strong: #9ca3af;
 
   // Text
   --jensify-text-strong: #111827;
   --jensify-text-medium: #374151;
-  --jensify-text-muted: #6B7280;
-  --jensify-text-subtle: #9CA3AF;
+  --jensify-text-muted: #6b7280;
+  --jensify-text-subtle: #9ca3af;
 
   // Icons
   --jensify-icon-strong: #374151;
-  --jensify-icon-muted: #9CA3AF;
+  --jensify-icon-muted: #9ca3af;
 
   // Semantic Colors
-  --jensify-danger: #EF4444;
-  --jensify-danger-strong: #DC2626;
-  --jensify-danger-soft: #FEE2E2;
-  --jensify-danger-border: #FECACA;
+  --jensify-danger: #ef4444;
+  --jensify-danger-strong: #dc2626;
+  --jensify-danger-soft: #fee2e2;
+  --jensify-danger-border: #fecaca;
 
   --jensify-success: #059669;
   --jensify-success-strong: #047857;
-  --jensify-success-soft: #D1FAE5;
-  --jensify-success-border: #A7F3D0;
+  --jensify-success-soft: #d1fae5;
+  --jensify-success-border: #a7f3d0;
 
-  --jensify-warning: #F59E0B;
-  --jensify-warning-strong: #D97706;
-  --jensify-warning-soft: #FEF3C7;
-  --jensify-warning-border: #FDE68A;
+  --jensify-warning: #f59e0b;
+  --jensify-warning-strong: #d97706;
+  --jensify-warning-soft: #fef3c7;
+  --jensify-warning-border: #fde68a;
 
-  --jensify-info: #3B82F6;
-  --jensify-info-strong: #2563EB;
-  --jensify-info-soft: #DBEAFE;
-  --jensify-info-border: #BFDBFE;
+  --jensify-info: #3b82f6;
+  --jensify-info-strong: #2563eb;
+  --jensify-info-soft: #dbeafe;
+  --jensify-info-border: #bfdbfe;
 
   // Focus & Interactive States
-  --jensify-focus-ring: #FFB380;
+  --jensify-focus-ring: #ffb380;
   --jensify-focus-ring-width: 2px;
 
-  // Shadows (for cards and elevated surfaces)
-  --jensify-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --jensify-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --jensify-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --jensify-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  // Shadows (Refined for premium feel)
+  --jensify-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --jensify-shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --jensify-shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --jensify-shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --jensify-shadow-icon: 0 2px 8px rgba(0, 0, 0, 0.08);
 
   // Gradients & Special Effects
-  --jensify-gradient-card: linear-gradient(135deg, var(--jensify-surface-card) 0%, var(--jensify-surface-soft) 100%);
-  --jensify-gradient-hero: linear-gradient(135deg, var(--jensify-surface-card), #FFF8F3);
-  --jensify-glow-primary: radial-gradient(circle, rgba(255, 89, 0, 0.12), transparent 60%);
+  --jensify-gradient-card: linear-gradient(
+    135deg,
+    var(--jensify-surface-card) 0%,
+    var(--jensify-surface-soft) 100%
+  );
+  --jensify-gradient-hero: linear-gradient(
+    135deg,
+    var(--jensify-surface-card),
+    #fff8f3
+  );
+  --jensify-glow-primary: radial-gradient(
+    circle,
+    rgba(255, 89, 0, 0.12),
+    transparent 60%
+  );
   --jensify-surface-frosted: rgba(255, 255, 255, 0.95);
+  --jensify-surface-glass-nav: rgba(255, 255, 255, 0.65);
   --jensify-overlay: rgba(0, 0, 0, 0.5);
   --jensify-warning-glow-start: rgba(245, 158, 11, 0.4);
   --jensify-warning-glow-end: rgba(245, 158, 11, 0);
 
   // Spacing Scale (for generous whitespace)
-  --jensify-spacing-xs: 0.25rem;    // 4px
-  --jensify-spacing-sm: 0.5rem;     // 8px
-  --jensify-spacing-md: 1rem;       // 16px
-  --jensify-spacing-lg: 1.5rem;     // 24px
-  --jensify-spacing-xl: 2rem;       // 32px
-  --jensify-spacing-2xl: 3rem;      // 48px
-  --jensify-spacing-3xl: 4rem;      // 64px
+  --jensify-spacing-xs: 0.25rem; // 4px
+  --jensify-spacing-sm: 0.5rem; // 8px
+  --jensify-spacing-md: 1rem; // 16px
+  --jensify-spacing-lg: 1.5rem; // 24px
+  --jensify-spacing-xl: 2rem; // 32px
+  --jensify-spacing-2xl: 3rem; // 48px
+  --jensify-spacing-3xl: 4rem; // 64px
 
   // Border Radius
-  --jensify-radius-sm: 0.375rem;    // 6px
-  --jensify-radius-md: 0.5rem;      // 8px
-  --jensify-radius-lg: 0.75rem;     // 12px
-  --jensify-radius-xl: 1rem;        // 16px
+  --jensify-radius-sm: 0.375rem; // 6px
+  --jensify-radius-md: 0.5rem; // 8px
+  --jensify-radius-lg: 0.75rem; // 12px
+  --jensify-radius-xl: 1rem; // 16px
   --jensify-radius-full: 9999px;
 
   // Legacy aliases (for older component styles)
@@ -168,7 +186,7 @@ html {
   --radius-xl: var(--jensify-radius-xl);
 
   // Additional surface & text tokens used by layout components
-  --jensify-surface-hover: #F3F4F6;
+  --jensify-surface-hover: #f3f4f6;
   --jensify-text-primary: var(--jensify-text-strong);
   --jensify-text-secondary: var(--jensify-text-medium);
 
@@ -194,9 +212,13 @@ body {
   height: 100%;
 }
 
-html,
-body {
+html {
   height: 100%;
+}
+
+body {
+  min-height: 100%;
+  overflow-x: hidden; // Handle horizontal overflow globally
 }
 
 body {
@@ -206,6 +228,315 @@ body {
 /* Global styles */
 * {
   box-sizing: border-box;
+}
+
+// ============================================================================
+// PREMIUM DESIGN MIXINS
+// ============================================================================
+
+@mixin jensify-mesh-gradient-bg {
+  background-color: #fff0e6;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(255, 89, 0, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(255, 122, 51, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(255, 89, 0, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(255, 122, 51, 0.1) 0px, transparent 50%);
+  position: relative;
+  // overflow-x: hidden; // Removed to prevent nested scroll context
+}
+
+@mixin jensify-floating-shapes {
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.6;
+    animation: float 20s infinite ease-in-out;
+    pointer-events: none;
+  }
+
+  &::before {
+    width: 600px;
+    height: 600px;
+    background: rgba(255, 89, 0, 0.08);
+    top: -100px;
+    left: -100px;
+    animation-delay: -5s;
+  }
+
+  &::after {
+    width: 500px;
+    height: 500px;
+    background: rgba(255, 122, 51, 0.08);
+    bottom: -50px;
+    right: -50px;
+  }
+}
+
+@mixin jensify-glass-card($opacity: 0.9, $blur: 20px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(20px, 20px); }
+  50% { transform: translate(-10px, 40px); }
+  75% { transform: translate(-30px, 10px); }
+}
+
+// Utility Classes for Components
+.jensify-premium-mesh-bg {
+  @include jensify-mesh-gradient-bg;
+  @include jensify-floating-shapes;
+  min-height: 100%;
+  width: 100%;
+}
+
+.jensify-glass-card {
+  @include jensify-glass-card;
+}
+
+// Global Card Styling within Premium Background
+.jensify-premium-mesh-bg {
+  mat-card, .mat-mdc-card {
+    @include jensify-glass-card;
+    background-color: rgba(255, 255, 255, 0.9) !important; // Ensure override
+  }
+}
+
+// ============================================================================
+// AUTH LAYOUT STYLES - PREMIUM REDESIGN
+// ============================================================================
+
+.jensify-auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jensify-spacing-lg);
+  
+  // Apply Mixins
+  @include jensify-mesh-gradient-bg;
+  @include jensify-floating-shapes;
+}
+
+.jensify-auth-hero-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  max-width: 1100px;
+  width: 100%;
+  
+  // Apply Glassmorphism Mixin
+  @include jensify-glass-card;
+  
+  border-radius: var(--jensify-radius-xl);
+  overflow: visible;
+  min-height: 600px;
+  position: relative;
+  z-index: 1;
+  padding: var(--jensify-spacing-md);
+  gap: var(--jensify-spacing-md);
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    min-height: auto;
+    padding: 0;
+    gap: 0;
+  }
+}
+
+.jensify-auth-benefits {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+  color: white;
+  padding: var(--jensify-spacing-3xl);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--jensify-radius-lg); // Rounded corners
+  box-shadow: var(--jensify-shadow-lg); // Add shadow for depth
+
+  // Premium pattern overlay
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.1;
+  }
+
+  // Vibrant glow effect
+  &::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 89, 0, 0.15) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  @media (max-width: 960px) {
+    display: none;
+  }
+
+  .jensify-brand-header {
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-md);
+    margin-bottom: var(--jensify-spacing-2xl);
+    position: relative;
+    z-index: 1;
+
+    .jensify-brand-icon {
+      color: var(--jensify-primary);
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      filter: drop-shadow(0 0 10px rgba(255, 89, 0, 0.3));
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0;
+      color: white;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  h3 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: var(--jensify-spacing-2xl);
+    color: white;
+    letter-spacing: -0.03em;
+    position: relative;
+    z-index: 1;
+    
+    background: linear-gradient(to right, #ffffff, #e0e0e0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.jensify-benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--jensify-spacing-lg);
+  position: relative;
+  z-index: 1;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--jensify-spacing-md);
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateX(5px);
+      color: white;
+      
+      mat-icon {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 5px rgba(255, 89, 0, 0.5));
+      }
+    }
+
+    mat-icon {
+      color: var(--jensify-primary);
+      transition: all 0.3s ease;
+    }
+  }
+}
+
+.jensify-auth-card {
+  padding: var(--jensify-spacing-2xl) !important; // Reduced from 3xl
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: none !important;
+  background: transparent !important;
+  max-height: 100%; // Ensure it doesn't overflow parent
+  overflow-y: auto; // Allow scrolling if absolutely necessary on small screens
+
+  @media (max-width: 960px) {
+    padding: var(--jensify-spacing-lg) !important;
+  }
+}
+
+.jensify-page-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--jensify-text-strong);
+  margin-bottom: var(--jensify-spacing-xs);
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--jensify-text-strong) 0%, #4b5563 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.jensify-page-subtitle {
+  font-size: 1.125rem;
+  color: var(--jensify-text-muted);
+  margin-bottom: var(--jensify-spacing-xl);
+  font-weight: 500;
+}
+
+// Animations
+.jensify-animate-slide-down {
+  animation: slideDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.jensify-animate-fade {
+  animation: fadeIn 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 // ============================================================================
@@ -346,7 +677,8 @@ body {
   @include jensify-form-field-surface;
 }
 
-.mat-mdc-form-field-appearance-outline.mat-mdc-form-field-has-icon-prefix .mat-mdc-notched-outline {
+.mat-mdc-form-field-appearance-outline.mat-mdc-form-field-has-icon-prefix
+  .mat-mdc-notched-outline {
   display: none;
 }
 
@@ -359,7 +691,7 @@ body {
 }
 
 .mat-mdc-form-field:not([appearance]),
-.mat-mdc-form-field[appearance='legacy'] {
+.mat-mdc-form-field[appearance="legacy"] {
   .mat-mdc-form-field-flex {
     @include jensify-form-field-surface;
   }
@@ -414,11 +746,11 @@ body {
     background-color: var(--jensify-surface-card) !important;
     box-shadow: var(--jensify-shadow-xl) !important;
   }
-  
+
   .mat-calendar {
     background-color: var(--jensify-surface-card) !important;
   }
-  
+
   .mat-datepicker-content-container {
     background-color: var(--jensify-surface-card) !important;
   }
@@ -448,7 +780,7 @@ body {
   &.mat-mdc-form-field-appearance-outline {
     .mat-mdc-form-field-flex {
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 8px;
         bottom: 8px;
@@ -501,5 +833,194 @@ body {
   }
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+// Global fix: Ensure all Material cards have solid backgrounds
+mat-card, .mat-mdc-card {
+  background-color: var(--jensify-surface-card) !important;
+  opacity: 1 !important;
+}
+
+// ============================================================================
+// PRINT STYLES
+// Optimizes the app for printing expense reports, receipts, and lists
+// ============================================================================
+
+@media print {
+  // Hide navigation and UI elements
+  .sidebar,
+  .sidebar-backdrop,
+  app-sidebar-nav,
+  .jensify-topbar,
+  .jensify-filters-card,
+  .jensify-batch-action-bar,
+  .jensify-card-actions,
+  .jensify-form-actions,
+  button,
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-stroked-button {
+    display: none !important;
+  }
+
+  // Reset page layout
+  body {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .jensify-container,
+  .jensify-container-sm,
+  .jensify-container-md {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  // Remove shadows and borders for cleaner print
+  .jensify-card,
+  mat-card,
+  .mat-mdc-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb;
+    border-radius: 0;
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  // Optimize page headers for print
+  .jensify-page-header {
+    border-bottom: 2px solid #374151;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .jensify-page-title {
+    font-size: 1.5rem;
+    color: black !important;
+  }
+
+  // Ensure text is readable
+  .jensify-text-muted,
+  .jensify-text-medium,
+  .jensify-text-strong {
+    color: black !important;
+  }
+
+  // Optimize expense cards for printing
+  .jensify-expense-card {
+    break-inside: avoid;
+    border: 1px solid #d1d5db;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  // Hide receipt thumbnails (save ink) but show merchant info
+  .jensify-thumbnail-container {
+    display: none !important;
+  }
+
+  // Optimize expense details for print
+  .jensify-expense-details {
+    width: 100%;
+  }
+
+  .jensify-merchant-name {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .jensify-expense-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  // Status badges - convert to text-only
+  app-status-badge,
+  .status-badge {
+    border: 1px solid black;
+    padding: 2px 6px;
+    background: white !important;
+    color: black !important;
+  }
+
+  // Optimize tables for print
+  .mat-mdc-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      border: 1px solid #d1d5db;
+      padding: 0.5rem;
+      color: black !important;
+    }
+
+    .mat-mdc-header-cell {
+      background: #f3f4f6 !important;
+      font-weight: 700;
+    }
+  }
+
+  // Hide virtual scroll viewport extras
+  .cdk-virtual-scroll-viewport {
+    height: auto !important;
+  }
+
+  // Ensure metrics are visible
+  .jensify-metric-value,
+  .jensify-metric-label {
+    color: black !important;
+  }
+
+  // Add page breaks between reports
+  .jensify-expense-report-card {
+    page-break-after: always;
+  }
+
+  // Optimize home dashboard for print
+  .hero-card {
+    background: white !important;
+    border: 2px solid #374151;
+
+    &::before,
+    &::after {
+      display: none !important;
+    }
+  }
+
+  .stats-card {
+    border: 1px solid #d1d5db;
+  }
+
+  // Print footer with page numbers
+  @page {
+    margin: 1.5cm;
+
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 10pt;
+      color: #6b7280;
+    }
+  }
+
+  // Optimize links for print
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #6b7280;
+  }
+
+  // Don't print link URLs for navigation links
+  .nav-item a[href]:after,
+  button a[href]:after {
+    content: "";
+  }
+}

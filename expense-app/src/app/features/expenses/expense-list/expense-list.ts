@@ -11,11 +11,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { SanitizationService } from '../../../core/services/sanitization.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
 import { Expense, ExpenseFilters } from '../../../core/models/expense.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ExpenseStatus, ExpenseCategory } from '../../../core/models/enums';
@@ -23,6 +25,7 @@ import { StatusBadge, ExpenseStatus as BadgeStatus } from '../../../shared/compo
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { LoadingSkeleton } from '../../../shared/components/loading-skeleton/loading-skeleton';
 import { Router } from '@angular/router';
+import { AddToReportDialogComponent } from '../add-to-report-dialog/add-to-report-dialog';
 
 /**
  * Expense List Component
@@ -43,6 +46,7 @@ import { Router } from '@angular/router';
     MatDatepickerModule,
     MatNativeDateModule,
     MatCheckboxModule,
+    MatDialogModule,
     ScrollingModule,
     StatusBadge,
     EmptyState,
@@ -173,7 +177,9 @@ export class ExpenseList implements OnInit, OnDestroy {
     private expenseService: ExpenseService,
     private sanitizationService: SanitizationService,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
+    private supabase: SupabaseService
   ) {}
 
   ngOnInit(): void {
@@ -287,12 +293,47 @@ export class ExpenseList implements OnInit, OnDestroy {
 
   /**
    * Get receipt thumbnail URL
+   * Returns URL of primary receipt or first receipt in expense_receipts array
    */
   getReceiptThumbnail(expense: Expense): string | null {
-    if (!expense.receipt?.file_path) {
-      return null;
+    // Try primary receipt from expense_receipts array first
+    const primaryReceipt = expense.expense_receipts?.find(er => er.is_primary)?.receipt;
+    if (primaryReceipt?.file_path) {
+      return this.expenseService.getReceiptUrl(primaryReceipt.file_path);
     }
-    return this.expenseService.getReceiptUrl(expense.receipt.file_path);
+
+    // Fall back to first receipt in array
+    const firstReceipt = expense.expense_receipts?.[0]?.receipt;
+    if (firstReceipt?.file_path) {
+      return this.expenseService.getReceiptUrl(firstReceipt.file_path);
+    }
+
+    // Fall back to old single receipt (backward compatibility)
+    if (expense.receipt?.file_path) {
+      return this.expenseService.getReceiptUrl(expense.receipt.file_path);
+    }
+
+    return null;
+  }
+
+  /**
+   * Get receipt count for an expense
+   * @param expense Expense to count receipts for
+   * @returns Number of receipts attached
+   */
+  getReceiptCount(expense: Expense): number {
+    if (expense.expense_receipts && expense.expense_receipts.length > 0) {
+      return expense.expense_receipts.length;
+    }
+    // Fall back to checking if old-style receipt exists
+    return expense.receipt_id ? 1 : 0;
+  }
+
+  /**
+   * Check if expense has multiple receipts
+   */
+  hasMultipleReceipts(expense: Expense): boolean {
+    return this.getReceiptCount(expense) > 1;
   }
 
   /**
@@ -333,14 +374,21 @@ export class ExpenseList implements OnInit, OnDestroy {
   /**
    * View receipt in new window
    */
-  viewReceipt(expense: Expense): void {
+  async viewReceipt(expense: Expense): Promise<void> {
     if (!expense.receipt?.file_path) {
       this.snackBar.open('No receipt available for this expense.', 'Close', { duration: 3000 });
       return;
     }
 
-    const receiptUrl = this.expenseService.getReceiptUrl(expense.receipt.file_path);
-    window.open(receiptUrl, '_blank');
+    try {
+      const { signedUrl } = await this.supabase.getSignedUrl('receipts', expense.receipt.file_path, 86400); // 24 hours
+      if (signedUrl) {
+        window.open(signedUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Failed to get receipt URL:', error);
+      this.snackBar.open('Failed to load receipt.', 'Close', { duration: 3000 });
+    }
   }
 
   hasViolations(expense: Expense): boolean {
@@ -452,5 +500,48 @@ export class ExpenseList implements OnInit, OnDestroy {
           );
         }
       });
+  }
+
+  /**
+   * Add selected expenses to a report
+   */
+  addToReport(): void {
+    const selectedIds = Array.from(this.selectedExpenseIds());
+    if (selectedIds.length === 0) {
+      this.snackBar.open('No expenses selected.', 'Close', { duration: 3000 });
+      return;
+    }
+
+    // Calculate total amount of selected expenses
+    const selectedExpenses = this.expenses().filter(e => selectedIds.includes(e.id));
+    const totalAmount = selectedExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+    // Open dialog
+    const dialogRef = this.dialog.open(AddToReportDialogComponent, {
+      width: '600px',
+      maxWidth: '90vw',
+      data: {
+        expenseIds: selectedIds,
+        totalAmount: totalAmount
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result?.success) {
+        this.clearSelection();
+        const action = result.action === 'created' ? 'created new report' : 'added to report';
+        this.snackBar.open(
+          `Successfully ${action} with ${selectedIds.length} expense${selectedIds.length > 1 ? 's' : ''}`,
+          'View Report',
+          { duration: 5000 }
+        ).onAction().subscribe(() => {
+          if (result.report) {
+            this.router.navigate(['/reports', result.report.id]);
+          }
+        });
+        // Reload expenses to reflect any status changes
+        this.loadExpenses();
+      }
+    });
   }
 }
