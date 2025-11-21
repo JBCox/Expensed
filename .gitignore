@@ -21,6 +21,10 @@ expense-app/src/environments/environment.development.ts
 .DS_Store
 Thumbs.db
 
+# Windows reserved device names
+nul
+*/nul
+
 # Node
 node_modules/
 npm-debug.log
