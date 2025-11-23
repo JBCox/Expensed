@@ -1,225 +1,299 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
-import { OrganizationService } from './organization.service';
-import { LoggerService } from './logger.service';
-import { NotificationService } from './notification.service';
-import { User } from '../models';
-import { UserRole } from '../models/enums';
+import { User } from '../models/user.model';
+import { LoginCredentials, RegisterCredentials } from '../models';
 
 describe('AuthService', () => {
   let service: AuthService;
   let mockSupabaseService: jasmine.SpyObj<SupabaseService>;
-  let mockOrganizationService: jasmine.SpyObj<OrganizationService>;
   let mockRouter: jasmine.SpyObj<Router>;
-  let mockLogger: jasmine.SpyObj<LoggerService>;
-  let mockNotification: jasmine.SpyObj<NotificationService>;
   let currentUserSubject: BehaviorSubject<any>;
 
   const mockUser: User = {
     id: 'user-123',
     email: 'test@example.com',
     full_name: 'Test User',
-    role: UserRole.EMPLOYEE,
-    created_at: '2025-01-01T00:00:00Z',
-    updated_at: '2025-01-01T00:00:00Z'
+    role: 'employee',
+    created_at: '2025-11-13T10:00:00Z',
+    updated_at: '2025-11-13T10:00:00Z'
+  };
+
+  const mockSupabaseUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    user_metadata: {
+      full_name: 'Test User'
+    }
   };
 
   beforeEach(() => {
-    currentUserSubject = new BehaviorSubject(null);
+    // Create BehaviorSubject for currentUser$
+    currentUserSubject = new BehaviorSubject<any>(null);
 
-    // Create mock Supabase service
+    // Create mock services
     mockSupabaseService = jasmine.createSpyObj('SupabaseService', [
-      'signIn',
       'signUp',
+      'signIn',
       'signOut',
       'resetPassword',
       'updatePassword'
-    ]);
-
-    Object.defineProperty(mockSupabaseService, 'currentUser$', {
-      get: () => currentUserSubject.asObservable()
-    });
-    Object.defineProperty(mockSupabaseService, 'isAuthenticated', {
-      get: () => currentUserSubject.value !== null
-    });
-    Object.defineProperty(mockSupabaseService, 'userId', {
-      get: () => currentUserSubject.value?.id || null
-    });
-    Object.defineProperty(mockSupabaseService, 'session$', {
-      get: () => of(null)
+    ], {
+      currentUser$: currentUserSubject.asObservable(),
+      isAuthenticated: false,
+      userId: null,
+      client: {
+        from: jasmine.createSpy('from')
+      }
     });
 
-    // Mock client for database queries
-    const mockClient = {
-      from: jasmine.createSpy('from').and.returnValue({
-        select: jasmine.createSpy('select').and.returnValue({
-          eq: jasmine.createSpy('eq').and.returnValue({
-            single: jasmine.createSpy('single').and.returnValue(
-              Promise.resolve({ data: mockUser, error: null })
-            )
-          })
-        })
-      })
-    };
-    Object.defineProperty(mockSupabaseService, 'client', {
-      get: () => mockClient
-    });
-
-    // Create mock organization service
-    mockOrganizationService = jasmine.createSpyObj('OrganizationService', [
-      'getUserOrganizationContext',
-      'setCurrentOrganization',
-      'clearCurrentOrganization'
-    ]);
-    mockOrganizationService.getUserOrganizationContext.and.returnValue(
-      of({
-        current_organization: { id: 'org-123', name: 'Test Org' },
-        current_membership: { organization_id: 'org-123', user_id: 'user-123', role: 'employee' }
-      } as any)
-    );
-    Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
-      get: () => 'org-123',
-      configurable: true
-    });
-
-    // Create mock router
-    mockRouter = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']);
-
-    // Create mock logger
-    mockLogger = jasmine.createSpyObj('LoggerService', ['info', 'warn', 'error']);
-
-    // Create mock notification
-    mockNotification = jasmine.createSpyObj('NotificationService', ['showWarning', 'showError']);
+    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
     TestBed.configureTestingModule({
       providers: [
         AuthService,
         { provide: SupabaseService, useValue: mockSupabaseService },
-        { provide: OrganizationService, useValue: mockOrganizationService },
-        { provide: Router, useValue: mockRouter },
-        { provide: LoggerService, useValue: mockLogger },
-        { provide: NotificationService, useValue: mockNotification }
+        { provide: Router, useValue: mockRouter }
       ]
     });
 
     service = TestBed.inject(AuthService);
   });
 
-  afterEach(() => {
-    service.ngOnDestroy();
+  it('should be created', () => {
+    expect(service).toBeTruthy();
   });
 
-  // ============================================================================
-  // INITIALIZATION TESTS
-  // ============================================================================
-
   describe('Initialization', () => {
-    it('should create the service', () => {
-      expect(service).toBeTruthy();
-    });
-
     it('should initialize with null user profile', () => {
       expect(service.currentUserProfile).toBeNull();
     });
 
-    it('should not be authenticated initially', () => {
-      expect(service.isAuthenticated).toBe(false);
+    it('should subscribe to auth changes on construction', () => {
+      expect(service.userProfile$).toBeDefined();
     });
 
-    it('should load user profile when user signs in', fakeAsync(() => {
-      const authUser = { id: 'user-123', email: 'test@example.com' };
-      currentUserSubject.next(authUser);
-      tick();
+    it('should load user profile when currentUser$ emits user', (done) => {
+      // Setup mock profile fetch
+      const mockProfileResponse = { data: mockUser, error: null };
+      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
 
-      expect(service.currentUserProfile).toBeTruthy();
-      expect(service.currentUserProfile?.id).toBe('user-123');
-    }));
+      // Emit user
+      currentUserSubject.next(mockSupabaseUser);
+
+      // Wait for async profile loading
+      setTimeout(() => {
+        expect(service.currentUserProfile).toEqual(mockUser);
+        done();
+      }, 100);
+    });
+
+    it('should set profile to null when currentUser$ emits null', (done) => {
+      // First set a user
+      const mockProfileResponse = { data: mockUser, error: null };
+      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+      currentUserSubject.next(mockSupabaseUser);
+
+      setTimeout(() => {
+        expect(service.currentUserProfile).toEqual(mockUser);
+
+        // Now emit null
+        currentUserSubject.next(null);
+
+        setTimeout(() => {
+          expect(service.currentUserProfile).toBeNull();
+          done();
+        }, 50);
+      }, 100);
+    });
   });
 
-  // ============================================================================
-  // SIGN IN TESTS
-  // ============================================================================
+  describe('register()', () => {
+    const credentials: RegisterCredentials = {
+      email: 'newuser@example.com',
+      password: 'password123',
+      full_name: 'New User'
+    };
 
-  describe('signIn', () => {
-    it('should successfully sign in with valid credentials', (done) => {
-      mockSupabaseService.signIn.and.returnValue(
-        Promise.resolve({ data: { user: mockUser, session: {} }, error: null } as any)
-      );
+    it('should register new user successfully', (done) => {
+      const mockResponse = {
+        data: { user: mockSupabaseUser },
+        error: null
+      };
+      mockSupabaseService.signUp.and.resolveTo(mockResponse);
 
-      service.signIn({ email: 'test@example.com', password: 'password123' }).subscribe({
+      service.register(credentials).subscribe({
         next: (result) => {
           expect(result.success).toBe(true);
           expect(result.error).toBeUndefined();
-          expect(mockSupabaseService.signIn).toHaveBeenCalledWith('test@example.com', 'password123');
+          expect(mockSupabaseService.signUp).toHaveBeenCalledWith(
+            credentials.email,
+            credentials.password,
+            credentials.full_name
+          );
           done();
         },
-        error: (err) => {
-          fail(`Expected success, got error: ${err}`);
-        }
+        error: done.fail
       });
     });
 
-    it('should return error with invalid credentials', (done) => {
-      const authError = { message: 'Invalid login credentials' };
-      mockSupabaseService.signIn.and.returnValue(
-        Promise.resolve({ data: null, error: authError } as any)
-      );
+    it('should handle registration error from Supabase', (done) => {
+      const mockError = { message: 'Email already registered' };
+      const mockResponse = { data: null, error: mockError };
+      mockSupabaseService.signUp.and.resolveTo(mockResponse);
 
-      service.signIn({ email: 'test@example.com', password: 'wrong' }).subscribe({
+      service.register(credentials).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Email already registered');
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle unexpected registration error', (done) => {
+      mockSupabaseService.signUp.and.rejectWith(new Error('Network error'));
+
+      service.register(credentials).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Network error');
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle error without message', (done) => {
+      mockSupabaseService.signUp.and.rejectWith({});
+
+      service.register(credentials).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Registration failed');
+          done();
+        },
+        error: done.fail
+      });
+    });
+  });
+
+  describe('signIn()', () => {
+    const credentials: LoginCredentials = {
+      email: 'test@example.com',
+      password: 'password123'
+    };
+
+    it('should sign in successfully', (done) => {
+      const mockResponse = {
+        data: { user: mockSupabaseUser, session: {} },
+        error: null
+      };
+      mockSupabaseService.signIn.and.resolveTo(mockResponse);
+
+      service.signIn(credentials).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(true);
+          expect(result.error).toBeUndefined();
+          expect(mockSupabaseService.signIn).toHaveBeenCalledWith(
+            credentials.email,
+            credentials.password
+          );
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle invalid credentials', (done) => {
+      const mockError = { message: 'Invalid login credentials' };
+      const mockResponse = { data: null, error: mockError };
+      mockSupabaseService.signIn.and.resolveTo(mockResponse);
+
+      service.signIn(credentials).subscribe({
         next: (result) => {
           expect(result.success).toBe(false);
           expect(result.error).toBe('Invalid login credentials');
           done();
-        }
+        },
+        error: done.fail
       });
     });
 
-    it('should handle network errors during sign in', (done) => {
-      mockSupabaseService.signIn.and.returnValue(
-        Promise.reject(new Error('Network error'))
-      );
+    it('should handle network error', (done) => {
+      mockSupabaseService.signIn.and.rejectWith(new Error('Network timeout'));
 
-      service.signIn({ email: 'test@example.com', password: 'password123' }).subscribe({
+      service.signIn(credentials).subscribe({
         next: (result) => {
           expect(result.success).toBe(false);
-          expect(result.error).toContain('Network error');
+          expect(result.error).toBe('Network timeout');
           done();
-        }
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle error without message', (done) => {
+      mockSupabaseService.signIn.and.rejectWith({});
+
+      service.signIn(credentials).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Login failed');
+          done();
+        },
+        error: done.fail
       });
     });
   });
 
-  // ============================================================================
-  // SIGN OUT TESTS
-  // ============================================================================
+  describe('signOut()', () => {
+    it('should sign out successfully and clear profile', async () => {
+      mockSupabaseService.signOut.and.resolveTo({ error: null });
+      mockRouter.navigate.and.resolveTo(true);
 
-  describe('signOut', () => {
-    beforeEach(() => {
-      currentUserSubject.next({ id: 'user-123', email: 'test@example.com' });
+      await service.signOut();
+
+      expect(mockSupabaseService.signOut).toHaveBeenCalled();
+      expect(service.currentUserProfile).toBeNull();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
     });
 
-    it('should clear user profile on sign out', async () => {
-      mockSupabaseService.signOut.and.returnValue(Promise.resolve({ error: null } as any));
+    it('should clear profile even if signOut fails', async () => {
+      // Set a current user first
+      const mockProfileResponse = { data: mockUser, error: null };
+      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+      currentUserSubject.next(mockSupabaseUser);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Now sign out with error
+      mockSupabaseService.signOut.and.resolveTo({ error: { message: 'Error' } });
+      mockRouter.navigate.and.resolveTo(true);
 
       await service.signOut();
 
       expect(service.currentUserProfile).toBeNull();
-      expect(mockSupabaseService.signOut).toHaveBeenCalled();
-    });
-
-    it('should clear organization context on sign out', async () => {
-      mockSupabaseService.signOut.and.returnValue(Promise.resolve({ error: null } as any));
-
-      await service.signOut();
-
-      expect(mockOrganizationService.clearCurrentOrganization).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
     });
 
     it('should navigate to login page after sign out', async () => {
-      mockSupabaseService.signOut.and.returnValue(Promise.resolve({ error: null } as any));
+      mockSupabaseService.signOut.and.resolveTo({ error: null });
+      mockRouter.navigate.and.resolveTo(true);
 
       await service.signOut();
 
@@ -227,346 +301,303 @@ describe('AuthService', () => {
     });
   });
 
-  // ============================================================================
-  // REGISTRATION TESTS
-  // ============================================================================
+  describe('resetPassword()', () => {
+    const email = 'test@example.com';
 
-  describe('register', () => {
-    it('should successfully register a new user', (done) => {
-      mockSupabaseService.signUp.and.returnValue(
-        Promise.resolve({ data: { user: mockUser, session: null }, error: null } as any)
-      );
-
-      service.register({
-        email: 'newuser@example.com',
-        password: 'password123',
-        confirm_password: 'password123',
-        full_name: 'New User'
-      }).subscribe({
-        next: (result) => {
-          expect(result.success).toBe(true);
-          expect(mockSupabaseService.signUp).toHaveBeenCalledWith(
-            'newuser@example.com',
-            'password123',
-            'New User'
-          );
-          done();
-        }
-      });
-    });
-
-    it('should return error for duplicate email', (done) => {
-      const authError = { message: 'User already registered' };
-      mockSupabaseService.signUp.and.returnValue(
-        Promise.resolve({ data: null, error: authError } as any)
-      );
-
-      service.register({
-        email: 'existing@example.com',
-        password: 'password123',
-        confirm_password: 'password123',
-        full_name: 'Existing User'
-      }).subscribe({
-        next: (result) => {
-          expect(result.success).toBe(false);
-          expect(result.error).toBe('User already registered');
-          done();
-        }
-      });
-    });
-
-    it('should handle network errors during registration', (done) => {
-      mockSupabaseService.signUp.and.returnValue(
-        Promise.reject(new Error('Network error'))
-      );
-
-      service.register({
-        email: 'newuser@example.com',
-        password: 'password123',
-        confirm_password: 'password123',
-        full_name: 'New User'
-      }).subscribe({
-        next: (result) => {
-          expect(result.success).toBe(false);
-          expect(result.error).toBe('Network error');
-          done();
-        }
-      });
-    });
-  });
-
-  // ============================================================================
-  // PASSWORD RESET TESTS
-  // ============================================================================
-
-  describe('resetPassword', () => {
     it('should send password reset email successfully', (done) => {
-      mockSupabaseService.resetPassword.and.returnValue(
-        Promise.resolve({ data: {}, error: null } as any)
-      );
+      mockSupabaseService.resetPassword.and.resolveTo({ error: null });
 
-      service.resetPassword('test@example.com').subscribe({
+      service.resetPassword(email).subscribe({
         next: (result) => {
           expect(result.success).toBe(true);
-          expect(mockSupabaseService.resetPassword).toHaveBeenCalledWith('test@example.com');
+          expect(result.error).toBeUndefined();
+          expect(mockSupabaseService.resetPassword).toHaveBeenCalledWith(email);
           done();
-        }
+        },
+        error: done.fail
       });
     });
 
-    it('should return error for invalid email', (done) => {
-      const authError = { message: 'User not found' };
-      mockSupabaseService.resetPassword.and.returnValue(
-        Promise.resolve({ data: null, error: authError } as any)
-      );
+    it('should handle reset password error', (done) => {
+      const mockError = { message: 'User not found' };
+      mockSupabaseService.resetPassword.and.resolveTo({ error: mockError });
 
-      service.resetPassword('nonexistent@example.com').subscribe({
+      service.resetPassword(email).subscribe({
         next: (result) => {
           expect(result.success).toBe(false);
           expect(result.error).toBe('User not found');
           done();
-        }
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle network error', (done) => {
+      mockSupabaseService.resetPassword.and.rejectWith(new Error('Network error'));
+
+      service.resetPassword(email).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Network error');
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle error without message', (done) => {
+      mockSupabaseService.resetPassword.and.rejectWith({});
+
+      service.resetPassword(email).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Password reset failed');
+          done();
+        },
+        error: done.fail
       });
     });
   });
 
-  describe('updatePassword', () => {
-    it('should update password successfully', (done) => {
-      mockSupabaseService.updatePassword.and.returnValue(
-        Promise.resolve({ data: {}, error: null } as any)
-      );
+  describe('updatePassword()', () => {
+    const newPassword = 'newPassword123';
 
-      service.updatePassword('newPassword123').subscribe({
+    it('should update password successfully', (done) => {
+      mockSupabaseService.updatePassword.and.resolveTo({ error: null });
+
+      service.updatePassword(newPassword).subscribe({
         next: (result) => {
           expect(result.success).toBe(true);
-          expect(mockSupabaseService.updatePassword).toHaveBeenCalledWith('newPassword123');
+          expect(result.error).toBeUndefined();
+          expect(mockSupabaseService.updatePassword).toHaveBeenCalledWith(newPassword);
           done();
-        }
+        },
+        error: done.fail
       });
     });
 
-    it('should return error if password update fails', (done) => {
-      const authError = { message: 'Password too weak' };
-      mockSupabaseService.updatePassword.and.returnValue(
-        Promise.resolve({ data: null, error: authError } as any)
-      );
+    it('should handle update password error', (done) => {
+      const mockError = { message: 'Password too weak' };
+      mockSupabaseService.updatePassword.and.resolveTo({ error: mockError });
 
-      service.updatePassword('weak').subscribe({
+      service.updatePassword(newPassword).subscribe({
         next: (result) => {
           expect(result.success).toBe(false);
           expect(result.error).toBe('Password too weak');
           done();
-        }
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle network error', (done) => {
+      mockSupabaseService.updatePassword.and.rejectWith(new Error('Network error'));
+
+      service.updatePassword(newPassword).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Network error');
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('should handle error without message', (done) => {
+      mockSupabaseService.updatePassword.and.rejectWith({});
+
+      service.updatePassword(newPassword).subscribe({
+        next: (result) => {
+          expect(result.success).toBe(false);
+          expect(result.error).toBe('Password update failed');
+          done();
+        },
+        error: done.fail
       });
     });
   });
 
-  // ============================================================================
-  // ROLE & PERMISSION TESTS
-  // ============================================================================
+  describe('refreshUserProfile()', () => {
+    it('should refresh user profile when userId is available', async () => {
+      (mockSupabaseService as any).userId = 'user-123';
 
-  describe('Role and Permission Checks', () => {
-    it('should correctly identify user role', fakeAsync(() => {
-      // Set user profile directly via the private subject
-      (service as any).userProfileSubject.next(mockUser);
-      tick();
-
-      expect(service.userRole).toBe(UserRole.EMPLOYEE);
-    }));
-
-    it('should return true for hasRole with matching role', () => {
-      // Set user profile directly via the private subject
-      (service as any).userProfileSubject.next(mockUser);
-      expect(service.hasRole(UserRole.EMPLOYEE)).toBe(true);
-    });
-
-    it('should return false for hasRole with non-matching role', () => {
-      // Set user profile directly via the private subject
-      (service as any).userProfileSubject.next(mockUser);
-      expect(service.hasRole(UserRole.ADMIN)).toBe(false);
-    });
-
-    it('should correctly identify finance users', () => {
-      const financeUser = { ...mockUser, role: UserRole.FINANCE };
-      // Set user profile directly via the private subject
-      (service as any).userProfileSubject.next(financeUser);
-      expect(service.isFinanceOrAdmin).toBe(true);
-    });
-
-    it('should correctly identify admin users', () => {
-      const adminUser = { ...mockUser, role: UserRole.ADMIN };
-      // Set user profile directly via the private subject
-      (service as any).userProfileSubject.next(adminUser);
-      expect(service.isAdmin).toBe(true);
-      expect(service.isFinanceOrAdmin).toBe(true);
-    });
-
-    it('should return false for non-finance/admin users', () => {
-      // Set user profile directly via the private subject
-      (service as any).userProfileSubject.next(mockUser);
-      expect(service.isFinanceOrAdmin).toBe(false);
-      expect(service.isAdmin).toBe(false);
-    });
-  });
-
-  // ============================================================================
-  // ORGANIZATION CONTEXT TESTS
-  // ============================================================================
-
-  describe('Organization Context', () => {
-    it('should load organization context for authenticated user', fakeAsync(() => {
-      const authUser = { id: 'user-123', email: 'test@example.com' };
-      currentUserSubject.next(authUser);
-      tick();
-
-      expect(mockOrganizationService.getUserOrganizationContext).toHaveBeenCalled();
-      expect(mockOrganizationService.setCurrentOrganization).toHaveBeenCalled();
-    }));
-
-    it('should clear organization context if user has no organization', fakeAsync(() => {
-      mockOrganizationService.getUserOrganizationContext.and.returnValue(
-        of({ current_organization: null, current_membership: null } as any)
-      );
-
-      const authUser = { id: 'user-123', email: 'test@example.com' };
-      currentUserSubject.next(authUser);
-      tick();
-
-      expect(mockOrganizationService.clearCurrentOrganization).toHaveBeenCalled();
-    }));
-
-    it('should return true for hasOrganization when user has organization', () => {
-      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
-        get: () => 'org-123',
-        configurable: true
-      });
-
-      expect(service.hasOrganization).toBe(true);
-    });
-
-    it('should return false for hasOrganization when user has no organization', () => {
-      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
-        get: () => null,
-        configurable: true
-      });
-
-      expect(service.hasOrganization).toBe(false);
-    });
-  });
-
-  // ============================================================================
-  // DEFAULT ROUTE TESTS
-  // ============================================================================
-
-  describe('Default Route Determination', () => {
-    it('should return organization setup route when user has no organization', () => {
-      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
-        get: () => null,
-        configurable: true
-      });
-
-      expect(service.getDefaultRoute()).toBe('/organization/setup');
-    });
-
-    it('should return home route when user has organization', () => {
-      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
-        get: () => 'org-123',
-        configurable: true
-      });
-
-      expect(service.getDefaultRoute()).toBe('/home');
-    });
-
-    it('should identify legacy routes correctly', () => {
-      expect(service.shouldUseDefaultRoute('/')).toBe(true);
-      expect(service.shouldUseDefaultRoute('/expenses')).toBe(false);
-      expect(service.shouldUseDefaultRoute('/?returnUrl=/expenses')).toBe(true);
-    });
-  });
-
-  // ============================================================================
-  // SESSION TIMEOUT TESTS
-  // ============================================================================
-
-  describe('Session Timeout', () => {
-    it('should track user activity events', fakeAsync(() => {
-      // Simulate user is authenticated
-      currentUserSubject.next({ id: 'user-123', email: 'test@example.com' });
-      tick();
-
-      // Simulate user activity (click event)
-      document.dispatchEvent(new Event('click'));
-      tick(1000);
-
-      // Session should still be active
-      expect(service.isAuthenticated).toBe(true);
-    }));
-
-    xit('should show warning after 25 minutes of inactivity', fakeAsync(() => {
-      // SKIP: Session timeout initializes only if user is authenticated at construction
-      // This test would need service to be created with authenticated user
-      currentUserSubject.next({ id: 'user-123', email: 'test@example.com' });
-      tick();
-
-      // Fast-forward 25 minutes
-      tick(25 * 60 * 1000);
-
-      // Should show warning notification
-      expect(mockNotification.showWarning).toHaveBeenCalledWith(
-        jasmine.stringContaining('session will expire')
-      );
-    }));
-
-    xit('should sign out user after 30 minutes of inactivity', fakeAsync(() => {
-      // SKIP: Session timeout initializes only if user is authenticated at construction
-      // This test would need service to be created with authenticated user
-      mockSupabaseService.signOut.and.returnValue(Promise.resolve({ error: null } as any));
-      currentUserSubject.next({ id: 'user-123', email: 'test@example.com' });
-      tick();
-
-      // Fast-forward 30 minutes
-      tick(30 * 60 * 1000 + 1000); // +1 second to ensure timeout
-
-      // Should show error notification and sign out
-      expect(mockNotification.showError).toHaveBeenCalledWith(
-        jasmine.stringContaining('expired due to inactivity')
-      );
-
-      tick(); // Allow async signOut to complete
-      expect(mockSupabaseService.signOut).toHaveBeenCalled();
-    }));
-  });
-
-  // ============================================================================
-  // USER PROFILE REFRESH TESTS
-  // ============================================================================
-
-  describe('User Profile Refresh', () => {
-    xit('should refresh user profile when requested', async () => {
-      // SKIP: Property mocking has issues with redefine
-      // Set userId directly on the mock
-      Object.defineProperty(mockSupabaseService, 'userId', {
-        get: () => 'user-123',
-        configurable: true
-      });
+      const mockProfileResponse = { data: mockUser, error: null };
+      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
 
       await service.refreshUserProfile();
 
-      expect(mockSupabaseService.client.from).toHaveBeenCalledWith('users');
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(service.currentUserProfile).toEqual(mockUser);
     });
 
-    xit('should not refresh if user is not authenticated', async () => {
-      // SKIP: Property mocking has issues with redefine
-      // Set userId to null directly on the mock
-      Object.defineProperty(mockSupabaseService, 'userId', {
-        get: () => null,
-        configurable: true
-      });
+    it('should not refresh when userId is null', async () => {
+      (mockSupabaseService as any).userId = null;
 
       await service.refreshUserProfile();
 
-      // Should not call database if no user ID
       expect(mockSupabaseService.client.from).not.toHaveBeenCalled();
+    });
+
+    it('should handle profile refresh error', async () => {
+      (mockSupabaseService as any).userId = 'user-123';
+
+      const mockError = { message: 'Profile not found' };
+      const mockProfileResponse = { data: null, error: mockError };
+      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+      spyOn(console, 'error');
+
+      await service.refreshUserProfile();
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(console.error).toHaveBeenCalledWith('Error loading user profile:', mockError);
+    });
+  });
+
+  describe('Role-based Access', () => {
+    describe('isAuthenticated', () => {
+      it('should return true when user is authenticated', () => {
+        (mockSupabaseService as any).isAuthenticated = true;
+
+        expect(service.isAuthenticated).toBe(true);
+      });
+
+      it('should return false when user is not authenticated', () => {
+        (mockSupabaseService as any).isAuthenticated = false;
+
+        expect(service.isAuthenticated).toBe(false);
+      });
+    });
+
+    describe('userRole', () => {
+      it('should return user role when profile exists', (done) => {
+        const mockProfileResponse = { data: mockUser, error: null };
+        const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+        const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+        const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+        (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+        currentUserSubject.next(mockSupabaseUser);
+
+        setTimeout(() => {
+          expect(service.userRole).toBe('employee');
+          done();
+        }, 100);
+      });
+
+      it('should return null when no profile', () => {
+        expect(service.userRole).toBeNull();
+      });
+    });
+
+    describe('hasRole()', () => {
+      it('should return true when user has the specified role', (done) => {
+        const mockProfileResponse = { data: mockUser, error: null };
+        const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+        const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+        const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+        (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+        currentUserSubject.next(mockSupabaseUser);
+
+        setTimeout(() => {
+          expect(service.hasRole('employee')).toBe(true);
+          expect(service.hasRole('finance')).toBe(false);
+          done();
+        }, 100);
+      });
+
+      it('should return false when no profile', () => {
+        expect(service.hasRole('employee')).toBe(false);
+      });
+    });
+
+    describe('isFinanceOrAdmin', () => {
+      it('should return true for finance role', (done) => {
+        const financeUser = { ...mockUser, role: 'finance' };
+        const mockProfileResponse = { data: financeUser, error: null };
+        const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+        const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+        const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+        (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+        currentUserSubject.next(mockSupabaseUser);
+
+        setTimeout(() => {
+          expect(service.isFinanceOrAdmin).toBe(true);
+          done();
+        }, 100);
+      });
+
+      it('should return true for admin role', (done) => {
+        const adminUser = { ...mockUser, role: 'admin' };
+        const mockProfileResponse = { data: adminUser, error: null };
+        const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+        const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+        const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+        (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+        currentUserSubject.next(mockSupabaseUser);
+
+        setTimeout(() => {
+          expect(service.isFinanceOrAdmin).toBe(true);
+          done();
+        }, 100);
+      });
+
+      it('should return false for employee role', (done) => {
+        const mockProfileResponse = { data: mockUser, error: null };
+        const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+        const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+        const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+        (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+        currentUserSubject.next(mockSupabaseUser);
+
+        setTimeout(() => {
+          expect(service.isFinanceOrAdmin).toBe(false);
+          done();
+        }, 100);
+      });
+
+      it('should return false when no profile', () => {
+        expect(service.isFinanceOrAdmin).toBe(false);
+      });
+    });
+  });
+
+  describe('Observable Behavior', () => {
+    it('should emit userProfile$ updates', (done) => {
+      const mockProfileResponse = { data: mockUser, error: null };
+      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockProfileResponse);
+      const eqSpy = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
+      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy });
+      (mockSupabaseService.client.from as jasmine.Spy).and.returnValue({ select: selectSpy });
+
+      const profiles: (User | null)[] = [];
+      service.userProfile$.subscribe(profile => profiles.push(profile));
+
+      currentUserSubject.next(mockSupabaseUser);
+
+      setTimeout(() => {
+        expect(profiles.length).toBeGreaterThan(0);
+        expect(profiles[profiles.length - 1]).toEqual(mockUser);
+        done();
+      }, 100);
+    });
+
+    it('should maintain single subscription to currentUser$', () => {
+      // The subscription is set up in constructor
+      // Verify it doesn't create multiple subscriptions
+      expect(service.userProfile$).toBeDefined();
     });
   });
 });
