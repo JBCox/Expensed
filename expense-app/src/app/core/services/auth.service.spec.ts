@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { SupabaseService } from './supabase.service';
 import { User } from '../models/user.model';
 import { LoginCredentials, RegisterCredentials } from '../models';
+import { UserRole } from '../models/enums';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -16,7 +17,7 @@ describe('AuthService', () => {
     id: 'user-123',
     email: 'test@example.com',
     full_name: 'Test User',
-    role: 'employee',
+    role: UserRole.EMPLOYEE,
     created_at: '2025-11-13T10:00:00Z',
     updated_at: '2025-11-13T10:00:00Z'
   };
@@ -121,15 +122,19 @@ describe('AuthService', () => {
     const credentials: RegisterCredentials = {
       email: 'newuser@example.com',
       password: 'password123',
-      full_name: 'New User'
+      full_name: 'New User',
+      confirm_password: 'password123'
     };
 
     it('should register new user successfully', (done) => {
       const mockResponse = {
-        data: { user: mockSupabaseUser },
+        data: {
+          user: mockSupabaseUser as any,
+          session: null
+        },
         error: null
       };
-      mockSupabaseService.signUp.and.resolveTo(mockResponse);
+      mockSupabaseService.signUp.and.resolveTo(mockResponse as any);
 
       service.register(credentials).subscribe({
         next: (result) => {
@@ -196,10 +201,13 @@ describe('AuthService', () => {
 
     it('should sign in successfully', (done) => {
       const mockResponse = {
-        data: { user: mockSupabaseUser, session: {} },
+        data: {
+          user: mockSupabaseUser as any,
+          session: { access_token: 'test-token', refresh_token: 'test-refresh', expires_in: 3600 } as any
+        },
         error: null
       };
-      mockSupabaseService.signIn.and.resolveTo(mockResponse);
+      mockSupabaseService.signIn.and.resolveTo(mockResponse as any);
 
       service.signIn(credentials).subscribe({
         next: (result) => {

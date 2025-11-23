@@ -5,6 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { App } from './app';
 import { AuthService } from './core/services/auth.service';
 import { User } from './core/models/user.model';
+import { UserRole } from './core/models/enums';
 
 describe('App Component', () => {
   let component: App;
@@ -12,12 +13,13 @@ describe('App Component', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockRouter: jasmine.SpyObj<Router>;
   let userProfileSubject: BehaviorSubject<User | null>;
+  let sessionSubject: BehaviorSubject<any>;
 
   const mockEmployee: User = {
     id: 'user-123',
     email: 'employee@example.com',
     full_name: 'Test Employee',
-    role: 'employee',
+    role: UserRole.EMPLOYEE,
     created_at: '2025-11-13T10:00:00Z',
     updated_at: '2025-11-13T10:00:00Z'
   };
@@ -26,7 +28,7 @@ describe('App Component', () => {
     id: 'user-456',
     email: 'finance@example.com',
     full_name: 'Test Finance',
-    role: 'finance',
+    role: UserRole.FINANCE,
     created_at: '2025-11-13T10:00:00Z',
     updated_at: '2025-11-13T10:00:00Z'
   };
@@ -35,16 +37,18 @@ describe('App Component', () => {
     id: 'user-789',
     email: 'admin@example.com',
     full_name: 'Test Admin',
-    role: 'admin',
+    role: UserRole.ADMIN,
     created_at: '2025-11-13T10:00:00Z',
     updated_at: '2025-11-13T10:00:00Z'
   };
 
   beforeEach(async () => {
     userProfileSubject = new BehaviorSubject<User | null>(null);
+    sessionSubject = new BehaviorSubject<any>(null);
 
     mockAuthService = jasmine.createSpyObj('AuthService', ['signOut'], {
       userProfile$: userProfileSubject.asObservable(),
+      session$: sessionSubject.asObservable(),
       isFinanceOrAdmin: false
     });
 
@@ -68,37 +72,40 @@ describe('App Component', () => {
   });
 
   describe('Initialization', () => {
-    it('should subscribe to currentUser$ from AuthService', () => {
-      expect(component.currentUser$).toBeDefined();
+    it('should have vm$ observable defined', () => {
+      expect(component.vm$).toBeDefined();
     });
 
-    it('should expose userProfile$ as currentUser$', (done) => {
+    it('should combine userProfile$ and session$ in vm$', (done) => {
       userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
 
-      component.currentUser$.subscribe(user => {
-        expect(user).toEqual(mockEmployee);
+      component.vm$.subscribe(vm => {
+        expect(vm.profile).toEqual(mockEmployee);
+        expect(vm.isAuthenticated).toBe(true);
         done();
       });
     });
 
-    it('should start with null user if not authenticated', (done) => {
-      component.currentUser$.subscribe(user => {
-        expect(user).toBeNull();
+    it('should start with null profile if not authenticated', (done) => {
+      component.vm$.subscribe(vm => {
+        expect(vm.profile).toBeNull();
+        expect(vm.isAuthenticated).toBe(false);
         done();
       });
     });
   });
 
   describe('User Profile Observable', () => {
-    it('should emit user updates', (done) => {
-      const users: (User | null)[] = [];
+    it('should emit vm updates when user profile changes', (done) => {
+      const profiles: (User | null)[] = [];
 
-      component.currentUser$.subscribe(user => {
-        users.push(user);
+      component.vm$.subscribe(vm => {
+        profiles.push(vm.profile);
 
-        if (users.length === 2) {
-          expect(users[0]).toBeNull();
-          expect(users[1]).toEqual(mockEmployee);
+        if (profiles.length === 2) {
+          expect(profiles[0]).toBeNull();
+          expect(profiles[1]).toEqual(mockEmployee);
           done();
         }
       });
@@ -108,34 +115,39 @@ describe('App Component', () => {
 
     it('should handle user sign in', (done) => {
       userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
 
-      component.currentUser$.subscribe(user => {
-        expect(user).toEqual(mockEmployee);
+      component.vm$.subscribe(vm => {
+        expect(vm.profile).toEqual(mockEmployee);
+        expect(vm.isAuthenticated).toBe(true);
         done();
       });
     });
 
     it('should handle user sign out', (done) => {
       userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
 
       let emissionCount = 0;
-      component.currentUser$.subscribe(user => {
+      component.vm$.subscribe(vm => {
         emissionCount++;
 
         if (emissionCount === 2) {
-          expect(user).toBeNull();
+          expect(vm.profile).toBeNull();
+          expect(vm.isAuthenticated).toBe(false);
           done();
         }
       });
 
       userProfileSubject.next(null);
+      sessionSubject.next(null);
     });
 
     it('should handle user role changes', (done) => {
       const emissions: (User | null)[] = [];
 
-      component.currentUser$.subscribe(user => {
-        emissions.push(user);
+      component.vm$.subscribe(vm => {
+        emissions.push(vm.profile);
 
         if (emissions.length === 3) {
           expect(emissions[0]).toBeNull();
@@ -150,83 +162,17 @@ describe('App Component', () => {
     });
   });
 
-  describe('isFinanceOrAdmin getter', () => {
-    it('should return false for employee users', () => {
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => false
-      });
-
-      expect(component.isFinanceOrAdmin).toBe(false);
-    });
-
-    it('should return true for finance users', () => {
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => true,
-        configurable: true
-      });
-
-      expect(component.isFinanceOrAdmin).toBe(true);
-    });
-
-    it('should return true for admin users', () => {
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => true,
-        configurable: true
-      });
-
-      expect(component.isFinanceOrAdmin).toBe(true);
-    });
-
-    it('should delegate to AuthService', () => {
-      const getter = Object.getOwnPropertyDescriptor(
-        mockAuthService,
-        'isFinanceOrAdmin'
-      );
-
-      expect(getter).toBeDefined();
-      expect(component.isFinanceOrAdmin).toBe(mockAuthService.isFinanceOrAdmin);
-    });
-  });
-
   describe('signOut()', () => {
     it('should call authService.signOut', async () => {
       mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
 
       await component.signOut();
 
       expect(mockAuthService.signOut).toHaveBeenCalled();
     });
 
-    it('should navigate to login page after sign out', async () => {
-      mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
-
-      await component.signOut();
-
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
-    });
-
-    it('should call signOut and navigate in order', async () => {
-      const callOrder: string[] = [];
-
-      mockAuthService.signOut.and.callFake(async () => {
-        callOrder.push('signOut');
-      });
-
-      mockRouter.navigate.and.callFake(async () => {
-        callOrder.push('navigate');
-        return true;
-      });
-
-      await component.signOut();
-
-      expect(callOrder).toEqual(['signOut', 'navigate']);
-    });
-
     it('should handle signOut errors gracefully', async () => {
       mockAuthService.signOut.and.rejectWith(new Error('Sign out failed'));
-      mockRouter.navigate.and.resolveTo(true);
 
       try {
         await component.signOut();
@@ -235,145 +181,98 @@ describe('App Component', () => {
         expect(error.message).toBe('Sign out failed');
       }
     });
-
-    it('should still attempt navigation if signOut succeeds', async () => {
-      mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
-
-      await component.signOut();
-
-      expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
-      expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('Component Integration', () => {
     it('should work with authenticated employee user', (done) => {
       userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
 
-      component.currentUser$.subscribe(user => {
-        expect(user?.role).toBe('employee');
-        expect(user?.email).toBe('employee@example.com');
+      component.vm$.subscribe(vm => {
+        expect(vm.profile?.role).toBe(UserRole.EMPLOYEE);
+        expect(vm.profile?.email).toBe('employee@example.com');
+        expect(vm.isAuthenticated).toBe(true);
         done();
       });
     });
 
     it('should work with authenticated finance user', (done) => {
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => true,
-        configurable: true
-      });
-
       userProfileSubject.next(mockFinanceUser);
+      sessionSubject.next({ access_token: 'test-token' });
 
-      component.currentUser$.subscribe(user => {
-        expect(user?.role).toBe('finance');
-        expect(component.isFinanceOrAdmin).toBe(true);
+      component.vm$.subscribe(vm => {
+        expect(vm.profile?.role).toBe(UserRole.FINANCE);
+        expect(vm.isAuthenticated).toBe(true);
         done();
       });
     });
 
     it('should work with authenticated admin user', (done) => {
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => true,
-        configurable: true
-      });
-
       userProfileSubject.next(mockAdminUser);
+      sessionSubject.next({ access_token: 'test-token' });
 
-      component.currentUser$.subscribe(user => {
-        expect(user?.role).toBe('admin');
-        expect(component.isFinanceOrAdmin).toBe(true);
+      component.vm$.subscribe(vm => {
+        expect(vm.profile?.role).toBe(UserRole.ADMIN);
+        expect(vm.isAuthenticated).toBe(true);
         done();
       });
     });
 
     it('should handle complete auth lifecycle', async () => {
-      // Start unauthenticated
-      expect(component.isFinanceOrAdmin).toBe(false);
-
       // User signs in
       userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
       await fixture.whenStable();
 
       // User signs out
       mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
 
       await component.signOut();
 
       expect(mockAuthService.signOut).toHaveBeenCalled();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
     });
   });
 
   describe('UI State Management', () => {
-    it('should provide reactive user state for templates', (done) => {
-      const users: (User | null)[] = [];
+    it('should provide reactive vm state for templates', (done) => {
+      const profiles: (User | null)[] = [];
 
-      component.currentUser$.subscribe(user => users.push(user));
+      component.vm$.subscribe(vm => profiles.push(vm.profile));
 
       userProfileSubject.next(mockEmployee);
 
       setTimeout(() => {
-        expect(users.length).toBeGreaterThan(0);
-        expect(users[users.length - 1]).toEqual(mockEmployee);
+        expect(profiles.length).toBeGreaterThan(0);
+        expect(profiles[profiles.length - 1]).toEqual(mockEmployee);
         done();
       }, 100);
     });
 
-    it('should allow template to check isFinanceOrAdmin', () => {
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => false,
-        configurable: true
+    it('should provide display name for templates', (done) => {
+      userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
+
+      component.vm$.subscribe(vm => {
+        expect(vm.displayName).toBe('Test Employee');
+        expect(vm.email).toBe('employee@example.com');
+        done();
       });
-
-      // Template would use: *ngIf="isFinanceOrAdmin"
-      expect(component.isFinanceOrAdmin).toBe(false);
-
-      Object.defineProperty(mockAuthService, 'isFinanceOrAdmin', {
-        get: () => true,
-        configurable: true
-      });
-
-      expect(component.isFinanceOrAdmin).toBe(true);
-    });
-  });
-
-  describe('Router Integration', () => {
-    it('should use Router for navigation', async () => {
-      mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
-
-      await component.signOut();
-
-      expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
-    });
-
-    it('should navigate to correct route', async () => {
-      mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
-
-      await component.signOut();
-
-      const navArgs = mockRouter.navigate.calls.mostRecent().args;
-      expect(navArgs[0]).toEqual(['/auth/login']);
     });
   });
 
   describe('Observable Memory Management', () => {
-    it('should maintain single subscription to userProfile$', () => {
-      const user1$ = component.currentUser$;
-      const user2$ = component.currentUser$;
+    it('should maintain single observable reference', () => {
+      const vm1$ = component.vm$;
+      const vm2$ = component.vm$;
 
-      expect(user1$).toBe(user2$);
+      expect(vm1$).toBe(vm2$);
     });
 
     it('should properly propagate observable updates', (done) => {
-      const updates: (User | null)[] = [];
+      const profiles: (User | null)[] = [];
 
-      component.currentUser$.subscribe(user => {
-        updates.push(user);
+      component.vm$.subscribe(vm => {
+        profiles.push(vm.profile);
       });
 
       userProfileSubject.next(mockEmployee);
@@ -381,11 +280,11 @@ describe('App Component', () => {
       userProfileSubject.next(null);
 
       setTimeout(() => {
-        expect(updates.length).toBe(4); // Initial null + 3 updates
-        expect(updates[0]).toBeNull();
-        expect(updates[1]).toEqual(mockEmployee);
-        expect(updates[2]).toEqual(mockFinanceUser);
-        expect(updates[3]).toBeNull();
+        expect(profiles.length).toBe(4); // Initial null + 3 updates
+        expect(profiles[0]).toBeNull();
+        expect(profiles[1]).toEqual(mockEmployee);
+        expect(profiles[2]).toEqual(mockFinanceUser);
+        expect(profiles[3]).toBeNull();
         done();
       }, 100);
     });
@@ -394,7 +293,6 @@ describe('App Component', () => {
   describe('Edge Cases', () => {
     it('should handle rapid sign out calls', async () => {
       mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(true);
 
       await Promise.all([
         component.signOut(),
@@ -403,17 +301,6 @@ describe('App Component', () => {
 
       // Both should complete without error
       expect(mockAuthService.signOut).toHaveBeenCalled();
-      expect(mockRouter.navigate).toHaveBeenCalled();
-    });
-
-    it('should handle navigation failure', async () => {
-      mockAuthService.signOut.and.resolveTo();
-      mockRouter.navigate.and.resolveTo(false);
-
-      await component.signOut();
-
-      expect(mockAuthService.signOut).toHaveBeenCalled();
-      expect(mockRouter.navigate).toHaveBeenCalled();
     });
 
     it('should handle user profile with missing fields gracefully', (done) => {
@@ -423,9 +310,11 @@ describe('App Component', () => {
       } as User;
 
       userProfileSubject.next(partialUser);
+      sessionSubject.next({ access_token: 'test-token' });
 
-      component.currentUser$.subscribe(user => {
-        expect(user?.id).toBe('user-999');
+      component.vm$.subscribe(vm => {
+        expect(vm.profile?.id).toBe('user-999');
+        expect(vm.isAuthenticated).toBe(true);
         done();
       });
     });

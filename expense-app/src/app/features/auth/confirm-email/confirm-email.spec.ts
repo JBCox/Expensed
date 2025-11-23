@@ -306,17 +306,12 @@ describe('ConfirmEmailComponent', () => {
 
   describe('Component Lifecycle', () => {
     it('should subscribe to query params on init', () => {
-      spyOn(queryParamsSubject, 'subscribe').and.callThrough();
+      // Component already initialized in beforeEach and ngOnInit called via fixture.detectChanges()
+      // Verify that the component subscribed by checking that email was set from query params
+      queryParamsSubject.next({ email: 'test@example.com' });
+      fixture.detectChanges();
 
-      const newComponent = new ConfirmEmailComponent(
-        { queryParams: queryParamsSubject.asObservable() } as any,
-        mockRouter,
-        mockAuthService
-      );
-
-      newComponent.ngOnInit();
-
-      expect(queryParamsSubject.subscribe).toHaveBeenCalled();
+      expect(component.email).toBe('test@example.com');
     });
 
     it('should set email before checking for redirect', () => {
