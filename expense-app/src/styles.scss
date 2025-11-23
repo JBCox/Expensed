@@ -124,6 +124,11 @@ html {
   --jensify-info-soft: #DBEAFE;
   --jensify-info-border: #BFDBFE;
 
+  --jensify-reimbursed: #7E22CE;
+  --jensify-reimbursed-strong: #6B21A8;
+  --jensify-reimbursed-soft: #F3E8FF;
+  --jensify-reimbursed-border: #D8B4FE;
+
   // Focus & Interactive States
   --jensify-focus-ring: #FFB380;
   --jensify-focus-ring-width: 2px;
@@ -257,6 +262,9 @@ html {
   --jensify-info-soft: rgba(59, 130, 246, 0.1);
   --jensify-info-border: rgba(59, 130, 246, 0.2);
 
+  --jensify-reimbursed-soft: rgba(126, 34, 206, 0.1);
+  --jensify-reimbursed-border: rgba(126, 34, 206, 0.2);
+
   // Shadows (Orange Glow Focus)
   --jensify-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
   --jensify-shadow-md:
@@ -284,6 +292,11 @@ html {
     rgba(10, 10, 10, 0.95) 100%
   );
   --jensify-gradient-hero: linear-gradient(135deg, #121212, #000000);
+  --jensify-glow-primary: radial-gradient(
+    circle,
+    rgba(247, 88, 12, 0.55),
+    transparent 60%
+  );
   --jensify-surface-frosted: rgba(10, 10, 10, 0.85);
   --jensify-surface-glass-nav: rgba(10, 10, 10, 0.8);
   --jensify-surface-hover: #1F1F1F;
@@ -566,7 +579,7 @@ body {
 }
 
 .jensify-auth-benefits {
-  background: linear-gradient(135deg, #2D1E17 0%, #1C1311 100%);
+  background: linear-gradient(135deg, var(--jensify-primary) 0%, var(--jensify-primary-strong) 100%);
   color: white;
   padding: var(--jensify-spacing-3xl);
   display: flex;
@@ -600,7 +613,7 @@ body {
     height: 200%;
     background: radial-gradient(
       circle,
-      rgba(247, 88, 12, 0.15) 0%,
+      rgba(255, 255, 255, 0.15) 0%,
       transparent 70%
     );
     pointer-events: none;

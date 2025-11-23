@@ -97,8 +97,8 @@
   }
 
   &.reimbursed {
-    background-color: #F3E8FF;
-    color: #7E22CE;
-    border: 1px solid #D8B4FE;
+    background-color: var(--jensify-reimbursed-soft);
+    color: var(--jensify-reimbursed-strong);
+    border: 1px solid var(--jensify-reimbursed-border);
   }
 }
