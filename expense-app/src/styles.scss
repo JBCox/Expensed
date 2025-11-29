@@ -2158,3 +2158,232 @@ html.dark {
   }
 }
 
+// ============================================================================
+// MOBILE OPTIMIZATION UTILITIES
+// Professional touch targets, responsive spacing, and mobile-first improvements
+// ============================================================================
+
+// Touch target sizing - Apple HIG recommends 44x44px minimum
+$touch-target-size: 44px;
+
+// Mobile breakpoint
+$mobile-breakpoint: 767px;
+
+@media (max-width: $mobile-breakpoint) {
+  // Ensure all interactive elements have proper touch targets
+  button,
+  [role="button"],
+  .mat-mdc-button,
+  .mat-mdc-raised-button,
+  .mat-mdc-stroked-button,
+  .mat-mdc-flat-button,
+  .mat-mdc-icon-button,
+  .mat-mdc-fab,
+  .mat-mdc-mini-fab {
+    min-height: $touch-target-size;
+    min-width: $touch-target-size;
+  }
+
+  // Icon buttons need explicit sizing
+  .mat-mdc-icon-button {
+    width: $touch-target-size;
+    height: $touch-target-size;
+    padding: 10px;
+
+    .mat-mdc-button-touch-target {
+      width: $touch-target-size;
+      height: $touch-target-size;
+    }
+  }
+
+  // Form fields - larger touch areas
+  .mat-mdc-form-field {
+    .mat-mdc-input-element {
+      min-height: 48px !important;
+      font-size: 16px !important; // Prevents iOS zoom on focus
+    }
+
+    .mat-mdc-select {
+      min-height: 48px;
+    }
+  }
+
+  // Checkbox and radio buttons - larger touch areas
+  .mat-mdc-checkbox,
+  .mat-mdc-radio-button {
+    .mdc-checkbox,
+    .mdc-radio {
+      width: $touch-target-size;
+      height: $touch-target-size;
+    }
+  }
+
+  // Status chips - better touch targets
+  .status-chip,
+  .mat-mdc-chip {
+    min-height: 36px;
+    padding: 0 12px;
+  }
+
+  // Filter chips wrapper - horizontal scroll on small screens
+  .status-chips,
+  .filter-chips {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; // Firefox
+    -ms-overflow-style: none; // IE/Edge
+
+    &::-webkit-scrollbar {
+      display: none; // Chrome/Safari
+    }
+
+    // Ensure chips don't wrap, allow horizontal scroll
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--jensify-spacing-xs, 0.25rem);
+    padding-bottom: var(--jensify-spacing-xs, 0.25rem); // Space for touch
+  }
+
+  // Menu items - larger touch targets
+  .mat-mdc-menu-item {
+    min-height: 48px;
+    padding: 0 16px;
+  }
+
+  // List items - larger touch targets
+  .mat-mdc-list-item {
+    min-height: 56px;
+  }
+
+  // Tab headers - larger touch targets
+  .mat-mdc-tab {
+    min-height: 48px;
+    padding: 0 16px;
+  }
+
+  // Dialog improvements
+  .mat-mdc-dialog-container {
+    .mat-mdc-dialog-surface {
+      max-width: calc(100vw - 32px) !important;
+      max-height: calc(100vh - 48px) !important;
+      margin: 16px;
+      border-radius: var(--jensify-radius-lg, 12px) !important;
+    }
+  }
+
+  // Snackbar improvements - better visibility on mobile
+  .mat-mdc-snack-bar-container {
+    margin-bottom: 16px !important;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  // Datepicker improvements
+  .mat-datepicker-content {
+    max-width: calc(100vw - 32px);
+  }
+
+  // Improved spacing for page containers
+  .jensify-container,
+  .dashboard-container,
+  .expense-list-container {
+    padding: var(--jensify-spacing-md, 1rem) !important;
+  }
+
+  // Header actions - full width buttons on mobile
+  .header-actions,
+  .jensify-header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--jensify-spacing-sm, 0.5rem);
+    width: 100%;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Card action buttons - better layout on mobile
+  .jensify-card-actions,
+  .card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--jensify-spacing-xs, 0.25rem);
+
+    button {
+      flex: 1;
+      min-width: 0;
+      justify-content: center;
+    }
+  }
+
+  // Prevent horizontal overflow
+  .mat-mdc-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Improve metric cards on mobile
+  app-metric-card {
+    .metric-card {
+      padding: var(--jensify-spacing-md, 1rem);
+    }
+  }
+
+  // Bottom safe area for devices with home indicator
+  .app-content {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+// Extra small devices (phones in portrait, < 375px)
+@media (max-width: 374px) {
+  // Further reduce padding on very small screens
+  .jensify-container,
+  .dashboard-container,
+  .expense-list-container {
+    padding: var(--jensify-spacing-sm, 0.5rem) !important;
+  }
+
+  // Stack action buttons vertically
+  .action-buttons,
+  .card-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  // Reduce font sizes slightly
+  h1 {
+    font-size: 1.5rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+  }
+}
+
+// Landscape mode adjustments
+@media (max-height: 500px) and (orientation: landscape) {
+  // Reduce vertical spacing in landscape
+  .dashboard-header,
+  .jensify-header {
+    padding-top: var(--jensify-spacing-sm, 0.5rem);
+    padding-bottom: var(--jensify-spacing-sm, 0.5rem);
+    margin-bottom: var(--jensify-spacing-sm, 0.5rem);
+  }
+
+  // Reduce card padding in landscape
+  .jensify-approval-card,
+  .jensify-expense-card {
+    .card-body {
+      padding: var(--jensify-spacing-sm, 0.5rem);
+    }
+  }
+}
+

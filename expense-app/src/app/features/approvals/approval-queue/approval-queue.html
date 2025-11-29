@@ -61,7 +61,58 @@
         message="You're all caught up! There are no pending approvals at this time.">
       </app-empty-state>
     } @else {
-      <!-- Approvals Table -->
+      <!-- Mobile Card View (visible only on mobile) -->
+      <div class="jensify-mobile-cards">
+        @for (approval of approvals; track approval.id) {
+          <div class="jensify-approval-card">
+            <div class="card-header">
+              <div class="submitter-info">
+                <div class="submitter-avatar">
+                  {{getSubmitterName(approval).charAt(0).toUpperCase()}}
+                </div>
+                <div class="submitter-details">
+                  <div class="submitter-name">{{getSubmitterName(approval)}}</div>
+                  <div class="submitter-meta">{{formatDate(approval.submitted_at)}}</div>
+                </div>
+              </div>
+              <div class="card-amount">{{formatCurrency(getAmount(approval))}}</div>
+            </div>
+
+            <div class="card-body">
+              <div class="card-row">
+                <span class="card-label">Merchant</span>
+                <span class="card-value">{{getMerchant(approval)}}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Category</span>
+                <span class="card-value">{{getCategory(approval)}}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Workflow</span>
+                <span class="card-value">{{approval.workflow.name}} (Step {{approval.current_step}}/{{approval.total_steps}})</span>
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <mat-chip class="type-chip" [class.expense]="approval.expense_id" [class.report]="approval.report_id">
+                <mat-icon>{{approval.expense_id ? 'receipt' : 'description'}}</mat-icon>
+                {{getApprovalType(approval)}}
+              </mat-chip>
+              <div class="card-actions">
+                <button mat-icon-button (click)="onViewHistory(approval)" class="history-btn" aria-label="View history">
+                  <mat-icon>history</mat-icon>
+                </button>
+                <button mat-flat-button color="primary" (click)="onViewDetails(approval)" class="review-btn">
+                  <mat-icon>visibility</mat-icon>
+                  Review
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Desktop Table View (hidden on mobile) -->
       <div class="jensify-table-container">
         <table mat-table [dataSource]="approvals" class="jensify-table">
           <!-- Submitter Column -->

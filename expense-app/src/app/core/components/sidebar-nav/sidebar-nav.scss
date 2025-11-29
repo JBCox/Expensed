@@ -66,12 +66,11 @@
   @media (max-width: 767px) {
     transform: translateX(-100%);
 
+    // Only .open class (hamburger toggle) should show sidebar on mobile
+    // .expanded/.collapsed only control width on desktop
     &.open {
       transform: translateX(0);
-    }
-
-    &.expanded {
-      transform: translateX(0);
+      width: 190px; // Always show expanded width when open on mobile
     }
   }
 }
