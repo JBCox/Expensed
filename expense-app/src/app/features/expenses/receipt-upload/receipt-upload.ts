@@ -79,7 +79,7 @@ export class ReceiptUpload implements OnDestroy {
   });
 
   // File validation constants
-  readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
   readonly ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
 

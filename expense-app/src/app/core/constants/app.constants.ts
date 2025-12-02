@@ -13,8 +13,8 @@ export const BYTES_PER_KB = 1024;
 /** Bytes in one megabyte */
 export const BYTES_PER_MB = 1024 * 1024;
 
-/** Maximum file size for receipt uploads (5MB) */
-export const MAX_RECEIPT_FILE_SIZE = 5 * BYTES_PER_MB;
+/** Maximum file size for receipt uploads (10MB) */
+export const MAX_RECEIPT_FILE_SIZE = 10 * BYTES_PER_MB;
 
 // ============================================================================
 // TIME CONSTANTS

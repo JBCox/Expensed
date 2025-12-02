@@ -28,8 +28,8 @@ export const SNACKBAR_DURATION = {
  * File upload constraints
  */
 export const FILE_UPLOAD = {
-  /** Maximum file size in bytes (5MB) */
-  MAX_SIZE_BYTES: 5 * 1024 * 1024,
+  /** Maximum file size in bytes (10MB) */
+  MAX_SIZE_BYTES: 10 * 1024 * 1024,
 
   /** Maximum file size in MB (for display) */
   MAX_SIZE_MB: 5,
