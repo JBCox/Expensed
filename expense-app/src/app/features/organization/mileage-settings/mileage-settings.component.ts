@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
@@ -35,6 +36,7 @@ import { IRSMileageRate } from '../../../core/models/mileage.model';
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatRadioModule,
     MatSnackBarModule,
     MatProgressSpinnerModule
   ],
@@ -66,6 +68,34 @@ export class MileageSettingsComponent implements OnInit, OnDestroy {
     { value: 'charity', label: 'Charity' },
     { value: 'moving', label: 'Moving' }
   ];
+  // GPS Tracking Mode options
+  readonly trackingModeOptions = [
+    {
+      value: 'disabled',
+      label: 'Manual Entry Only',
+      icon: 'edit',
+      description: 'Employees type in addresses manually. No GPS verification.',
+      badge: 'low',
+      badgeText: 'Low verification'
+    },
+    {
+      value: 'start_stop',
+      label: 'Start/Stop Verification',
+      icon: 'pin_drop',
+      description: 'Employee clicks Start at origin, drives, then clicks Stop at destination. Captures GPS coordinates and timestamps at both locations to verify presence.',
+      badge: 'medium',
+      badgeText: 'Medium verification',
+      recommended: true
+    },
+    {
+      value: 'full_gps',
+      label: 'Full GPS Tracking',
+      icon: 'timeline',
+      description: 'Continuously logs GPS breadcrumbs throughout the entire trip. Shows the exact route taken on a map. Higher battery usage.',
+      badge: 'high',
+      badgeText: 'High verification'
+    }
+  ];
 
   ngOnInit(): void {
     this.initForm();
@@ -82,7 +112,8 @@ export class MileageSettingsComponent implements OnInit, OnDestroy {
     this.settingsForm = this.fb.group({
       use_custom_rate: [false],
       custom_rate_per_mile: [0, [Validators.min(0), Validators.max(10)]],
-      mileage_category: ['business']
+      mileage_category: ['business'],
+      gps_tracking_mode: ['start_stop']  // Default to start/stop verification
     });
 
     // Enable/disable custom rate field based on toggle
@@ -113,7 +144,8 @@ export class MileageSettingsComponent implements OnInit, OnDestroy {
           this.settingsForm.patchValue({
             use_custom_rate: mileageSettings.use_custom_rate || false,
             custom_rate_per_mile: mileageSettings.custom_rate_per_mile || 0,
-            mileage_category: mileageSettings.mileage_category || 'business'
+            mileage_category: mileageSettings.mileage_category || 'business',
+            gps_tracking_mode: mileageSettings.gps_tracking_mode || 'start_stop'
           });
         }
         this.loading.set(false);
@@ -156,7 +188,8 @@ export class MileageSettingsComponent implements OnInit, OnDestroy {
     const mileageSettings: MileageSettings = {
       use_custom_rate: this.settingsForm.get('use_custom_rate')?.value || false,
       custom_rate_per_mile: parseFloat(this.settingsForm.get('custom_rate_per_mile')?.value) || 0,
-      mileage_category: this.settingsForm.get('mileage_category')?.value || 'business'
+      mileage_category: this.settingsForm.get('mileage_category')?.value || 'business',
+      gps_tracking_mode: this.settingsForm.get('gps_tracking_mode')?.value || 'start_stop'
     };
 
     // Update organization settings

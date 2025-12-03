@@ -35,6 +35,13 @@ export interface MileageSettings {
   custom_rate_per_mile: number;
   /** Default mileage category */
   mileage_category: 'business' | 'medical' | 'charity' | 'moving';
+  /**
+   * GPS tracking mode for mileage trips
+   * - 'disabled': Only manual entry allowed
+   * - 'start_stop': User clicks Start at origin, Stop at destination (verifies locations & timestamps)
+   * - 'full_gps': Continuous GPS breadcrumb tracking throughout the trip
+   */
+  gps_tracking_mode?: 'disabled' | 'start_stop' | 'full_gps';
 }
 
 /**

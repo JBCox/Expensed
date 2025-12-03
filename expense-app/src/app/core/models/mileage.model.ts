@@ -6,7 +6,7 @@
 
 export type MileageCategory = 'business' | 'medical' | 'charity' | 'moving';
 export type MileageStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'reimbursed';
-export type TrackingMethod = 'manual' | 'gps_tracked';
+export type TrackingMethod = 'manual' | 'start_stop' | 'full_gps';
 
 /**
  * Mileage Trip Interface
@@ -32,9 +32,11 @@ export interface MileageTrip {
   distance_miles: number;
   is_round_trip: boolean;
   total_miles: number; // Generated in database
+  tracking_method?: TrackingMethod; // How the trip was tracked (manual, start_stop, full_gps)
+  start_timestamp?: string; // ISO timestamp when user clicked 'Start' (for start_stop verification)
+  end_timestamp?: string; // ISO timestamp when user clicked 'Stop' (for start_stop verification)
   irs_rate: number;
   reimbursement_amount: number; // Generated in database
-  tracking_method: TrackingMethod; // How the trip was tracked
 
   // Trip Purpose & Classification
   purpose: string;

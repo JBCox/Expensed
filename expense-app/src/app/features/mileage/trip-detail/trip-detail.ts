@@ -101,7 +101,7 @@ export class TripDetailComponent implements OnInit, OnDestroy {
           this.trip.set(trip);
 
           // If trip was GPS tracked, load coordinates
-          if (trip.tracking_method === 'gps_tracked') {
+          if (trip.tracking_method === 'start_stop' || trip.tracking_method === 'full_gps') {
             this.loadTripCoordinates(id);
           } else {
             this.loading.set(false);

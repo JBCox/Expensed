@@ -107,6 +107,46 @@
         </mat-card-content>
       </mat-card>
 
+      <!-- GPS Tracking Mode Settings -->
+      <mat-card class="jensify-card">
+        <div class="jensify-card-header">
+          <h2 class="jensify-card-title">
+            <mat-icon>gps_fixed</mat-icon>
+            GPS Tracking Mode
+          </h2>
+        </div>
+        <mat-card-content>
+          <p class="setting-description mode-intro">
+            Choose how employees track their mileage trips. GPS-verified trips provide accountability by capturing locations and timestamps.
+          </p>
+
+          <mat-radio-group formControlName="gps_tracking_mode" class="tracking-mode-group">
+            @for (mode of trackingModeOptions; track mode.value) {
+              <mat-radio-button [value]="mode.value" class="tracking-mode-option">
+                <div class="mode-content">
+                  <div class="mode-header">
+                    <mat-icon>{{ mode.icon }}</mat-icon>
+                    <span class="mode-title">{{ mode.label }}</span>
+                    @if (mode.recommended) {
+                      <span class="recommended-badge">Recommended</span>
+                    }
+                  </div>
+                  <p class="mode-description">
+                    {{ mode.description }}
+                    <span class="mode-badge" [class]="mode.badge">{{ mode.badgeText }}</span>
+                  </p>
+                </div>
+              </mat-radio-button>
+            }
+          </mat-radio-group>
+
+          <div class="setting-note">
+            <mat-icon>info_outline</mat-icon>
+            <p>Manual entry is always available as a fallback if GPS is unavailable. Trips will be marked with their tracking method.</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
       <!-- Save Button -->
       <div class="jensify-form-actions">
         <button

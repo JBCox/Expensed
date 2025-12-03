@@ -22,6 +22,7 @@ import { GeolocationService, GeolocationPosition } from '../../../core/services/
 import { GoogleMapsService } from '../../../core/services/google-maps.service';
 import { TripTrackingService } from '../../../core/services/trip-tracking.service';
 import { TripGpsTrackingComponent, TrackingResult } from '../trip-gps-tracking/trip-gps-tracking';
+import { OrganizationService } from '../../../core/services/organization.service';
 
 /**
  * Trip Form Component
@@ -65,6 +66,7 @@ export class TripForm implements OnInit, OnDestroy {
   // GPS features
   calculatingDistance = signal<boolean>(false);
   gpsAvailable = signal<boolean>(false);
+  gpsTrackingEnabled = signal<boolean>(true);  // Admin setting for GPS tracking
   currentLocation = signal<GeolocationPosition | null>(null);
 
   // Tracking mode
@@ -93,6 +95,7 @@ export class TripForm implements OnInit, OnDestroy {
   private geolocation = inject(GeolocationService);
   private googleMaps = inject(GoogleMapsService);
   private trackingService = inject(TripTrackingService);
+  private organizationService = inject(OrganizationService);
 
   ngOnInit(): void {
     // Initialize form
@@ -121,6 +124,9 @@ export class TripForm implements OnInit, OnDestroy {
 
     // Check GPS availability
     this.gpsAvailable.set(this.geolocation.isAvailable());
+
+    // Check if GPS tracking is enabled by admin
+    this.loadGpsTrackingSetting();
 
     // Watch for changes to recalculate reimbursement
     this.form.valueChanges
@@ -496,6 +502,21 @@ export class TripForm implements OnInit, OnDestroy {
   onTrackingCancelled(): void {
     this.isTracking.set(false);
     this.trackedCoordinates = [];
+  }
+
+  /**
+   * Load GPS tracking setting from organization
+   */
+  private loadGpsTrackingSetting(): void {
+    this.organizationService.currentOrganization$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((org) => {
+        if (org?.settings?.mileage_settings) {
+          // Default to true if not set
+          const enabled = org.settings.mileage_settings.gps_tracking_mode !== 'disabled';
+          this.gpsTrackingEnabled.set(enabled);
+        }
+      });
   }
 
   /**
