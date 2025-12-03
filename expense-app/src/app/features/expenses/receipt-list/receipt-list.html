@@ -175,17 +175,35 @@
         @for (receipt of receipts(); track trackByReceiptId($index, receipt)) {
           <div class="receipt-row">
             <div class="receipt-info">
-              <mat-icon class="receipt-icon">description</mat-icon>
+              <mat-icon class="receipt-icon">receipt</mat-icon>
               <div class="receipt-details">
-                <p class="receipt-name">{{ receipt.file_name }}</p>
-                <p class="receipt-meta">
-                  {{ receipt.file_type }} · {{ (receipt.file_size / 1024) | number:'1.0-0' }} KB
+                <!-- Primary: Merchant name or fallback -->
+                <p class="receipt-name">
                   @if (receipt.extracted_merchant) {
-                    · {{ receipt.extracted_merchant }}
+                    {{ receipt.extracted_merchant }}
+                  } @else {
+                    Receipt
                   }
                   @if (receipt.extracted_amount) {
-                    · {{ receipt.extracted_amount | currency }}
+                    <span class="receipt-amount">{{ receipt.extracted_amount | currency }}</span>
                   }
+                </p>
+                <!-- Secondary: Receipt date, file type, upload info -->
+                <p class="receipt-meta">
+                  @if (receipt.extracted_date) {
+                    <span class="meta-item">
+                      <mat-icon>event</mat-icon>
+                      {{ receipt.extracted_date | date:'MMM d, y' }}
+                    </span>
+                  }
+                  <span class="meta-item">
+                    <mat-icon>insert_drive_file</mat-icon>
+                    {{ receipt.file_type | uppercase }}
+                  </span>
+                  <span class="meta-item upload-date">
+                    <mat-icon>schedule</mat-icon>
+                    Uploaded {{ receipt.created_at | date:'MMM d, h:mm a' }}
+                  </span>
                 </p>
               </div>
             </div>

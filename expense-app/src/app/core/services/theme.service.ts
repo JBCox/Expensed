@@ -1,4 +1,5 @@
-import { effect, Injectable, signal } from "@angular/core";
+import { computed, effect, Injectable, signal } from "@angular/core";
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 export type Theme = "light" | "dark" | "system";
 
@@ -14,14 +15,33 @@ export interface ColorVariants {
   backgroundActive: string;
 }
 
+/** Chart color palette for ngx-charts */
+export interface ChartColorPalette {
+  /** Primary color scheme for pie charts and general use */
+  primary: Color;
+  /** Color scheme for line/area charts */
+  line: Color;
+  /** Status-based color scheme (pending, approved, rejected, etc.) */
+  status: Color;
+  /** Array of hex colors for use in templates */
+  colors: string[];
+}
+
 @Injectable({
     providedIn: "root",
 })
 export class ThemeService {
     private readonly THEME_KEY = "jensify-theme-preference";
+    private readonly DEFAULT_PRIMARY = '#F7580C';
 
     // Signal to track the current active theme
     theme = signal<Theme>("dark");
+
+    // Signal to track the current primary brand color
+    primaryColor = signal<string>(this.DEFAULT_PRIMARY);
+
+    // Computed chart color palette based on current primary color
+    chartColors = computed<ChartColorPalette>(() => this.generateChartColorPalette(this.primaryColor()));
 
     constructor() {
         // Load saved preference or default to system
@@ -81,6 +101,9 @@ export class ThemeService {
     applyBrandColor(hexColor: string): void {
         const root = document.documentElement;
         const variants = this.generateColorVariants(hexColor);
+
+        // Update the primary color signal so chart colors update
+        this.primaryColor.set(hexColor);
 
         root.style.setProperty('--jensify-primary', variants.primary);
         root.style.setProperty('--jensify-primary-hover', variants.hover);
@@ -193,5 +216,72 @@ export class ThemeService {
         };
 
         return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+    }
+
+    /**
+     * Generate a complete chart color palette from a primary color
+     * Creates shades and complementary colors for different chart types
+     */
+    generateChartColorPalette(primaryHex: string): ChartColorPalette {
+        const hsl = this.hexToHSL(primaryHex);
+
+        // Generate shades of the primary color for pie charts
+        const primaryShades = [
+            primaryHex, // Original primary
+            this.hslToHex(hsl.h, Math.max(hsl.s - 15, 40), Math.min(hsl.l + 15, 75)), // Lighter
+            this.hslToHex(hsl.h, Math.max(hsl.s - 25, 30), Math.min(hsl.l + 25, 85)), // Even lighter
+            this.hslToHex(hsl.h, Math.max(hsl.s - 35, 20), Math.min(hsl.l + 35, 90)), // Very light
+            this.hslToHex(hsl.h, Math.max(hsl.s - 45, 15), Math.min(hsl.l + 42, 93)), // Subtle
+            '#1a1a2e' // Dark accent for contrast
+        ];
+
+        // Additional colors for larger datasets (complementary and analogous)
+        const extendedColors = [
+            primaryHex,
+            '#3B82F6', // Blue (complementary feel)
+            '#22C55E', // Green (success/positive)
+            '#F59E0B', // Amber (warning/attention)
+            '#EF4444', // Red (error/negative)
+            '#8B5CF6', // Purple
+            '#EC4899', // Pink
+            '#06B6D4', // Cyan
+            '#84CC16', // Lime
+            '#F97316'  // Orange variant
+        ];
+
+        // Status colors remain semantic (not theme-dependent)
+        const statusColors = ['#F59E0B', '#10B981', '#3B82F6', '#EF4444'];
+
+        return {
+            primary: {
+                name: 'JensifyPrimary',
+                selectable: true,
+                group: ScaleType.Ordinal,
+                domain: primaryShades
+            },
+            line: {
+                name: 'JensifyLine',
+                selectable: true,
+                group: ScaleType.Ordinal,
+                domain: [primaryHex, '#34D399', '#60A5FA']
+            },
+            status: {
+                name: 'JensifyStatus',
+                selectable: true,
+                group: ScaleType.Ordinal,
+                domain: statusColors
+            },
+            colors: extendedColors
+        };
+    }
+
+    /**
+     * Get the current primary color from CSS variable or default
+     */
+    getCurrentPrimaryColor(): string {
+        const cssValue = getComputedStyle(document.documentElement)
+            .getPropertyValue('--jensify-primary')
+            .trim();
+        return cssValue || this.DEFAULT_PRIMARY;
     }
 }

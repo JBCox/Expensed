@@ -1,11 +1,12 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Observable, combineLatest, map } from 'rxjs';
-import { NgxChartsModule, Color, ScaleType, LegendPosition } from '@swimlane/ngx-charts';
+import { NgxChartsModule, Color, LegendPosition } from '@swimlane/ngx-charts';
 import { ExpenseService } from '../../../core/services/expense.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { ExpenseWithUser } from '../../../core/models/expense.model';
 import { ExpenseStatus } from '../../../core/models/enums';
 import { ChangeType } from '../../../shared/components/metric-card/metric-card';
@@ -54,6 +55,7 @@ interface LineChartSeries {
 export class ManagerDashboard implements OnInit {
   private expenseService = inject(ExpenseService);
   private router = inject(Router);
+  private themeService = inject(ThemeService);
 
   metrics$!: Observable<ManagerMetrics>;
   teamPendingApprovals$!: Observable<ExpenseWithUser[]>;
@@ -63,20 +65,9 @@ export class ManagerDashboard implements OnInit {
   loading = true;
   refreshing = signal(false);
 
-  // Chart configuration - static color scheme to avoid change detection issues
-  readonly pieColorScheme: Color = {
-    name: 'JensifyPie',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#F7580C', '#FF8A4D', '#FFB088', '#FFC9A8', '#FFE0CC', '#1a1a2e']
-  };
-
-  readonly lineChartColorScheme: Color = {
-    name: 'JensifyLine',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#F7580C']
-  };
+  // Dynamic chart colors from theme service
+  pieColorScheme = computed<Color>(() => this.themeService.chartColors().primary);
+  lineChartColorScheme = computed<Color>(() => this.themeService.chartColors().line);
 
   readonly legendPosition = LegendPosition.Right;
 

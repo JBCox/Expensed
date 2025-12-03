@@ -72,7 +72,7 @@
             @if (hasTrendData(trendData)) {
               <ngx-charts-line-chart
                 [results]="trendData"
-                [scheme]="lineChartColorScheme"
+                [scheme]="lineChartColorScheme()"
                 [xAxis]="true"
                 [yAxis]="true"
                 [showXAxisLabel]="false"
@@ -105,7 +105,7 @@
             @if (categoryData.length > 0) {
               <ngx-charts-pie-chart
                 [results]="categoryData"
-                [scheme]="chartColorScheme"
+                [scheme]="chartColorScheme()"
                 [legend]="true"
                 [legendPosition]="legendPosition"
                 [labels]="false"

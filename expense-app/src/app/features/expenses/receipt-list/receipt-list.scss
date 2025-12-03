@@ -357,10 +357,48 @@
         text-overflow: ellipsis;
       }
 
+      .receipt-name {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+
+        .receipt-amount {
+          font-weight: 600;
+          font-size: 0.9375rem;
+          color: var(--jensify-primary, #ff5900);
+          background: color-mix(in srgb, var(--jensify-primary) 10%, transparent);
+          padding: 2px 8px;
+          border-radius: var(--jensify-radius-sm, 4px);
+        }
+      }
+
       .receipt-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
         font-size: 0.8125rem;
         color: var(--jensify-text-muted, #666);
-        margin: 0;
+        margin: 4px 0 0 0;
+
+        .meta-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+
+          mat-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            color: var(--jensify-text-muted, #999);
+          }
+
+          &.upload-date {
+            color: var(--jensify-text-muted, #999);
+            font-size: 0.75rem;
+          }
+        }
       }
     }
   }

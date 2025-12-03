@@ -38,7 +38,7 @@ export class CurrencyService {
     if (!this.currenciesCache$) {
       this.currenciesCache$ = from(
         this.supabase.client
-          .from('supported_currencies')
+          .from('currencies')
           .select('*')
           .eq('is_active', true)
           .order('code', { ascending: true })
@@ -60,7 +60,7 @@ export class CurrencyService {
   getCurrency(code: string): Observable<SupportedCurrency | null> {
     return from(
       this.supabase.client
-        .from('supported_currencies')
+        .from('currencies')
         .select('*')
         .eq('code', code)
         .single()

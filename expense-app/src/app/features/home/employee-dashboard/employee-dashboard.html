@@ -76,7 +76,7 @@
             @if (categoryData.length > 0) {
               <ngx-charts-pie-chart
                 [results]="categoryData"
-                [scheme]="pieColorScheme"
+                [scheme]="pieColorScheme()"
                 [legend]="true"
                 [legendPosition]="legendPosition"
                 [labels]="false"
@@ -108,7 +108,7 @@
             @if (hasTrendData(trendData)) {
               <ngx-charts-bar-vertical
                 [results]="trendData"
-                [scheme]="pieColorScheme"
+                [scheme]="pieColorScheme()"
                 [xAxis]="true"
                 [yAxis]="true"
                 [showXAxisLabel]="false"

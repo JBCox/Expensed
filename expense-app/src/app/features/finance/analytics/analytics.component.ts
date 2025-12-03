@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import {
   AnalyticsDashboardData,
   AnalyticsFilters,
@@ -22,8 +23,7 @@ import {
   getDateRangeForPreset,
   formatCurrency,
   formatPercent,
-  formatChange,
-  ANALYTICS_COLORS
+  formatChange
 } from '../../../core/models/analytics.model';
 
 @Component({
@@ -121,7 +121,7 @@ import {
                   @for (category of data()?.categoryBreakdown; track category.category; let i = $index) {
                     <div class="category-item">
                       <div class="category-info">
-                        <div class="category-color" [style.background]="chartColors[i % chartColors.length]"></div>
+                        <div class="category-color" [style.background]="chartColors()[i % chartColors().length]"></div>
                         <span class="category-name">{{ category.category }}</span>
                       </div>
                       <div class="category-stats">
@@ -129,7 +129,7 @@ import {
                         <span class="category-percent">{{ category.percentage | number:'1.1-1' }}%</span>
                       </div>
                       <mat-progress-bar mode="determinate" [value]="category.percentage"
-                                        [style.--mdc-linear-progress-active-indicator-color]="chartColors[i % chartColors.length]">
+                                        [style.--mdc-linear-progress-active-indicator-color]="chartColors()[i % chartColors().length]">
                       </mat-progress-bar>
                     </div>
                   }
@@ -155,7 +155,7 @@ import {
                   @for (dept of data()?.departmentComparison; track dept.department; let i = $index) {
                     <div class="category-item">
                       <div class="category-info">
-                        <div class="category-color" [style.background]="chartColors[(i + 3) % chartColors.length]"></div>
+                        <div class="category-color" [style.background]="chartColors()[(i + 3) % chartColors().length]"></div>
                         <span class="category-name">{{ dept.department || 'Unassigned' }}</span>
                       </div>
                       <div class="category-stats">
@@ -163,7 +163,7 @@ import {
                         <span class="category-percent">{{ dept.percentage_of_total | number:'1.1-1' }}%</span>
                       </div>
                       <mat-progress-bar mode="determinate" [value]="dept.percentage_of_total"
-                                        [style.--mdc-linear-progress-active-indicator-color]="chartColors[(i + 3) % chartColors.length]">
+                                        [style.--mdc-linear-progress-active-indicator-color]="chartColors()[(i + 3) % chartColors().length]">
                       </mat-progress-bar>
                     </div>
                   }
@@ -610,13 +610,16 @@ import {
 export class AnalyticsComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   private notificationService = inject(NotificationService);
+  private themeService = inject(ThemeService);
 
   loading = signal(true);
   data = signal<AnalyticsDashboardData | null>(null);
 
   datePresets = DATE_RANGE_PRESETS;
   selectedPreset: DateRangePreset = 'this_month';
-  chartColors = ANALYTICS_COLORS.chart;
+
+  // Dynamic chart colors from theme service
+  chartColors = computed(() => this.themeService.chartColors().colors);
 
   summaryMetrics = [
     { key: 'total_expenses', label: 'Total Spending', icon: 'payments', color: '#ff5900', isCurrency: true },

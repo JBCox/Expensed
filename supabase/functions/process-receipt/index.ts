@@ -263,6 +263,113 @@ function extractCurrency(text: string, hasAmounts: boolean): { currency: string 
 }
 
 /**
+ * Extract merchant name from receipt lines
+ * Handles multi-line merchant names common on receipts
+ */
+function extractMerchant(lines: string[]): { name: string | null; confidence: number } {
+  if (lines.length === 0) {
+    return { name: null, confidence: 0 };
+  }
+
+  // Patterns that indicate we've passed the merchant name section
+  const stopPatterns = [
+    /^\d+\s+\w+\s+(st|street|ave|avenue|blvd|boulevard|rd|road|dr|drive|ln|lane|way|ct|court|plaza|pkwy|parkway)/i, // Address
+    /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/, // Date MM/DD/YYYY
+    /^\d{2}:\d{2}/, // Time HH:MM
+    /^\(\d{3}\)|\d{3}[\-\.\s]\d{3}[\-\.\s]\d{4}/, // Phone number
+    /^(subtotal|total|tax|cash|credit|debit|change|amount|balance|qty|item|price)/i, // Transaction keywords
+    /^\$\d+\.\d{2}/, // Dollar amount at start
+    /^#\d+/, // Order/receipt number
+    /^(store|loc|location)\s*#?\s*\d+/i, // Store number
+    /^\d+\s+x\s+\$?\d+/, // Item quantity x price
+    /^www\.|\.com|\.net|\.org/i, // Website
+    /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i, // Email
+  ];
+
+  // Patterns to skip (but don't stop at)
+  const skipPatterns = [
+    /^store\s*#?\s*\d+$/i, // Store number line
+    /^loc(ation)?\s*#?\s*\d+$/i, // Location number
+    /^terminal\s*#?\s*\d+$/i, // Terminal number
+    /^register\s*#?\s*\d+$/i, // Register number
+    /^cashier[:.]?\s*\w+$/i, // Cashier name
+    /^server[:.]?\s*\w+$/i, // Server name
+    /^trans(action)?[:.]?\s*\d+$/i, // Transaction number
+  ];
+
+  const merchantParts: string[] = [];
+  let confidence = 0.85;
+
+  // Look at first 5 lines maximum for merchant name
+  const maxLines = Math.min(5, lines.length);
+
+  for (let i = 0; i < maxLines; i++) {
+    const line = lines[i].trim();
+
+    // Skip empty lines
+    if (!line) continue;
+
+    // Check if we should stop looking
+    let shouldStop = false;
+    for (const pattern of stopPatterns) {
+      if (pattern.test(line)) {
+        shouldStop = true;
+        break;
+      }
+    }
+    if (shouldStop) break;
+
+    // Check if we should skip this line (but continue looking)
+    let shouldSkip = false;
+    for (const pattern of skipPatterns) {
+      if (pattern.test(line)) {
+        shouldSkip = true;
+        break;
+      }
+    }
+    if (shouldSkip) continue;
+
+    // Line looks like part of merchant name
+    // Skip very long lines (probably not a name)
+    if (line.length > 50) continue;
+
+    // Skip lines that are just numbers
+    if (/^\d+$/.test(line)) continue;
+
+    merchantParts.push(line);
+
+    // After 2-3 good lines, we probably have the full name
+    if (merchantParts.length >= 3) break;
+  }
+
+  if (merchantParts.length === 0) {
+    // Fallback: use first non-empty line
+    for (const line of lines) {
+      if (line.trim()) {
+        return { name: line.trim(), confidence: 0.60 };
+      }
+    }
+    return { name: null, confidence: 0 };
+  }
+
+  // Join the parts with a space
+  let merchantName = merchantParts.join(' ');
+
+  // Clean up the merchant name
+  merchantName = merchantName
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[*#]+/g, '') // Remove asterisks and hashes
+    .trim();
+
+  // Adjust confidence based on how many lines we combined
+  if (merchantParts.length > 1) {
+    confidence = 0.80; // Slightly lower confidence for multi-line
+  }
+
+  return { name: merchantName || null, confidence: merchantName ? confidence : 0 };
+}
+
+/**
  * Parse extracted text to identify receipt fields
  */
 function parseReceiptText(text: string): OcrResult {
@@ -286,11 +393,10 @@ function parseReceiptText(text: string): OcrResult {
     },
   };
 
-  // Extract merchant (usually first line)
-  if (lines.length > 0) {
-    result.merchant = lines[0];
-    result.confidence.merchant = 0.85; // High confidence for first line
-  }
+  // Extract merchant (may span multiple lines at the top)
+  const merchantResult = extractMerchant(lines);
+  result.merchant = merchantResult.name;
+  result.confidence.merchant = merchantResult.confidence;
 
   // Extract amount (look for dollar amounts)
   const amountPattern = /\$?\s*(\d+\.\d{2})|(\d+\.\d{2})/g;
@@ -366,12 +472,67 @@ function parseReceiptText(text: string): OcrResult {
 
 /**
  * Normalize date to YYYY-MM-DD format
+ * Handles various date formats from receipts
  */
 function normalizeDate(dateString: string): string | null {
   try {
-    const date = new Date(dateString);
+    const trimmed = dateString.trim();
+
+    // Month name mapping
+    const monthNames: Record<string, number> = {
+      'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+      'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+    };
+
+    // Try YYYY-MM-DD format (ISO)
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      return `${year}-${month}-${day}`;
+    }
+
+    // Try MM/DD/YYYY or M/D/YYYY format
+    const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (slashMatch) {
+      let [, month, day, year] = slashMatch;
+      // Handle 2-digit year
+      if (year.length === 2) {
+        const currentYear = new Date().getFullYear();
+        const century = Math.floor(currentYear / 100) * 100;
+        year = String(century + parseInt(year, 10));
+      }
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Try MM-DD-YYYY format
+    const dashMatch = trimmed.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+    if (dashMatch) {
+      let [, month, day, year] = dashMatch;
+      if (year.length === 2) {
+        const currentYear = new Date().getFullYear();
+        const century = Math.floor(currentYear / 100) * 100;
+        year = String(century + parseInt(year, 10));
+      }
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Try "Month DD, YYYY" or "Month DD YYYY" format (e.g., "Dec 25, 2024" or "December 25, 2024")
+    const textMonthMatch = trimmed.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})$/i);
+    if (textMonthMatch) {
+      const [, monthStr, day, year] = textMonthMatch;
+      const monthNum = monthNames[monthStr.toLowerCase().substring(0, 3)];
+      if (monthNum !== undefined) {
+        return `${year}-${String(monthNum + 1).padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+    }
+
+    // Fallback: try native Date parsing for other formats
+    const date = new Date(trimmed);
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split("T")[0];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
   } catch (e) {
     console.error("Date parsing error:", e);

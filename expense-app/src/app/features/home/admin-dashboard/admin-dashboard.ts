@@ -1,14 +1,15 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Observable, combineLatest, of } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
-import { NgxChartsModule, Color, ScaleType, LegendPosition } from '@swimlane/ngx-charts';
+import { NgxChartsModule, Color, LegendPosition } from '@swimlane/ngx-charts';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { ChangeType } from '../../../shared/components/metric-card/metric-card';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PullToRefresh } from '../../../shared/components/pull-to-refresh/pull-to-refresh';
@@ -68,6 +69,7 @@ export class AdminDashboard implements OnInit {
   private organizationService = inject(OrganizationService);
   private supabaseService = inject(SupabaseService);
   private router = inject(Router);
+  private themeService = inject(ThemeService);
 
   metrics$!: Observable<AdminMetrics>;
   expenseTrendData$!: Observable<LineChartSeries[]>;
@@ -77,20 +79,9 @@ export class AdminDashboard implements OnInit {
   loading = true;
   refreshing = signal(false);
 
-  // Chart configuration - static color scheme to avoid change detection issues
-  readonly chartColorScheme: Color = {
-    name: 'Jensify',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#F7580C', '#FF8A4D', '#FFB088', '#FFC9A8', '#FFE0CC', '#1a1a2e']
-  };
-
-  readonly lineChartColorScheme: Color = {
-    name: 'JensifyLine',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: ['#F7580C']
-  };
+  // Dynamic chart colors from theme service
+  chartColorScheme = computed<Color>(() => this.themeService.chartColors().primary);
+  lineChartColorScheme = computed<Color>(() => this.themeService.chartColors().line);
 
   readonly legendPosition = LegendPosition.Right;
 
