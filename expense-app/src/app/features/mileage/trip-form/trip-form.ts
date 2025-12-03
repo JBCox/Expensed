@@ -71,7 +71,7 @@ export class TripForm implements OnInit, OnDestroy {
   currentLocation = signal<GeolocationPosition | null>(null);
 
   // Tracking mode
-  trackingMode = signal<'quick' | 'gps'>('quick'); // quick = point-to-point, gps = live tracking
+  trackingMode = signal<'quick' | 'gps'>('gps'); // gps = live tracking (default), quick = point-to-point
   isTracking = signal(false);
   trackedCoordinates: TripCoordinate[] = [];
 
