@@ -17,7 +17,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MileageService } from '../../../core/services/mileage.service';
-import { MileageCategory, CreateMileageTripDto, UpdateMileageTripDto, TripCoordinate } from '../../../core/models/mileage.model';
+import { MileageCategory, CreateMileageTripDto, UpdateMileageTripDto, TripCoordinate, TrackingMethod } from '../../../core/models/mileage.model';
 import { GeolocationService, GeolocationPosition } from '../../../core/services/geolocation.service';
 import { GoogleMapsService } from '../../../core/services/google-maps.service';
 import { TripTrackingService } from '../../../core/services/trip-tracking.service';
@@ -67,6 +67,7 @@ export class TripForm implements OnInit, OnDestroy {
   calculatingDistance = signal<boolean>(false);
   gpsAvailable = signal<boolean>(false);
   gpsTrackingEnabled = signal<boolean>(true);  // Admin setting for GPS tracking
+  gpsTrackingMode = signal<TrackingMethod>('start_stop');  // Admin setting for tracking method
   currentLocation = signal<GeolocationPosition | null>(null);
 
   // Tracking mode
@@ -462,13 +463,22 @@ export class TripForm implements OnInit, OnDestroy {
     this.isTracking.set(false);
     this.trackedCoordinates = result.coordinates;
 
-    // Auto-fill form with tracking data
+    // Set distance immediately
+    this.form.patchValue({ distance_miles: Math.round(result.distance * 100) / 100 });
+
+    // Handle Start/Stop mode - addresses are already provided
+    if (result.originAddress && result.destinationAddress) {
+      this.form.patchValue({
+        origin_address: result.originAddress,
+        destination_address: result.destinationAddress
+      });
+      return;
+    }
+
+    // Handle Full GPS mode - need to reverse geocode coordinates
     if (result.coordinates.length > 0) {
       const firstCoord = result.coordinates[0];
       const lastCoord = result.coordinates[result.coordinates.length - 1];
-
-      // Set distance immediately
-      this.form.patchValue({ distance_miles: Math.round(result.distance * 100) / 100 });
 
       // Reverse geocode start and end locations
       this.googleMaps.reverseGeocode(firstCoord.latitude, firstCoord.longitude)
@@ -513,8 +523,10 @@ export class TripForm implements OnInit, OnDestroy {
       .subscribe((org) => {
         if (org?.settings?.mileage_settings) {
           // Default to true if not set
-          const enabled = org.settings.mileage_settings.gps_tracking_mode !== 'disabled';
+          const mode = org.settings.mileage_settings.gps_tracking_mode || 'start_stop';
+          const enabled = mode !== 'disabled';
           this.gpsTrackingEnabled.set(enabled);
+          this.gpsTrackingMode.set(mode as TrackingMethod);
         }
       });
   }

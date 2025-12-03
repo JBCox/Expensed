@@ -2,12 +2,18 @@
   <mat-card class="jensify-card">
     <mat-card-header>
       <mat-card-title>{{ isEditMode ? 'Edit Trip' : 'New Mileage Trip' }}</mat-card-title>
-      <mat-card-subtitle>Choose tracking method: Quick Entry or GPS Tracking</mat-card-subtitle>
+      <mat-card-subtitle>
+        @if (gpsTrackingEnabled()) {
+          Choose tracking method: Quick Entry or GPS Tracking
+        } @else {
+          Enter your trip details below
+        }
+      </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
-      <!-- Tracking Mode Tabs -->
-      @if (!isEditMode) {
+      <!-- Tracking Mode Tabs (only show GPS tab if admin enabled it) -->
+      @if (!isEditMode && gpsTrackingEnabled()) {
         <mat-tab-group (selectedIndexChange)="onTrackingModeChange($event)" [selectedIndex]="trackingMode() === 'quick' ? 0 : 1">
           <mat-tab label="Quick Entry">
             <ng-template matTabContent>
@@ -20,6 +26,7 @@
             <ng-template matTabContent>
               <app-trip-gps-tracking
                 [gpsAvailable]="gpsAvailable()"
+                [trackingMode]="gpsTrackingMode()"
                 (trackingComplete)="onTrackingComplete($event)"
                 (trackingStarted)="onTrackingStarted()"
                 (trackingCancelled)="onTrackingCancelled()">
@@ -27,6 +34,11 @@
             </ng-template>
           </mat-tab>
         </mat-tab-group>
+      }
+      @if (!isEditMode && !gpsTrackingEnabled()) {
+        <div class="jensify-quick-entry-header">
+          <p class="jensify-text-muted">Enter start/end addresses and auto-calculate distance</p>
+        </div>
       }
 
       <!-- Real-time Calculation Display -->

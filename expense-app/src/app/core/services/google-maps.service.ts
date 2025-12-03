@@ -170,6 +170,41 @@ export class GoogleMapsService {
   }
 
   /**
+   * Calculate driving distance between two coordinate points
+   * Used by Start/Stop tracking mode
+   */
+  getRouteByCoords(origin: LatLng, destination: LatLng): Observable<{ distanceMiles: number; durationMinutes: number }> {
+    return this.waitForMaps().pipe(
+      switchMap(maps => {
+        const service = new maps.DistanceMatrixService();
+        return from(
+          service.getDistanceMatrix({
+            origins: [new maps.LatLng(origin.lat, origin.lng)],
+            destinations: [new maps.LatLng(destination.lat, destination.lng)],
+            travelMode: maps.TravelMode.DRIVING,
+            unitSystem: maps.UnitSystem.IMPERIAL
+          })
+        );
+      }),
+      map((result: any) => {
+        if (!result.rows || !result.rows[0] || !result.rows[0].elements[0]) {
+          throw new Error('Unable to calculate route');
+        }
+
+        const element = result.rows[0].elements[0];
+        if (element.status !== 'OK') {
+          throw new Error(`Route calculation failed: ${element.status}`);
+        }
+
+        return {
+          distanceMiles: element.distance.value / 1609.34, // meters to miles
+          durationMinutes: element.duration.value / 60 // seconds to minutes
+        };
+      })
+    );
+  }
+
+  /**
    * Calculate distance between two coordinates (straight line)
    */
   calculateDistance(from: LatLng, to: LatLng): number {
