@@ -149,64 +149,52 @@
           }
         </mat-form-field>
 
-        <!-- Distance and Round Trip -->
-        <div class="jensify-form-row">
-          <mat-form-field appearance="fill" floatLabel="always" [class.jensify-half-width]="trackingMode() === 'quick' || !gpsTrackingEnabled()" [class.jensify-full-width]="trackingMode() === 'gps' && gpsTrackingEnabled()">
-            <mat-label>{{ distanceFromGps() ? 'Total Distance' : 'Distance (one-way)' }}</mat-label>
-            <mat-icon matPrefix>straighten</mat-icon>
-            <input
-              matInput
-              type="number"
-              step="0.1"
-              min="0.1"
-              formControlName="distance_miles"
-              placeholder="0.0"
-              [readonly]="distanceFromGps()">
-            <!-- Only show auto-calculate button in Quick Entry mode -->
-            @if (!distanceFromGps() && (trackingMode() === 'quick' || !gpsTrackingEnabled())) {
-              <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                [disabled]="calculatingDistance()"
-                (click)="autoCalculateDistance()"
-                matTooltip="Auto-calculate distance"
-                aria-label="Auto-calculate distance using Google Maps">
-                @if (calculatingDistance()) {
-                  <mat-spinner diameter="20"></mat-spinner>
-                } @else {
-                  <mat-icon>route</mat-icon>
-                }
-              </button>
-            }
-            @if (distanceFromGps()) {
-              <mat-icon matSuffix class="gps-locked-icon" matTooltip="Distance calculated via GPS tracking">gps_fixed</mat-icon>
-            }
-            @if (hasError('distance_miles', 'required')) {
-              <mat-error>{{ getErrorMessage('distance_miles') }}</mat-error>
-            }
-            @if (hasError('distance_miles', 'min')) {
-              <mat-error>{{ getErrorMessage('distance_miles') }}</mat-error>
-            }
-            @if (distanceFromGps()) {
-              <mat-hint>GPS-calculated total distance (locked)</mat-hint>
-            } @else if (trackingMode() === 'gps' && gpsTrackingEnabled()) {
-              <mat-hint>Use Start/Stop tracking to capture distance</mat-hint>
-            } @else {
-              <mat-hint>Click route icon to auto-calculate</mat-hint>
-            }
-          </mat-form-field>
-
-          <!-- Only show round trip option in Quick Entry mode -->
-          @if (trackingMode() === 'quick' || !gpsTrackingEnabled()) {
-            <div class="jensify-round-trip-field">
-              <mat-checkbox formControlName="is_round_trip">
-                Round Trip
-              </mat-checkbox>
-              <p class="jensify-field-hint">Check if you returned to your starting point</p>
-            </div>
+        <!-- Distance -->
+        <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
+          <mat-label>{{ distanceFromGps() ? 'Total Distance' : 'Distance (miles)' }}</mat-label>
+          <mat-icon matPrefix>straighten</mat-icon>
+          <input
+            matInput
+            type="number"
+            step="0.1"
+            min="0.1"
+            formControlName="distance_miles"
+            placeholder="0.0"
+            [readonly]="distanceFromGps()">
+          <!-- Only show auto-calculate button in Quick Entry mode -->
+          @if (!distanceFromGps() && (trackingMode() === 'quick' || !gpsTrackingEnabled())) {
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              [disabled]="calculatingDistance()"
+              (click)="autoCalculateDistance()"
+              matTooltip="Auto-calculate distance"
+              aria-label="Auto-calculate distance using Google Maps">
+              @if (calculatingDistance()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>route</mat-icon>
+              }
+            </button>
           }
-        </div>
+          @if (distanceFromGps()) {
+            <mat-icon matSuffix class="gps-locked-icon" matTooltip="Distance calculated via GPS tracking">gps_fixed</mat-icon>
+          }
+          @if (hasError('distance_miles', 'required')) {
+            <mat-error>{{ getErrorMessage('distance_miles') }}</mat-error>
+          }
+          @if (hasError('distance_miles', 'min')) {
+            <mat-error>{{ getErrorMessage('distance_miles') }}</mat-error>
+          }
+          @if (distanceFromGps()) {
+            <mat-hint>GPS-calculated total distance (locked)</mat-hint>
+          } @else if (trackingMode() === 'gps' && gpsTrackingEnabled()) {
+            <mat-hint>Use Start/Stop tracking to capture distance</mat-hint>
+          } @else {
+            <mat-hint>Click route icon to auto-calculate</mat-hint>
+          }
+        </mat-form-field>
 
         <!-- Purpose (optional for quick logging, required before submitting) -->
         <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">

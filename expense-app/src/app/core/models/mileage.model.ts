@@ -94,7 +94,6 @@ export interface CreateMileageTripDto {
   origin_address: string;
   destination_address: string;
   distance_miles: number;
-  is_round_trip: boolean;
   purpose?: string; // Optional for quick logging - required before submitting
   category?: MileageCategory; // Defaults to 'business'
   tracking_method?: TrackingMethod; // Defaults to 'manual'
@@ -122,7 +121,6 @@ export interface UpdateMileageTripDto {
   origin_address?: string;
   destination_address?: string;
   distance_miles?: number;
-  is_round_trip?: boolean;
   purpose?: string;
   category?: MileageCategory;
   department?: string;

@@ -114,7 +114,6 @@ export class TripForm implements OnInit, OnDestroy {
       origin_address: ['', [Validators.required, Validators.minLength(3)]],
       destination_address: ['', [Validators.required, Validators.minLength(3)]],
       distance_miles: [null, [Validators.required, Validators.min(0.1)]],
-      is_round_trip: [false],
       purpose: [''],  // Optional for quick logging - required before submitting to expense report
       category: ['business' as MileageCategory, [Validators.required]],
       department: [''],
@@ -181,7 +180,6 @@ export class TripForm implements OnInit, OnDestroy {
             origin_address: trip.origin_address,
             destination_address: trip.destination_address,
             distance_miles: trip.distance_miles,
-            is_round_trip: trip.is_round_trip,
             purpose: trip.purpose,
             category: trip.category,
             department: trip.department || '',
@@ -205,7 +203,6 @@ export class TripForm implements OnInit, OnDestroy {
   private updateCalculation(): void {
     const values = this.form.value;
     const distance = parseFloat(values.distance_miles);
-    const isRoundTrip = values.is_round_trip;
     const category = values.category;
     const tripDate = values.trip_date;
 
@@ -217,12 +214,11 @@ export class TripForm implements OnInit, OnDestroy {
       return;
     }
 
-    // Calculate total miles
-    const totalMiles = isRoundTrip ? distance * 2 : distance;
-    this.totalMiles.set(totalMiles);
+    // Total miles is simply the distance (no round trip logic)
+    this.totalMiles.set(distance);
 
     // Fetch IRS rate and calculate reimbursement
-    this.mileageService.calculateReimbursement(distance, isRoundTrip, category, tripDate)
+    this.mileageService.calculateReimbursement(distance, false, category, tripDate)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (calc) => {
