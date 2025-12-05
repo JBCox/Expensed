@@ -101,8 +101,21 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.handleAuthCallback();
     this.setupKeyboardShortcuts();
     this.setupBrandColor();
+  }
+
+  /**
+   * Handle auth callback tokens in URL hash
+   * Supabase email links may redirect to root with tokens in hash
+   */
+  private handleAuthCallback(): void {
+    const hash = window.location.hash;
+    if (hash && (hash.includes('access_token') || hash.includes('error') || hash.includes('type=signup') || hash.includes('type=recovery'))) {
+      // Auth tokens detected in URL - redirect to callback handler
+      this.router.navigate(['/auth/callback'], { replaceUrl: true });
+    }
   }
 
   /**

@@ -269,7 +269,8 @@ export class TripForm implements OnInit, OnDestroy {
       tracking_method: trackingMethod,
       // Include original GPS distance for fraud tracking (only for GPS-based trips)
       original_gps_distance: this.originalGpsDistance ?? undefined,
-      // Include modification reason if distance was changed from GPS value
+      // Include modification tracking if distance was changed from GPS value
+      distance_manually_modified: !!this.distanceModificationReason,
       distance_modification_reason: this.distanceModificationReason ?? undefined,
       // Remove empty optional fields
       department: this.form.value.department || undefined,

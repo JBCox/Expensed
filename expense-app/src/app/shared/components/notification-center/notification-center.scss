@@ -5,6 +5,10 @@
 
 .notification-button {
   position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  // Ensure the button is always clickable even with backdrop-filter effects
+  isolation: isolate;
 }
 
 .notification-menu {

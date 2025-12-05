@@ -18,7 +18,13 @@
           <mat-tab label="Quick Entry">
             <ng-template matTabContent>
               <div class="jensify-tab-content">
-                <p class="jensify-text-muted">Enter start/end addresses and auto-calculate distance</p>
+                <div class="jensify-warning-banner">
+                  <mat-icon>warning</mat-icon>
+                  <div>
+                    <strong>Manual entry should be a last resort.</strong>
+                    <span>GPS tracking provides verified mileage and faster approvals. Use the GPS Tracking tab whenever possible.</span>
+                  </div>
+                </div>
               </div>
             </ng-template>
           </mat-tab>

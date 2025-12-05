@@ -10,23 +10,25 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { PayoutService } from '../../../core/services/payout.service';
 import { OrganizationService } from '../../../core/services/organization.service';
-import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.model';
+import { PayoutMethod } from '../../../core/models/payout.model';
 
 /**
  * Payout Settings Component
  *
  * Allows organization admins to:
  * 1. Choose between manual (CSV export) and Stripe automated payouts
- * 2. Connect/disconnect their Stripe account
- * 3. View Stripe account status
+ * 2. Enter their own Stripe API key for direct integration
+ * 3. View Stripe configuration status
  *
- * SECURITY: Stripe Connect uses Standard accounts where the organization
- * pays all fees directly to Stripe. We never handle their bank details.
+ * SECURITY: Stripe API keys are encrypted at rest in the database.
+ * The key is validated with Stripe before being stored.
  */
 @Component({
   selector: 'app-payout-settings',
@@ -34,6 +36,7 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -43,6 +46,8 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
     MatChipsModule,
     MatDividerModule,
     MatTooltipModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   template: `
     <div class="jensify-container">
@@ -89,7 +94,7 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
             <div
               class="method-option"
               [class.selected]="payoutMethod() === 'stripe'"
-              [class.disabled]="stripeStatus() !== 'active' && stripeStatus() !== 'not_connected'"
+              [class.disabled]="!stripeConfigured()"
               (click)="selectMethod('stripe')"
               role="button"
               tabindex="0"
@@ -99,14 +104,14 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
                 <mat-icon>bolt</mat-icon>
               </div>
               <div class="method-details">
-                <h3>Stripe Connect (Automated)</h3>
-                <p>Connect your company's Stripe account to send direct ACH deposits to employee bank accounts.</p>
+                <h3>Stripe (Automated)</h3>
+                <p>Use your Stripe account to send direct ACH deposits to employee bank accounts.</p>
                 <div class="method-features">
                   <span class="feature"><mat-icon>check</mat-icon> Automated payouts</span>
                   <span class="feature"><mat-icon>check</mat-icon> 1-2 day delivery</span>
-                  <span class="feature"><mat-icon>check</mat-icon> $1 per ACH transfer</span>
+                  <span class="feature"><mat-icon>check</mat-icon> Your own Stripe account</span>
                 </div>
-                @if (stripeStatus() !== 'active' && stripeStatus() !== 'not_connected') {
+                @if (!stripeConfigured()) {
                   <mat-chip class="status-chip pending">Setup required</mat-chip>
                 }
               </div>
@@ -116,25 +121,16 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
         </mat-card-content>
       </mat-card>
 
-      <!-- Stripe Connect Section -->
+      <!-- Stripe Configuration Section -->
       <mat-card class="jensify-card stripe-card">
         <mat-card-header>
           <mat-icon mat-card-avatar class="card-icon stripe-icon">account_balance</mat-icon>
-          <mat-card-title>Stripe Connect</mat-card-title>
+          <mat-card-title>Stripe Configuration</mat-card-title>
           <mat-card-subtitle>
-            @switch (stripeStatus()) {
-              @case ('active') {
-                Your Stripe account is connected and ready for payouts
-              }
-              @case ('pending') {
-                Complete Stripe onboarding to enable payouts
-              }
-              @case ('restricted') {
-                Additional verification required
-              }
-              @default {
-                Connect your Stripe account to enable automated payouts
-              }
+            @if (stripeConfigured()) {
+              Your Stripe API key is configured and ready for payouts
+            } @else {
+              Enter your Stripe API key to enable automated payouts
             }
           </mat-card-subtitle>
         </mat-card-header>
@@ -143,30 +139,25 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
           <!-- Status Display -->
           <div class="stripe-status">
             <div class="status-row">
-              <span class="status-label">Connection Status:</span>
-              <mat-chip [class]="'status-chip ' + stripeStatus()">
-                @switch (stripeStatus()) {
-                  @case ('active') { Connected }
-                  @case ('pending') { Pending Setup }
-                  @case ('restricted') { Restricted }
-                  @case ('disabled') { Disabled }
-                  @default { Not Connected }
-                }
+              <span class="status-label">Status:</span>
+              <mat-chip [class]="'status-chip ' + (stripeConfigured() ? 'active' : 'not_connected')">
+                {{ stripeConfigured() ? 'Configured' : 'Not Configured' }}
               </mat-chip>
             </div>
 
-            @if (stripeConnected()) {
+            @if (stripeConfigured()) {
               <div class="status-row">
-                <span class="status-label">Payouts Enabled:</span>
-                <mat-chip [class]="'status-chip ' + (payoutsEnabled() ? 'active' : 'pending')">
-                  {{ payoutsEnabled() ? 'Yes' : 'No' }}
-                </mat-chip>
+                <span class="status-label">API Key:</span>
+                <span class="status-value key-display">
+                  <mat-icon>vpn_key</mat-icon>
+                  sk_****{{ keyLast4() }}
+                </span>
               </div>
 
-              @if (businessName()) {
+              @if (keySetAt()) {
                 <div class="status-row">
-                  <span class="status-label">Business Name:</span>
-                  <span class="status-value">{{ businessName() }}</span>
+                  <span class="status-label">Configured:</span>
+                  <span class="status-value">{{ keySetAt() | date:'medium' }}</span>
                 </div>
               }
             }
@@ -174,57 +165,110 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
 
           <mat-divider></mat-divider>
 
-          <!-- Actions -->
-          <div class="stripe-actions">
-            @if (!stripeConnected()) {
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="connectStripe()"
-                [disabled]="loading()"
-              >
-                @if (loading()) {
-                  <mat-spinner diameter="20"></mat-spinner>
-                } @else {
-                  <ng-container><mat-icon>link</mat-icon> Connect Stripe Account</ng-container>
+          <!-- API Key Form -->
+          <div class="stripe-form">
+            @if (!stripeConfigured()) {
+              <form [formGroup]="keyForm" (ngSubmit)="saveStripeKey()">
+                <mat-form-field appearance="outline" class="key-field">
+                  <mat-label>Stripe Secret Key</mat-label>
+                  <input
+                    matInput
+                    formControlName="stripeKey"
+                    [type]="showKey() ? 'text' : 'password'"
+                    placeholder="sk_live_... or sk_test_..."
+                  >
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    type="button"
+                    (click)="toggleShowKey()"
+                    [matTooltip]="showKey() ? 'Hide key' : 'Show key'"
+                  >
+                    <mat-icon>{{ showKey() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                  <mat-hint>Your Stripe secret key starts with sk_live_ or sk_test_</mat-hint>
+                  @if (keyForm.get('stripeKey')?.hasError('required')) {
+                    <mat-error>API key is required</mat-error>
+                  }
+                  @if (keyForm.get('stripeKey')?.hasError('pattern')) {
+                    <mat-error>Key must start with sk_</mat-error>
+                  }
+                </mat-form-field>
+
+                <div class="form-actions">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="testing() || !keyForm.valid"
+                    (click)="testStripeKey()"
+                  >
+                    @if (testing()) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                    } @else {
+                      <mat-icon>science</mat-icon>
+                      Test Key
+                    }
+                  </button>
+
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    type="submit"
+                    [disabled]="saving() || !keyForm.valid"
+                  >
+                    @if (saving()) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                    } @else {
+                      <mat-icon>save</mat-icon>
+                      Save Key
+                    }
+                  </button>
+                </div>
+
+                @if (testResult()) {
+                  <div class="test-result" [class.success]="testResult()?.valid" [class.error]="!testResult()?.valid">
+                    <mat-icon>{{ testResult()?.valid ? 'check_circle' : 'error' }}</mat-icon>
+                    @if (testResult()?.valid) {
+                      <span>
+                        Key is valid!
+                        {{ testResult()?.livemode ? '(Live mode)' : '(Test mode)' }}
+                      </span>
+                    } @else {
+                      <span>{{ testResult()?.error || 'Invalid key' }}</span>
+                    }
+                  </div>
                 }
-              </button>
-              <p class="action-hint">
-                You'll be redirected to Stripe to connect your existing account or create a new one.
-                All Stripe fees are billed directly to your account.
-              </p>
-            } @else if (stripeStatus() === 'pending' || stripeStatus() === 'restricted') {
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="continueSetup()"
-                [disabled]="loading()"
-              >
-                @if (loading()) {
-                  <mat-spinner diameter="20"></mat-spinner>
-                } @else {
-                  <ng-container><mat-icon>arrow_forward</mat-icon> Continue Setup</ng-container>
-                }
-              </button>
-              <p class="action-hint">
-                Complete the Stripe onboarding process to enable payouts.
-              </p>
+              </form>
+
+              <div class="help-text">
+                <mat-icon>info</mat-icon>
+                <p>
+                  Find your API key in your
+                  <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">
+                    Stripe Dashboard <mat-icon class="external-link">open_in_new</mat-icon>
+                  </a>
+                </p>
+              </div>
             } @else {
-              <button
-                mat-stroked-button
-                color="warn"
-                (click)="disconnectStripe()"
-                [disabled]="loading()"
-              >
-                @if (loading()) {
-                  <mat-spinner diameter="20"></mat-spinner>
-                } @else {
-                  <ng-container><mat-icon>link_off</mat-icon> Disconnect Stripe</ng-container>
-                }
-              </button>
-              <p class="action-hint warn">
-                Disconnecting will switch to manual payout mode. You can reconnect at any time.
-              </p>
+              <!-- Already configured - show remove option -->
+              <div class="configured-actions">
+                <button
+                  mat-stroked-button
+                  color="warn"
+                  (click)="removeStripeKey()"
+                  [disabled]="removing()"
+                >
+                  @if (removing()) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <mat-icon>delete</mat-icon>
+                    Remove API Key
+                  }
+                </button>
+                <p class="action-hint warn">
+                  Removing the API key will switch to manual payout mode.
+                </p>
+              </div>
             }
           </div>
         </mat-card-content>
@@ -242,8 +286,8 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
             <div class="info-item">
               <mat-icon>security</mat-icon>
               <div>
-                <h4>Secure by Design</h4>
-                <p>Bank account information is handled entirely by Stripe. We never see or store sensitive financial data.</p>
+                <h4>Secure Storage</h4>
+                <p>Your Stripe API key is encrypted at rest. We only use it to process payouts on your behalf.</p>
               </div>
             </div>
 
@@ -251,7 +295,7 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
               <mat-icon>account_balance_wallet</mat-icon>
               <div>
                 <h4>Your Stripe Account</h4>
-                <p>All fees ($1/ACH transfer) are billed directly to your connected Stripe account, not through Jensify.</p>
+                <p>All fees are billed directly to your Stripe account. Jensify doesn't charge any additional fees.</p>
               </div>
             </div>
 
@@ -429,6 +473,23 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
       font-weight: 500;
     }
 
+    .key-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: monospace;
+      background: var(--jensify-surface-soft, #f5f5f5);
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--jensify-text-muted, #999);
+      }
+    }
+
     .status-chip {
       &.active {
         background: rgba(76, 175, 80, 0.15) !important;
@@ -440,12 +501,7 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
         color: #e65100 !important;
       }
 
-      &.restricted {
-        background: rgba(244, 67, 54, 0.15) !important;
-        color: #c62828 !important;
-      }
-
-      &.not_connected, &.disabled {
+      &.not_connected {
         background: rgba(158, 158, 158, 0.15) !important;
         color: #616161 !important;
       }
@@ -455,14 +511,106 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
       margin: 1rem 0;
     }
 
-    .stripe-actions {
+    /* Stripe Form */
+    .stripe-form {
       padding-top: 1rem;
+    }
+
+    .key-field {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
 
       button {
-        min-width: 200px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 0.5rem;
+
+        mat-spinner {
+          margin: 0;
+        }
+      }
+    }
+
+    .test-result {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      &.success {
+        background: rgba(76, 175, 80, 0.1);
+        color: #2e7d32;
+      }
+
+      &.error {
+        background: rgba(244, 67, 54, 0.1);
+        color: #c62828;
+      }
+    }
+
+    .help-text {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--jensify-surface-soft, #f5f5f5);
+      border-radius: 8px;
+
+      > mat-icon {
+        color: #2196f3;
+        flex-shrink: 0;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--jensify-text-secondary, #666);
+
+        a {
+          color: var(--jensify-primary, #ff5900);
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+
+          &:hover {
+            text-decoration: underline;
+          }
+
+          .external-link {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+          }
+        }
+      }
+    }
+
+    .configured-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+
+      button {
+        display: flex;
+        align-items: center;
         gap: 0.5rem;
 
         mat-spinner {
@@ -472,10 +620,9 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
     }
 
     .action-hint {
-      margin: 1rem 0 0 0;
+      margin: 0;
       font-size: 0.85rem;
       color: var(--jensify-text-muted, #999);
-      max-width: 500px;
 
       &.warn {
         color: var(--jensify-warn, #f44336);
@@ -537,6 +684,11 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
       .info-item p {
         color: rgba(255, 255, 255, 0.7);
       }
+
+      .key-display,
+      .help-text {
+        background: rgba(255, 255, 255, 0.05);
+      }
     }
 
     /* Mobile */
@@ -564,6 +716,10 @@ import { PayoutMethod, StripeAccountStatus } from '../../../core/models/payout.m
       .status-label {
         min-width: unset;
       }
+
+      .form-actions {
+        flex-direction: column;
+      }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -573,15 +729,27 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
   private organizationService = inject(OrganizationService);
   private snackBar = inject(MatSnackBar);
   private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
 
   // State
   loading = signal(false);
+  saving = signal(false);
+  testing = signal(false);
+  removing = signal(false);
+  showKey = signal(false);
+
   payoutMethod = signal<PayoutMethod>('manual');
-  stripeStatus = signal<StripeAccountStatus>('not_connected');
-  stripeConnected = signal(false);
-  payoutsEnabled = signal(false);
-  businessName = signal<string | null>(null);
+  stripeConfigured = signal(false);
+  keyLast4 = signal<string | null>(null);
+  keySetAt = signal<string | null>(null);
+
+  testResult = signal<{ valid: boolean; livemode?: boolean; error?: string } | null>(null);
+
+  // Form
+  keyForm = this.fb.group({
+    stripeKey: ['', [Validators.required, Validators.pattern(/^sk_.+/)]]
+  });
 
   private organizationId: string | null = null;
 
@@ -596,16 +764,13 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
         }
       });
 
-    // Handle Stripe redirect callback
+    // Handle redirect callback
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
         if (params['stripe'] === 'success') {
-          this.snackBar.open('Stripe account connected successfully!', 'Close', { duration: 5000 });
+          this.snackBar.open('Stripe configured successfully!', 'Close', { duration: 5000 });
           this.loadStripeStatus();
-        } else if (params['stripe'] === 'refresh') {
-          this.snackBar.open('Please complete Stripe setup', 'Close', { duration: 3000 });
-          this.continueSetup();
         }
       });
   }
@@ -624,10 +789,9 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (status) => {
           this.payoutMethod.set(status.payout_method || 'manual');
-          this.stripeConnected.set(status.connected);
-          this.stripeStatus.set(status.status || 'not_connected');
-          this.payoutsEnabled.set(status.payouts_enabled || false);
-          this.businessName.set(status.business_name || null);
+          this.stripeConfigured.set(status.has_key || status.connected || false);
+          this.keyLast4.set(status.key_last4 || null);
+          this.keySetAt.set(status.key_set_at || null);
           this.loading.set(false);
         },
         error: (error) => {
@@ -637,12 +801,16 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
       });
   }
 
+  toggleShowKey(): void {
+    this.showKey.update(v => !v);
+  }
+
   selectMethod(method: PayoutMethod): void {
     if (!this.organizationId) return;
 
-    // Can only select Stripe if connected
-    if (method === 'stripe' && this.stripeStatus() !== 'active') {
-      this.snackBar.open('Please connect your Stripe account first', 'Close', { duration: 3000 });
+    // Can only select Stripe if configured
+    if (method === 'stripe' && !this.stripeConfigured()) {
+      this.snackBar.open('Please configure your Stripe API key first', 'Close', { duration: 3000 });
       return;
     }
 
@@ -665,83 +833,85 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Failed to update payout method:', error);
-          this.snackBar.open('Failed to update payout method', 'Close', { duration: 3000 });
+          this.snackBar.open(error.message || 'Failed to update payout method', 'Close', { duration: 3000 });
           this.loading.set(false);
         }
       });
   }
 
-  connectStripe(): void {
-    if (!this.organizationId) return;
+  testStripeKey(): void {
+    if (!this.keyForm.valid) return;
 
-    this.loading.set(true);
-    this.payoutService.connectStripeAccount(this.organizationId)
+    const stripeKey = this.keyForm.get('stripeKey')?.value;
+    if (!stripeKey) return;
+
+    this.testing.set(true);
+    this.testResult.set(null);
+
+    this.payoutService.testStripeKey(stripeKey)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
-          if (result.onboarding_url) {
-            // Redirect to Stripe
-            window.location.href = result.onboarding_url;
-          } else {
-            this.snackBar.open(result.error || 'Failed to connect Stripe', 'Close', { duration: 3000 });
-            this.loading.set(false);
-          }
+          this.testResult.set(result);
+          this.testing.set(false);
         },
         error: (error) => {
-          console.error('Failed to connect Stripe:', error);
-          this.snackBar.open('Failed to connect Stripe', 'Close', { duration: 3000 });
-          this.loading.set(false);
+          this.testResult.set({ valid: false, error: error.message || 'Test failed' });
+          this.testing.set(false);
         }
       });
   }
 
-  continueSetup(): void {
-    if (!this.organizationId) return;
+  saveStripeKey(): void {
+    if (!this.organizationId || !this.keyForm.valid) return;
 
-    this.loading.set(true);
-    this.payoutService.createAccountLink(this.organizationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (result) => {
-          if (result.onboarding_url) {
-            window.location.href = result.onboarding_url;
-          } else {
-            this.snackBar.open(result.error || 'Failed to continue setup', 'Close', { duration: 3000 });
-            this.loading.set(false);
-          }
-        },
-        error: (error) => {
-          console.error('Failed to continue setup:', error);
-          this.snackBar.open('Failed to continue setup', 'Close', { duration: 3000 });
-          this.loading.set(false);
-        }
-      });
-  }
+    const stripeKey = this.keyForm.get('stripeKey')?.value;
+    if (!stripeKey) return;
 
-  disconnectStripe(): void {
-    if (!this.organizationId) return;
+    this.saving.set(true);
 
-    if (!confirm('Are you sure you want to disconnect Stripe? This will switch to manual payout mode.')) {
-      return;
-    }
-
-    this.loading.set(true);
-    this.payoutService.disconnectStripeAccount(this.organizationId)
+    this.payoutService.setStripeKey(this.organizationId, stripeKey)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.stripeConnected.set(false);
-          this.stripeStatus.set('not_connected');
-          this.payoutMethod.set('manual');
-          this.payoutsEnabled.set(false);
-          this.businessName.set(null);
-          this.snackBar.open('Stripe account disconnected', 'Close', { duration: 3000 });
-          this.loading.set(false);
+          this.snackBar.open('Stripe API key saved successfully!', 'Close', { duration: 5000 });
+          this.keyForm.reset();
+          this.testResult.set(null);
+          this.loadStripeStatus();
+          this.saving.set(false);
         },
         error: (error) => {
-          console.error('Failed to disconnect Stripe:', error);
-          this.snackBar.open('Failed to disconnect Stripe', 'Close', { duration: 3000 });
-          this.loading.set(false);
+          console.error('Failed to save Stripe key:', error);
+          this.snackBar.open(error.message || 'Failed to save Stripe key', 'Close', { duration: 3000 });
+          this.saving.set(false);
+        }
+      });
+  }
+
+  removeStripeKey(): void {
+    if (!this.organizationId) return;
+
+    if (!confirm('Are you sure you want to remove the Stripe API key? This will switch to manual payout mode.')) {
+      return;
+    }
+
+    this.removing.set(true);
+
+    this.payoutService.removeStripeKey(this.organizationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.stripeConfigured.set(false);
+          this.keyLast4.set(null);
+          this.keySetAt.set(null);
+          this.payoutMethod.set('manual');
+          this.snackBar.open('Stripe API key removed', 'Close', { duration: 3000 });
+          this.removing.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to remove Stripe key:', error);
+          this.snackBar.open(error.message || 'Failed to remove Stripe key', 'Close', { duration: 3000 });
+          this.removing.set(false);
         }
       });
   }

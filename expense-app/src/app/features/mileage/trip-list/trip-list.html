@@ -140,7 +140,7 @@
   <!-- Trip Cards List with Virtual Scrolling -->
   @if (!loading() && !error() && filteredTrips().length > 0) {
     <cdk-virtual-scroll-viewport
-      itemSize="240"
+      itemSize="280"
       class="jensify-trip-cards-viewport">
       <div class="jensify-trip-cards">
         <mat-card
@@ -149,142 +149,114 @@
           [class.selected]="isSelected(trip.id)"
           role="article"
           [attr.aria-label]="'Trip on ' + formatDate(trip.trip_date) + ' from ' + trip.origin_address + ' to ' + trip.destination_address + ', ' + trip.total_miles + ' miles, status ' + trip.status + ', reimbursement ' + formatCurrency(trip.reimbursement_amount)">
-          <div class="jensify-card-content">
-            <!-- Selection Checkbox (only for draft trips) -->
-            @if (trip.status === 'draft') {
-              <div class="jensify-checkbox-container">
+
+          <!-- Card Header Row: Checkbox + Icon + Route + Amount -->
+          <div class="trip-card-header">
+            <!-- Left: Checkbox (drafts only) + Car Icon -->
+            <div class="trip-card-left">
+              @if (trip.status === 'draft') {
                 <mat-checkbox
                   [checked]="isSelected(trip.id)"
                   (change)="toggleSelection(trip)"
                   (click)="$event.stopPropagation()"
-                  [attr.aria-label]="'Select trip from ' + trip.origin_address + ' to ' + trip.destination_address">
+                  class="trip-checkbox"
+                  [attr.aria-label]="'Select trip'">
                 </mat-checkbox>
-              </div>
-            }
-
-            <!-- Trip Icon -->
-            <div class="jensify-trip-icon-container">
-              <div class="jensify-trip-icon">
+              }
+              <div class="trip-icon">
                 <mat-icon>directions_car</mat-icon>
               </div>
             </div>
 
-            <!-- Trip Details -->
-            <div class="jensify-trip-details">
-              <div class="jensify-trip-header">
-                <div class="jensify-trip-route">
-                  <div class="jensify-route-item">
-                    <mat-icon class="jensify-route-icon">place</mat-icon>
-                    <span class="jensify-address">{{ trip.origin_address }}</span>
-                  </div>
-                  <mat-icon class="jensify-arrow-icon">arrow_downward</mat-icon>
-                  <div class="jensify-route-item">
-                    <mat-icon class="jensify-route-icon">location_on</mat-icon>
-                    <span class="jensify-address">{{ trip.destination_address }}</span>
-                  </div>
+            <!-- Center: Route Info -->
+            <div class="trip-card-center">
+              <div class="trip-route">
+                <div class="route-line">
+                  <mat-icon class="route-icon origin">place</mat-icon>
+                  <span class="route-address">{{ trip.origin_address }}</span>
                 </div>
-                <app-status-badge [status]="getStatusBadge(trip.status)" />
-              </div>
-
-              <div class="jensify-trip-meta">
-                <div class="jensify-meta-item">
-                  <mat-icon>event</mat-icon>
-                  <span>{{ formatDate(trip.trip_date) }}</span>
-                </div>
-                <div class="jensify-meta-item">
-                  <mat-icon>business_center</mat-icon>
-                  <span>{{ trip.category }}</span>
-                </div>
-                <div class="jensify-meta-item">
-                  <mat-icon>description</mat-icon>
-                  <span>{{ trip.purpose || '(No purpose)' }}</span>
+                <div class="route-line">
+                  <mat-icon class="route-icon destination">location_on</mat-icon>
+                  <span class="route-address">{{ trip.destination_address }}</span>
                 </div>
               </div>
-
-              <div class="jensify-trip-mileage-info">
-                <div class="jensify-mileage-item">
-                  <span class="jensify-mileage-label">Distance:</span>
-                  <span class="jensify-mileage-value">
-                    {{ trip.distance_miles }} mi {{ trip.is_round_trip ? '(round trip)' : '' }}
-                    @if (trip.distance_manually_modified) {
-                      <mat-icon
-                        class="distance-modified-icon"
-                        matTooltip="Distance manually modified from {{ trip.original_gps_distance }} mi">
-                        warning
-                      </mat-icon>
-                    }
-                  </span>
-                </div>
-                <div class="jensify-mileage-item">
-                  <span class="jensify-mileage-label">Total Miles:</span>
-                  <span class="jensify-mileage-value">{{ trip.total_miles }} mi</span>
-                </div>
-                <div class="jensify-mileage-item">
-                  <span class="jensify-mileage-label">IRS Rate:</span>
-                  <span class="jensify-mileage-value">${{ trip.irs_rate.toFixed(3) }}/mi</span>
-                </div>
-              </div>
-
-              @if (trip.notes) {
-                <p class="jensify-trip-notes">{{ trip.notes }}</p>
-              }
+              <app-status-badge [status]="getStatusBadge(trip.status)" class="trip-status" />
             </div>
 
-            <!-- Reimbursement Amount -->
-            <div class="jensify-trip-amount">
-              <span class="jensify-amount-value">{{ formatCurrency(trip.reimbursement_amount) }}</span>
-              <span class="jensify-amount-label">Reimbursement</span>
+            <!-- Right: Amount -->
+            <div class="trip-card-right">
+              <span class="trip-amount-value">{{ formatCurrency(trip.reimbursement_amount) }}</span>
+              <span class="trip-amount-label">Reimbursement</span>
             </div>
           </div>
 
-          <!-- Card Actions -->
-          <div class="jensify-card-actions" role="group" [attr.aria-label]="'Actions for trip on ' + formatDate(trip.trip_date)">
-            <button
-              mat-button
-              (click)="goToDetails(trip)"
-              class="jensify-button"
-              [attr.aria-label]="'View details for trip from ' + trip.origin_address + ' to ' + trip.destination_address">
-              <mat-icon aria-hidden="true">visibility</mat-icon>
+          <!-- Meta Row: Date, Category, Purpose -->
+          <div class="trip-card-meta">
+            <div class="meta-item">
+              <mat-icon>event</mat-icon>
+              <span>{{ formatDate(trip.trip_date) }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>business_center</mat-icon>
+              <span>{{ trip.category }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>description</mat-icon>
+              <span>{{ trip.purpose || '(No purpose)' }}</span>
+            </div>
+          </div>
+
+          <!-- Mileage Info Row -->
+          <div class="trip-card-mileage">
+            <div class="mileage-item">
+              <span class="mileage-label">Distance</span>
+              <span class="mileage-value">
+                {{ trip.distance_miles }} mi
+                @if (trip.distance_manually_modified) {
+                  <mat-icon class="modified-icon" matTooltip="Manually modified">warning</mat-icon>
+                }
+              </span>
+            </div>
+            <div class="mileage-item">
+              <span class="mileage-label">Total</span>
+              <span class="mileage-value">{{ trip.total_miles }} mi</span>
+            </div>
+            <div class="mileage-item">
+              <span class="mileage-label">Rate</span>
+              <span class="mileage-value">${{ trip.irs_rate.toFixed(3) }}/mi</span>
+            </div>
+          </div>
+
+          <!-- Notes (if any) -->
+          @if (trip.notes) {
+            <div class="trip-card-notes">{{ trip.notes }}</div>
+          }
+
+          <!-- Actions Row -->
+          <div class="trip-card-actions">
+            <button mat-button (click)="goToDetails(trip)" class="action-btn">
+              <mat-icon>visibility</mat-icon>
               Details
             </button>
             @if (canConvertToExpense(trip)) {
-              <button
-                mat-button
-                color="accent"
-                (click)="convertToExpense(trip)"
-                class="jensify-button"
-                [attr.aria-label]="'Convert this trip to an expense'">
-                <mat-icon aria-hidden="true">receipt_long</mat-icon>
+              <button mat-button color="accent" (click)="convertToExpense(trip)" class="action-btn">
+                <mat-icon>receipt_long</mat-icon>
                 To Expense
               </button>
             }
             @if (trip.expense_id) {
-              <button
-                mat-button
-                (click)="viewLinkedExpense(trip)"
-                class="jensify-button"
-                [attr.aria-label]="'View linked expense for this trip'">
-                <mat-icon aria-hidden="true">open_in_new</mat-icon>
+              <button mat-button (click)="viewLinkedExpense(trip)" class="action-btn">
+                <mat-icon>open_in_new</mat-icon>
                 View Expense
               </button>
             }
             @if (trip.status === 'draft') {
-              <button
-                mat-button
-                color="primary"
-                (click)="goToEdit(trip)"
-                class="jensify-button"
-                [attr.aria-label]="'Edit this trip'">
-                <mat-icon aria-hidden="true">edit</mat-icon>
+              <button mat-button color="primary" (click)="goToEdit(trip)" class="action-btn">
+                <mat-icon>edit</mat-icon>
                 Edit
               </button>
-              <button
-                mat-button
-                color="warn"
-                (click)="deleteTrip(trip)"
-                class="jensify-button"
-                [attr.aria-label]="'Delete this trip'">
-                <mat-icon aria-hidden="true">delete</mat-icon>
+              <button mat-button color="warn" (click)="deleteTrip(trip)" class="action-btn">
+                <mat-icon>delete</mat-icon>
                 Delete
               </button>
             }

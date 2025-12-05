@@ -65,25 +65,80 @@ export class PayoutService {
    * Get current Stripe account status for organization
    */
   getStripeAccountStatus(organizationId: string): Observable<StripeAccountStatusResponse> {
-    return from(this.callEdgeFunction<StripeAccountStatusResponse>('get_account_status', { organization_id: organizationId })).pipe(
+    return from(this.callEdgeFunction<StripeAccountStatusResponse>('get_stripe_status', { organization_id: organizationId })).pipe(
       tap(result => {
         if (result) {
           this.payoutSettingsSubject.next({
             payout_method: result.payout_method || 'manual',
-            stripe_account_id: result.connected ? 'connected' : null,
+            stripe_account_id: result.has_key ? 'configured' : null,
             stripe_account_status: result.status || 'not_connected',
-            stripe_connected_at: null,
+            stripe_connected_at: result.key_set_at || null,
             stripe_account_details: {
-              business_name: result.business_name,
-              charges_enabled: result.charges_enabled,
-              payouts_enabled: result.payouts_enabled
+              key_last4: result.key_last4
             }
           });
         }
       }),
       catchError(error => {
         console.error('Failed to get Stripe account status:', error);
-        return of({ connected: false, payout_method: 'manual' as PayoutMethod });
+        return of({ connected: false, has_key: false, payout_method: 'manual' as PayoutMethod });
+      })
+    );
+  }
+
+  // ============================================================================
+  // STRIPE KEY MANAGEMENT (New Direct Integration)
+  // ============================================================================
+
+  /**
+   * Test a Stripe API key before saving
+   */
+  testStripeKey(stripeKey: string): Observable<{ valid: boolean; livemode?: boolean; error?: string }> {
+    return from(this.callEdgeFunction<{ valid: boolean; livemode?: boolean; error?: string }>('test_stripe_key', {
+      stripe_key: stripeKey
+    }));
+  }
+
+  /**
+   * Set the organization's Stripe API key
+   * Key is encrypted before storage
+   */
+  setStripeKey(organizationId: string, stripeKey: string): Observable<{ success: boolean; message?: string }> {
+    return from(this.callEdgeFunction<{ success: boolean; message?: string }>('set_stripe_key', {
+      organization_id: organizationId,
+      stripe_key: stripeKey
+    })).pipe(
+      tap(() => {
+        // Update local state
+        const current = this.payoutSettingsSubject.value;
+        if (current) {
+          this.payoutSettingsSubject.next({
+            ...current,
+            payout_method: 'stripe',
+            stripe_account_id: 'configured',
+            stripe_account_status: 'active'
+          });
+        }
+      })
+    );
+  }
+
+  /**
+   * Remove the organization's Stripe API key
+   */
+  removeStripeKey(organizationId: string): Observable<{ success: boolean }> {
+    return from(this.callEdgeFunction<{ success: boolean }>('remove_stripe_key', {
+      organization_id: organizationId
+    })).pipe(
+      tap(() => {
+        // Reset local state
+        this.payoutSettingsSubject.next({
+          payout_method: 'manual',
+          stripe_account_id: null,
+          stripe_account_status: 'not_connected',
+          stripe_connected_at: null,
+          stripe_account_details: {}
+        });
       })
     );
   }

@@ -1,12 +1,11 @@
 /**
  * Mileage Trip List Component Styles
- * Enhanced with modern card designs and interactive states
+ * Professional card design with clean layout
  */
 
 // Override filter row grid to prevent overlapping
 .jensify-filters-card {
   .jensify-filter-row {
-    // Override global 4-column grid on desktop
     @media (min-width: 1024px) {
       grid-template-columns: repeat(2, 1fr) !important;
     }
@@ -45,39 +44,32 @@
 .jensify-trip-cards-viewport {
   height: 600px;
   margin-top: var(--jensify-spacing-lg);
+  width: 100%;
+
+  // Ensure CDK virtual scroll content takes full width
+  ::ng-deep .cdk-virtual-scroll-content-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
 
   @media (max-width: 767px) {
     height: 500px;
   }
 }
 
-// Trip Card Enhancements
+// Trip Card Base
 .jensify-trip-card {
-  transition: all 0.3s ease;
-  border-left: 3px solid transparent;
-  position: relative;
+  margin-bottom: var(--jensify-spacing-md);
+  padding: 0 !important;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--jensify-primary), var(--jensify-primary-soft));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  width: 100%;
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--jensify-shadow-lg) !important;
     border-left-color: var(--jensify-primary);
-
-    &::before {
-      opacity: 1;
-    }
   }
 
   &.selected {
@@ -86,131 +78,264 @@
   }
 }
 
-// Trip Icon
-.jensify-trip-icon {
-  background: linear-gradient(135deg, var(--jensify-primary-soft), var(--jensify-primary));
-  border-radius: 50%;
+// Trip Cards Container - Force full width
+::ng-deep .jensify-trip-cards {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 var(--jensify-spacing-md);
+  display: block;
+}
+
+// Force mat-card to full width
+::ng-deep .jensify-trip-card.mat-mdc-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+
+// Card Header Row
+::ng-deep .trip-card-header {
+  display: flex !important;
+  align-items: flex-start;
+  gap: var(--jensify-spacing-md);
+  padding: var(--jensify-spacing-md) var(--jensify-spacing-lg);
+  background: var(--jensify-surface-card);
+  border-bottom: 1px solid var(--jensify-border-subtle);
+  width: 100%;
+
+  @media (max-width: 767px) {
+    flex-wrap: wrap;
+    gap: var(--jensify-spacing-sm);
+    padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+  }
+}
+
+// Left Section: Checkbox + Icon
+.trip-card-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
+  gap: var(--jensify-spacing-sm);
+  flex-shrink: 0;
 
-  mat-icon {
-    color: white;
-    font-size: 24px;
+  .trip-checkbox {
+    margin: 0;
+  }
+
+  .trip-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--jensify-primary) 0%, var(--jensify-primary-dark, #cc4700) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      color: white;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
   }
 }
 
-// Trip Route Display
-.jensify-trip-route {
-  .jensify-route-icon {
-    color: var(--jensify-primary);
-  }
-
-  .jensify-arrow-icon {
-    color: var(--jensify-text-muted);
-    font-size: 20px;
-    margin: var(--jensify-spacing-xs) 0;
-  }
-
-  .jensify-address {
-    font-weight: 500;
-    color: var(--jensify-text-body);
-  }
-}
-
-// Trip Meta Items
-.jensify-trip-meta {
+// Center Section: Route + Status
+.trip-card-center {
+  flex: 1;
+  min-width: 0; // Allow text truncation
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--jensify-spacing-md);
-  margin-top: var(--jensify-spacing-sm);
+  flex-direction: column;
+  gap: var(--jensify-spacing-xs);
 
-  .jensify-meta-item {
+  @media (max-width: 767px) {
+    order: 3;
+    width: 100%;
+  }
+}
+
+.trip-route {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .route-line {
     display: flex;
     align-items: center;
     gap: var(--jensify-spacing-xs);
-    font-size: 0.875rem;
+
+    .route-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+
+      &.origin {
+        color: var(--jensify-primary);
+      }
+
+      &.destination {
+        color: var(--jensify-success, #22c55e);
+      }
+    }
+
+    .route-address {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--jensify-text-strong);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+  }
+}
+
+.trip-status {
+  margin-top: var(--jensify-spacing-xs);
+}
+
+// Right Section: Amount
+.trip-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 90px;
+
+  @media (max-width: 767px) {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .trip-amount-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--jensify-primary);
+    white-space: nowrap;
+  }
+
+  .trip-amount-label {
+    font-size: 0.625rem;
+    color: var(--jensify-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Meta Row
+.trip-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jensify-spacing-md);
+  padding: var(--jensify-spacing-sm) var(--jensify-spacing-lg);
+  background: var(--jensify-surface-subtle);
+
+  @media (max-width: 767px) {
+    gap: var(--jensify-spacing-sm);
+    padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8125rem;
     color: var(--jensify-text-body);
 
     mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
       color: var(--jensify-text-muted);
     }
   }
 }
 
-// Mileage Info Section
-.jensify-trip-mileage-info {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--jensify-spacing-sm);
-  padding: var(--jensify-spacing-md);
-  background: var(--jensify-surface-subtle);
-  border-radius: var(--jensify-radius-md);
-  margin-top: var(--jensify-spacing-md);
+// Mileage Info Row
+.trip-card-mileage {
+  display: flex;
+  gap: var(--jensify-spacing-lg);
+  padding: var(--jensify-spacing-sm) var(--jensify-spacing-lg);
+  background: var(--jensify-surface-card);
+  border-top: 1px solid var(--jensify-border-subtle);
 
   @media (max-width: 767px) {
-    grid-template-columns: 1fr;
+    gap: var(--jensify-spacing-md);
+    padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+    justify-content: space-between;
+  }
+
+  .mileage-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .mileage-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--jensify-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .mileage-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--jensify-text-strong);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      .modified-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: var(--jensify-warning, #f59e0b);
+        cursor: help;
+      }
+    }
   }
 }
 
-.jensify-mileage-item {
+// Notes Section
+.trip-card-notes {
+  padding: var(--jensify-spacing-sm) var(--jensify-spacing-lg);
+  font-size: 0.8125rem;
+  color: var(--jensify-text-body);
+  background: var(--jensify-surface-subtle);
+  border-top: 1px solid var(--jensify-border-subtle);
+  font-style: italic;
+
+  @media (max-width: 767px) {
+    padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+  }
+}
+
+// Actions Row
+.trip-card-actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--jensify-spacing-xs);
+  padding: var(--jensify-spacing-sm) var(--jensify-spacing-lg);
+  background: var(--jensify-surface-subtle);
+  border-top: 1px solid var(--jensify-border-subtle);
 
-  .jensify-mileage-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--jensify-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  @media (max-width: 767px) {
+    padding: var(--jensify-spacing-sm) var(--jensify-spacing-md);
+    justify-content: center;
   }
 
-  .jensify-mileage-value {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--jensify-text-strong);
+  .action-btn {
+    font-size: 0.8125rem;
+    padding: 4px 12px;
+    min-height: 32px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
   }
-}
-
-// Trip Amount Display
-.jensify-trip-amount {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--jensify-spacing-xs);
-  padding: var(--jensify-spacing-md);
-  background: linear-gradient(135deg, var(--jensify-success-soft), var(--jensify-surface-card));
-  border-radius: var(--jensify-radius-md);
-  border: 1px solid var(--jensify-success-border);
-
-  .jensify-amount-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--jensify-success-strong);
-  }
-
-  .jensify-amount-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--jensify-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-}
-
-// Distance Modified Warning Icon
-.distance-modified-icon {
-  color: var(--jensify-warning, #ff9800);
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  vertical-align: middle;
-  margin-left: 4px;
-  cursor: help;
 }

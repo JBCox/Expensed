@@ -32,20 +32,27 @@ export interface PayoutSettings {
     business_name?: string;
     charges_enabled?: boolean;
     payouts_enabled?: boolean;
+    key_last4?: string;
   };
 }
 
 /**
- * Stripe Connect account status response
+ * Stripe account status response
+ * Supports both legacy Connect and new direct key integration
  */
 export interface StripeAccountStatusResponse {
   connected: boolean;
   status?: StripeAccountStatus;
   payout_method: PayoutMethod;
+  // Legacy Connect fields (deprecated)
   charges_enabled?: boolean;
   payouts_enabled?: boolean;
   details_submitted?: boolean;
   business_name?: string;
+  // New direct integration fields
+  has_key?: boolean;
+  key_last4?: string;
+  key_set_at?: string;
 }
 
 /**

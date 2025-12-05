@@ -1,16 +1,18 @@
 /**
- * Supabase Edge Function: Stripe Connect Integration (v2 API)
+ * Supabase Edge Function: Stripe Direct Integration
  *
- * Handles Stripe Connect for organization payouts:
- * - Create Connect onboarding links for admins
- * - Handle OAuth callbacks
+ * Each organization uses their own Stripe API key for payouts.
+ * Keys are encrypted and stored in the organization_secrets table.
+ *
+ * Features:
+ * - Manage organization Stripe API keys (set/remove/status)
  * - Create employee bank account tokens
- * - Process payouts
+ * - Process direct payouts to employees
  *
- * SECURITY: Stripe Secret Key is stored as environment secret
- * All bank data is tokenized through Stripe - we never handle raw account numbers
- *
- * NOTE: Uses Stripe Connect v2 Accounts API for improved account management
+ * SECURITY:
+ * - Stripe keys are encrypted at rest using pgcrypto
+ * - Only org admins can set/remove keys
+ * - Keys are retrieved via SECURITY DEFINER function
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -30,6 +32,28 @@ function getCorsHeaders(origin: string | null) {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Credentials": "true"
   };
+}
+
+/**
+ * Get the organization's Stripe API key from encrypted storage
+ * Uses the service role to call the security definer function
+ */
+async function getOrgStripeKey(organizationId: string): Promise<string | null> {
+  const serviceClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  const { data, error } = await serviceClient.rpc('get_org_stripe_key', {
+    p_organization_id: organizationId
+  });
+
+  if (error) {
+    console.error("Failed to get org Stripe key:", error);
+    return null;
+  }
+
+  return data;
 }
 
 serve(async (req) => {
@@ -58,7 +82,7 @@ serve(async (req) => {
       });
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with user auth
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -85,44 +109,53 @@ serve(async (req) => {
       });
     }
 
-    // Get Stripe secret key
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) {
-      console.error("STRIPE_SECRET_KEY not configured");
-      return new Response(JSON.stringify({
-        error: "Stripe not configured"
-      }), {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      });
-    }
-
     // Parse request
     const { action, ...params } = await req.json();
 
     // Route to appropriate handler
     switch (action) {
-      case "create_connect_account":
-        return await handleCreateConnectAccount(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "create_account_link":
-        return await handleCreateAccountLink(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "get_account_status":
-        return await handleGetAccountStatus(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "disconnect_account":
-        return await handleDisconnectAccount(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "create_bank_account":
-        return await handleCreateBankAccount(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "verify_bank_account":
-        return await handleVerifyBankAccount(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "create_payout":
-        return await handleCreatePayout(supabaseClient, user, stripeSecretKey, params, corsHeaders);
-      case "get_payout_status":
-        return await handleGetPayoutStatus(supabaseClient, user, stripeSecretKey, params, corsHeaders);
+      // Stripe Key Management (Admin only)
+      case "set_stripe_key":
+        return await handleSetStripeKey(supabaseClient, user, params, corsHeaders);
+      case "get_stripe_status":
+        return await handleGetStripeStatus(supabaseClient, user, params, corsHeaders);
+      case "remove_stripe_key":
+        return await handleRemoveStripeKey(supabaseClient, user, params, corsHeaders);
+      case "test_stripe_key":
+        return await handleTestStripeKey(supabaseClient, user, params, corsHeaders);
+
+      // Payout Method Management
       case "update_payout_method":
         return await handleUpdatePayoutMethod(supabaseClient, user, params, corsHeaders);
+      case "get_account_status":
+        return await handleGetAccountStatus(supabaseClient, user, params, corsHeaders);
+
+      // Bank Account Management (Employees)
+      case "create_bank_account":
+        return await handleCreateBankAccount(supabaseClient, user, params, corsHeaders);
+      case "verify_bank_account":
+        return await handleVerifyBankAccount(supabaseClient, user, params, corsHeaders);
+
+      // Payout Processing (Finance/Admin)
+      case "create_payout":
+        return await handleCreatePayout(supabaseClient, user, params, corsHeaders);
+      case "get_payout_status":
+        return await handleGetPayoutStatus(supabaseClient, user, params, corsHeaders);
+
+      // Legacy Connect actions - redirect to new flow
+      case "create_connect_account":
+      case "create_account_link":
+      case "disconnect_account":
+        return new Response(JSON.stringify({
+          error: "Stripe Connect is no longer used. Please use set_stripe_key to configure your Stripe API key."
+        }), {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
+          }
+        });
+
       default:
         return new Response(JSON.stringify({
           error: `Unknown action: ${action}`
@@ -148,20 +181,36 @@ serve(async (req) => {
   }
 });
 
+// ============================================================================
+// STRIPE KEY MANAGEMENT (Admin only)
+// ============================================================================
+
 /**
- * Create a new Stripe Connect account for an organization using v2 API
- * v2 API provides unified account model with better onboarding
+ * Set the organization's Stripe API key
+ * Admin only - key is encrypted before storage
  */
-async function handleCreateConnectAccount(
+async function handleSetStripeKey(
   supabase: any,
   user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {
-  const { organization_id, return_url, refresh_url } = params;
+  const { organization_id, stripe_key } = params;
 
-  // Verify user is admin of the organization
+  // Validate key format
+  if (!stripe_key || !stripe_key.startsWith('sk_')) {
+    return new Response(JSON.stringify({
+      error: "Invalid Stripe key format. Must start with 'sk_'"
+    }), {
+      status: 400,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
+  // Verify admin role
   const { data: membership, error: memberError } = await supabase
     .from("organization_members")
     .select("role")
@@ -172,7 +221,7 @@ async function handleCreateConnectAccount(
 
   if (memberError || !membership || membership.role !== "admin") {
     return new Response(JSON.stringify({
-      error: "Only organization admins can connect Stripe"
+      error: "Only organization admins can configure Stripe"
     }), {
       status: 403,
       headers: {
@@ -182,16 +231,18 @@ async function handleCreateConnectAccount(
     });
   }
 
-  // Check if org already has a Stripe account
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("stripe_account_id, name")
-    .eq("id", organization_id)
-    .single();
+  // Test the key first
+  const testResponse = await fetch("https://api.stripe.com/v1/balance", {
+    headers: {
+      "Authorization": `Bearer ${stripe_key}`
+    }
+  });
 
-  if (org?.stripe_account_id) {
+  if (!testResponse.ok) {
+    const error = await testResponse.json();
     return new Response(JSON.stringify({
-      error: "Organization already has a Stripe account connected"
+      error: "Invalid Stripe API key",
+      message: error.error?.message || "Key validation failed"
     }), {
       status: 400,
       headers: {
@@ -201,112 +252,24 @@ async function handleCreateConnectAccount(
     });
   }
 
-  // Create Stripe Connect account using v2 API
-  // v2 API uses JSON body and unified account model
-  const accountResponse = await fetch("https://api.stripe.com/v2/core/accounts", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${stripeKey}`,
-      "Content-Type": "application/json",
-      "Stripe-Version": "2025-01-27.acacia"
-    },
-    body: JSON.stringify({
-      // Identity information - will be collected during onboarding
-      identity: {
-        country: "US",
-        entity_type: "company",
-        business_details: {
-          registered_name: org?.name || undefined
-        }
-      },
-      // Configuration for marketplace payouts
-      configuration: {
-        recipient: {
-          // Enable receiving transfers from platform
-          capabilities: {
-            transfers: { requested: true }
-          },
-          // Stripe handles onboarding/compliance
-          service_agreement: "recipient"
-        }
-      },
-      // Include hosted onboarding
-      include: ["configuration.recipient.capabilities"]
-    })
+  // Store encrypted key using service role
+  const serviceClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  const { data, error } = await serviceClient.rpc('set_org_stripe_key', {
+    p_organization_id: organization_id,
+    p_stripe_key: stripe_key,
+    p_set_by: user.id
   });
 
-  if (!accountResponse.ok) {
-    const error = await accountResponse.text();
-    console.error("Stripe v2 account creation failed:", error);
-
-    // Fallback to v1 API if v2 fails (for compatibility)
-    console.log("Attempting fallback to v1 API...");
-    const v1Response = await fetch("https://api.stripe.com/v1/accounts", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${stripeKey}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({
-        "type": "express",
-        "country": "US",
-        "capabilities[transfers][requested]": "true",
-        "business_profile[name]": org?.name || ""
-      })
-    });
-
-    if (!v1Response.ok) {
-      const v1Error = await v1Response.text();
-      console.error("Stripe v1 fallback also failed:", v1Error);
-      return new Response(JSON.stringify({
-        error: "Failed to create Stripe account",
-        details: v1Error
-      }), {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        }
-      });
-    }
-
-    const v1Account = await v1Response.json();
-
-    // Save v1 account ID to organization
-    await supabase
-      .from("organizations")
-      .update({
-        stripe_account_id: v1Account.id,
-        stripe_account_status: "pending",
-        stripe_connected_at: new Date().toISOString()
-      })
-      .eq("id", organization_id);
-
-    // Create account link for v1 account
-    const linkResponse = await fetch("https://api.stripe.com/v1/account_links", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${stripeKey}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({
-        "account": v1Account.id,
-        "refresh_url": refresh_url,
-        "return_url": return_url,
-        "type": "account_onboarding"
-      })
-    });
-
-    const accountLink = await linkResponse.json();
-
+  if (error) {
+    console.error("Failed to store Stripe key:", error);
     return new Response(JSON.stringify({
-      success: true,
-      account_id: v1Account.id,
-      onboarding_url: accountLink.url,
-      expires_at: accountLink.expires_at,
-      api_version: "v1_fallback"
+      error: "Failed to store Stripe key"
     }), {
-      status: 200,
+      status: 500,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json"
@@ -314,55 +277,18 @@ async function handleCreateConnectAccount(
     });
   }
 
-  const account = await accountResponse.json();
-
-  // Save account ID to organization
+  // Update payout method to stripe
   await supabase
     .from("organizations")
     .update({
-      stripe_account_id: account.id,
-      stripe_account_status: "pending",
-      stripe_connected_at: new Date().toISOString()
+      payout_method: "stripe",
+      stripe_account_status: "active"
     })
     .eq("id", organization_id);
 
-  // Create account link for onboarding (still uses v1 endpoint)
-  const linkResponse = await fetch("https://api.stripe.com/v1/account_links", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${stripeKey}`,
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: new URLSearchParams({
-      "account": account.id,
-      "refresh_url": refresh_url,
-      "return_url": return_url,
-      "type": "account_onboarding"
-    })
-  });
-
-  if (!linkResponse.ok) {
-    const linkError = await linkResponse.text();
-    console.error("Account link creation failed:", linkError);
-    return new Response(JSON.stringify({
-      error: "Failed to create onboarding link"
-    }), {
-      status: 500,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
-    });
-  }
-
-  const accountLink = await linkResponse.json();
-
   return new Response(JSON.stringify({
     success: true,
-    account_id: account.id,
-    onboarding_url: accountLink.url,
-    expires_at: accountLink.expires_at,
-    api_version: "v2"
+    message: "Stripe API key configured successfully"
   }), {
     status: 200,
     headers: {
@@ -373,106 +299,30 @@ async function handleCreateConnectAccount(
 }
 
 /**
- * Create a new account link for continuing/refreshing onboarding
+ * Get the status of the organization's Stripe configuration
  */
-async function handleCreateAccountLink(
+async function handleGetStripeStatus(
   supabase: any,
   user: any,
-  stripeKey: string,
-  params: any,
-  corsHeaders: any
-) {
-  const { organization_id, return_url, refresh_url } = params;
-
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("stripe_account_id")
-    .eq("id", organization_id)
-    .single();
-
-  if (!org?.stripe_account_id) {
-    return new Response(JSON.stringify({
-      error: "No Stripe account found"
-    }), {
-      status: 400,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
-    });
-  }
-
-  const linkResponse = await fetch("https://api.stripe.com/v1/account_links", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${stripeKey}`,
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: new URLSearchParams({
-      "account": org.stripe_account_id,
-      "refresh_url": refresh_url,
-      "return_url": return_url,
-      "type": "account_onboarding"
-    })
-  });
-
-  if (!linkResponse.ok) {
-    return new Response(JSON.stringify({
-      error: "Failed to create account link"
-    }), {
-      status: 500,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
-    });
-  }
-
-  const accountLink = await linkResponse.json();
-
-  return new Response(JSON.stringify({
-    success: true,
-    onboarding_url: accountLink.url
-  }), {
-    status: 200,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json"
-    }
-  });
-}
-
-/**
- * Get Stripe account status for an organization
- * Uses v1 API directly for reliability (v2 API has compatibility issues)
- */
-async function handleGetAccountStatus(
-  supabase: any,
-  user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {
   const { organization_id } = params;
 
-  console.log("[get_account_status] Starting with organization_id:", organization_id);
-  console.log("[get_account_status] User:", user.id, user.email);
-
-  const { data: org, error: orgError } = await supabase
-    .from("organizations")
-    .select("stripe_account_id, stripe_account_status, payout_method")
-    .eq("id", organization_id)
+  // Verify membership
+  const { data: membership } = await supabase
+    .from("organization_members")
+    .select("role")
+    .eq("organization_id", organization_id)
+    .eq("user_id", user.id)
+    .eq("is_active", true)
     .single();
 
-  console.log("[get_account_status] Database query result:", { org, error: orgError });
-
-  if (!org?.stripe_account_id) {
-    console.log("[get_account_status] No stripe_account_id found, returning not connected");
+  if (!membership) {
     return new Response(JSON.stringify({
-      connected: false,
-      payout_method: org?.payout_method || "manual"
+      error: "Not a member of this organization"
     }), {
-      status: 200,
+      status: 403,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json"
@@ -480,31 +330,22 @@ async function handleGetAccountStatus(
     });
   }
 
-  console.log("[get_account_status] Found stripe_account_id:", org.stripe_account_id);
-
-  // Use v1 API directly for reliability
-  const v1Response = await fetch(
-    `https://api.stripe.com/v1/accounts/${org.stripe_account_id}`,
-    {
-      headers: {
-        "Authorization": `Bearer ${stripeKey}`
-      }
-    }
+  // Get status using service role
+  const serviceClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  console.log("[get_account_status] Stripe API response status:", v1Response.status);
+  const { data: status, error } = await serviceClient.rpc('get_org_stripe_status', {
+    p_organization_id: organization_id
+  });
 
-  if (!v1Response.ok) {
-    console.log("[get_account_status] Stripe API error, returning cached status");
-    // If account not found, return cached status from database
+  if (error) {
+    console.error("Failed to get Stripe status:", error);
     return new Response(JSON.stringify({
-      connected: !!org.stripe_account_id,
-      status: org.stripe_account_status || "pending",
-      payout_method: org.payout_method || "manual",
-      charges_enabled: org.stripe_account_status === "active",
-      payouts_enabled: org.stripe_account_status === "active",
-      business_name: "",
-      api_version: "cached"
+      connected: false,
+      has_key: false,
+      payout_method: "manual"
     }), {
       status: 200,
       headers: {
@@ -514,43 +355,21 @@ async function handleGetAccountStatus(
     });
   }
 
-  const account = await v1Response.json();
+  // Get payout method from organization
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("payout_method")
+    .eq("id", organization_id)
+    .single();
 
-  // v1 account status logic
-  const chargesEnabled = account.charges_enabled;
-  const payoutsEnabled = account.payouts_enabled;
-  const businessName = account.business_profile?.name || "";
-
-  let status = "pending";
-  if (chargesEnabled && payoutsEnabled) {
-    status = "active";
-  } else if (account.details_submitted) {
-    status = "restricted";
-  }
-
-  if (status !== org.stripe_account_status) {
-    console.log("[get_account_status] Updating status from", org.stripe_account_status, "to", status);
-    await supabase
-      .from("organizations")
-      .update({
-        stripe_account_status: status
-      })
-      .eq("id", organization_id);
-  }
-
-  const finalResponse = {
-    connected: true,
-    status,
-    payout_method: org.payout_method,
-    charges_enabled: chargesEnabled,
-    payouts_enabled: payoutsEnabled,
-    business_name: businessName,
-    api_version: "v1"
-  };
-
-  console.log("[get_account_status] Returning successful response:", finalResponse);
-
-  return new Response(JSON.stringify(finalResponse), {
+  return new Response(JSON.stringify({
+    connected: status?.has_key || false,
+    has_key: status?.has_key || false,
+    key_last4: status?.key_last4 || null,
+    key_set_at: status?.set_at || null,
+    payout_method: org?.payout_method || "manual",
+    status: status?.has_key ? "active" : "not_connected"
+  }), {
     status: 200,
     headers: {
       ...corsHeaders,
@@ -560,17 +379,17 @@ async function handleGetAccountStatus(
 }
 
 /**
- * Disconnect Stripe account
+ * Remove the organization's Stripe API key
  */
-async function handleDisconnectAccount(
+async function handleRemoveStripeKey(
   supabase: any,
   user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {
   const { organization_id } = params;
 
+  // Verify admin role
   const { data: membership } = await supabase
     .from("organization_members")
     .select("role")
@@ -581,7 +400,7 @@ async function handleDisconnectAccount(
 
   if (!membership || membership.role !== "admin") {
     return new Response(JSON.stringify({
-      error: "Only admins can disconnect Stripe"
+      error: "Only admins can remove Stripe configuration"
     }), {
       status: 403,
       headers: {
@@ -591,18 +410,41 @@ async function handleDisconnectAccount(
     });
   }
 
+  // Remove key using service role
+  const serviceClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
+
+  const { error } = await serviceClient.rpc('remove_org_stripe_key', {
+    p_organization_id: organization_id
+  });
+
+  if (error) {
+    console.error("Failed to remove Stripe key:", error);
+    return new Response(JSON.stringify({
+      error: "Failed to remove Stripe key"
+    }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
+  // Update organization status
   await supabase
     .from("organizations")
     .update({
-      stripe_account_id: null,
-      stripe_account_status: "not_connected",
-      stripe_connected_at: null,
-      payout_method: "manual"
+      payout_method: "manual",
+      stripe_account_status: "not_connected"
     })
     .eq("id", organization_id);
 
   return new Response(JSON.stringify({
-    success: true
+    success: true,
+    message: "Stripe configuration removed"
   }), {
     status: 200,
     headers: {
@@ -610,6 +452,83 @@ async function handleDisconnectAccount(
       "Content-Type": "application/json"
     }
   });
+}
+
+/**
+ * Test a Stripe API key before storing
+ */
+async function handleTestStripeKey(
+  supabase: any,
+  user: any,
+  params: any,
+  corsHeaders: any
+) {
+  const { stripe_key } = params;
+
+  if (!stripe_key || !stripe_key.startsWith('sk_')) {
+    return new Response(JSON.stringify({
+      valid: false,
+      error: "Invalid key format"
+    }), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
+  // Test the key
+  const testResponse = await fetch("https://api.stripe.com/v1/balance", {
+    headers: {
+      "Authorization": `Bearer ${stripe_key}`
+    }
+  });
+
+  if (!testResponse.ok) {
+    const error = await testResponse.json();
+    return new Response(JSON.stringify({
+      valid: false,
+      error: error.error?.message || "Invalid key"
+    }), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
+  const balance = await testResponse.json();
+
+  return new Response(JSON.stringify({
+    valid: true,
+    livemode: balance.livemode,
+    currency: balance.available?.[0]?.currency || "usd"
+  }), {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json"
+    }
+  });
+}
+
+// ============================================================================
+// ACCOUNT STATUS (for backward compatibility)
+// ============================================================================
+
+/**
+ * Get account status - now returns org's own Stripe key status
+ */
+async function handleGetAccountStatus(
+  supabase: any,
+  user: any,
+  params: any,
+  corsHeaders: any
+) {
+  // Delegate to the new status handler
+  return handleGetStripeStatus(supabase, user, params, corsHeaders);
 }
 
 /**
@@ -643,6 +562,22 @@ async function handleUpdatePayoutMethod(
     });
   }
 
+  // If switching to stripe, verify key is configured
+  if (payout_method === "stripe") {
+    const stripeKey = await getOrgStripeKey(organization_id);
+    if (!stripeKey) {
+      return new Response(JSON.stringify({
+        error: "Please configure your Stripe API key first"
+      }), {
+        status: 400,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      });
+    }
+  }
+
   await supabase
     .from("organizations")
     .update({
@@ -662,17 +597,34 @@ async function handleUpdatePayoutMethod(
   });
 }
 
+// ============================================================================
+// BANK ACCOUNT MANAGEMENT
+// ============================================================================
+
 /**
  * Create a tokenized bank account for an employee
  */
 async function handleCreateBankAccount(
   supabase: any,
   user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {
   const { organization_id, bank_account_token } = params;
+
+  // Get org's Stripe key
+  const stripeKey = await getOrgStripeKey(organization_id);
+  if (!stripeKey) {
+    return new Response(JSON.stringify({
+      error: "Organization has not configured Stripe"
+    }), {
+      status: 400,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
 
   // Verify membership
   const { data: membership } = await supabase
@@ -828,11 +780,24 @@ async function handleCreateBankAccount(
 async function handleVerifyBankAccount(
   supabase: any,
   user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {
-  const { bank_account_id, amounts } = params;
+  const { bank_account_id, amounts, organization_id } = params;
+
+  // Get org's Stripe key
+  const stripeKey = await getOrgStripeKey(organization_id);
+  if (!stripeKey) {
+    return new Response(JSON.stringify({
+      error: "Organization has not configured Stripe"
+    }), {
+      status: 400,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
 
   const { data: bankAccount } = await supabase
     .from("employee_bank_accounts")
@@ -903,17 +868,34 @@ async function handleVerifyBankAccount(
   });
 }
 
+// ============================================================================
+// PAYOUT PROCESSING
+// ============================================================================
+
 /**
- * Create a payout to an employee
+ * Create a payout to an employee using org's Stripe key
  */
 async function handleCreatePayout(
   supabase: any,
   user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {
   const { organization_id, employee_user_id, amount_cents, expense_ids } = params;
+
+  // Get org's Stripe key
+  const stripeKey = await getOrgStripeKey(organization_id);
+  if (!stripeKey) {
+    return new Response(JSON.stringify({
+      error: "Organization has not configured Stripe. Please add your Stripe API key in settings."
+    }), {
+      status: 400,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
 
   // Verify finance/admin role
   const { data: membership } = await supabase
@@ -936,29 +918,10 @@ async function handleCreatePayout(
     });
   }
 
-  // Get org Stripe account
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("stripe_account_id, stripe_account_status")
-    .eq("id", organization_id)
-    .single();
-
-  if (!org?.stripe_account_id || org.stripe_account_status !== "active") {
-    return new Response(JSON.stringify({
-      error: "Stripe account not active"
-    }), {
-      status: 400,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
-    });
-  }
-
   // Get employee's bank account
   const { data: bankAccount } = await supabase
     .from("employee_bank_accounts")
-    .select("id, stripe_customer_id, is_verified")
+    .select("id, stripe_customer_id, stripe_bank_account_id, is_verified")
     .eq("user_id", employee_user_id)
     .eq("organization_id", organization_id)
     .eq("is_default", true)
@@ -966,7 +929,7 @@ async function handleCreatePayout(
 
   if (!bankAccount) {
     return new Response(JSON.stringify({
-      error: "Employee has no bank account"
+      error: "Employee has no bank account configured"
     }), {
       status: 400,
       headers: {
@@ -976,7 +939,19 @@ async function handleCreatePayout(
     });
   }
 
-  // Create payout record
+  if (!bankAccount.is_verified) {
+    return new Response(JSON.stringify({
+      error: "Employee's bank account is not verified"
+    }), {
+      status: 400,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
+    });
+  }
+
+  // Create payout record first
   const { data: payoutRecord, error: payoutError } = await supabase
     .from("payouts")
     .insert({
@@ -994,8 +969,9 @@ async function handleCreatePayout(
     .single();
 
   if (payoutError) {
+    console.error("Failed to create payout record:", payoutError);
     return new Response(JSON.stringify({
-      error: "Failed to create payout"
+      error: "Failed to create payout record"
     }), {
       status: 500,
       headers: {
@@ -1005,36 +981,41 @@ async function handleCreatePayout(
     });
   }
 
-  // Create Stripe payout
-  const payoutResponse = await fetch("https://api.stripe.com/v1/payouts", {
+  // Create transfer to customer's bank account using Stripe
+  // Note: This creates an ACH credit transfer
+  const transferResponse = await fetch("https://api.stripe.com/v1/transfers", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${stripeKey}`,
-      "Stripe-Account": org.stripe_account_id,
       "Content-Type": "application/x-www-form-urlencoded"
     },
     body: new URLSearchParams({
       "amount": amount_cents.toString(),
       "currency": "usd",
+      "destination": bankAccount.stripe_customer_id,
       "metadata[payout_id]": payoutRecord.id,
-      "metadata[employee_id]": employee_user_id
+      "metadata[employee_id]": employee_user_id,
+      "metadata[expense_ids]": expense_ids.join(",")
     })
   });
 
-  if (!payoutResponse.ok) {
-    const error = await payoutResponse.json();
+  if (!transferResponse.ok) {
+    const error = await transferResponse.json();
+    console.error("Stripe transfer failed:", error);
+
+    // Update payout as failed
     await supabase
       .from("payouts")
       .update({
         status: "failed",
-        failure_reason: error.error?.message,
+        failure_reason: error.error?.message || "Transfer failed",
         failed_at: new Date().toISOString()
       })
       .eq("id", payoutRecord.id);
 
     return new Response(JSON.stringify({
       error: "Payout failed",
-      message: error.error?.message
+      message: error.error?.message || "Transfer failed"
     }), {
       status: 500,
       headers: {
@@ -1044,19 +1025,19 @@ async function handleCreatePayout(
     });
   }
 
-  const stripePayout = await payoutResponse.json();
+  const transfer = await transferResponse.json();
 
+  // Update payout record with Stripe details
   await supabase
     .from("payouts")
     .update({
-      stripe_payout_id: stripePayout.id,
-      status: "in_transit",
-      estimated_arrival: new Date(stripePayout.arrival_date * 1000).toISOString()
+      stripe_payout_id: transfer.id,
+      status: "in_transit"
     })
     .eq("id", payoutRecord.id);
 
   // Mark expenses as reimbursed
-  if (expense_ids.length > 0) {
+  if (expense_ids && expense_ids.length > 0) {
     await supabase
       .from("expenses")
       .update({
@@ -1073,7 +1054,7 @@ async function handleCreatePayout(
       id: payoutRecord.id,
       amount_cents,
       status: "in_transit",
-      stripe_payout_id: stripePayout.id
+      stripe_transfer_id: transfer.id
     }
   }), {
     status: 200,
@@ -1090,7 +1071,6 @@ async function handleCreatePayout(
 async function handleGetPayoutStatus(
   supabase: any,
   user: any,
-  stripeKey: string,
   params: any,
   corsHeaders: any
 ) {

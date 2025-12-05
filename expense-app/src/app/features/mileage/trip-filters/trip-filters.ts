@@ -135,9 +135,9 @@ export interface TripFilterState {
       display: flex;
       align-items: center;
       gap: var(--jensify-spacing-xs, 0.25rem);
-      flex: 1;
-      min-width: 200px;
-      max-width: 300px;
+      flex: 0 1 auto;
+      min-width: 140px;
+      max-width: 200px;
       padding: 6px 12px;
       background: var(--jensify-surface-soft, #f5f5f5);
       border-radius: var(--jensify-radius-md, 6px);

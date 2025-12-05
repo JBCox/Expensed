@@ -92,23 +92,8 @@
           </div>
 
           <div class="detail-row">
-            <span class="label">Distance (One Way)</span>
-            <span class="value">{{ t.distance_miles.toFixed(1) }} miles</span>
-          </div>
-
-          <div class="detail-row">
-            <span class="label">Round Trip?</span>
-            <span class="value">
-              <mat-icon [style.color]="t.is_round_trip ? 'var(--jensify-success)' : 'var(--jensify-text-muted)'">
-                {{ t.is_round_trip ? 'check_circle' : 'cancel' }}
-              </mat-icon>
-              {{ t.is_round_trip ? 'Yes' : 'No' }}
-            </span>
-          </div>
-
-          <div class="detail-row">
-            <span class="label">Total Miles</span>
-            <span class="value jensify-text-strong">{{ t.total_miles.toFixed(1) }} miles</span>
+            <span class="label">Distance</span>
+            <span class="value jensify-text-strong">{{ t.distance_miles.toFixed(1) }} miles</span>
           </div>
         </div>
       </mat-card-content>
@@ -134,23 +119,23 @@
       <div class="jensify-card-header">
         <h2 class="jensify-card-title">
           <mat-icon>attach_money</mat-icon>
-          Reimbursement Calculation
+          Reimbursement
         </h2>
       </div>
       <mat-card-content>
         <div class="detail-grid">
           <div class="detail-row">
+            <span class="label">Distance</span>
+            <span class="value">{{ t.distance_miles.toFixed(1) }} mi</span>
+          </div>
+
+          <div class="detail-row">
             <span class="label">IRS Rate</span>
-            <span class="value">{{ formatCurrency(t.irs_rate) }} / mile</span>
+            <span class="value">{{ formatCurrency(t.irs_rate) }} / mi</span>
           </div>
 
           <div class="detail-row">
-            <span class="label">Total Miles</span>
-            <span class="value">{{ t.total_miles.toFixed(1) }}</span>
-          </div>
-
-          <div class="detail-row">
-            <span class="label">Reimbursement Amount</span>
+            <span class="label">Reimbursement</span>
             <span class="value jensify-text-strong" style="font-size: 1.25rem;">
               {{ formatCurrency(t.reimbursement_amount) }}
             </span>

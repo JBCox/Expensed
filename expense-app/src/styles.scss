@@ -1315,6 +1315,11 @@ mat-card, .mat-mdc-card {
     font-size: 14px !important;
   }
 
+  // Float label - account for prefix icon
+  &.mat-mdc-form-field-has-icon-prefix .mat-mdc-floating-label {
+    left: 42px !important; // 36px prefix width + 6px gap
+  }
+
   // DARK MODE OVERRIDES
   @at-root .dark & {
     .mat-mdc-text-field-wrapper {
@@ -1543,6 +1548,10 @@ textarea.mat-mdc-input-element {
 
   // Icon styling
   .mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    line-height: 20px;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
   }
 
@@ -1624,6 +1633,10 @@ textarea.mat-mdc-input-element {
 
     // Icon inside button
     .mat-icon {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      line-height: 20px;
       color: inherit !important;
     }
   }
@@ -1669,6 +1682,10 @@ textarea.mat-mdc-input-element {
     }
 
     .mat-icon {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      line-height: 20px;
       color: inherit !important;
     }
   }

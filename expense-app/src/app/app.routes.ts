@@ -78,6 +78,14 @@ export const routes: Routes = [
         title: "Accept Invitation - Jensify",
       },
       {
+        path: "callback",
+        loadComponent: () =>
+          import("./features/auth/auth-callback/auth-callback").then(
+            (m) => m.AuthCallbackComponent
+          ),
+        title: "Verifying... - Jensify",
+      },
+      {
         path: "",
         redirectTo: "login",
         pathMatch: "full",

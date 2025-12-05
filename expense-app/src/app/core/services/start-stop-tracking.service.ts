@@ -160,6 +160,7 @@ export class StartStopTrackingService {
           }),
           catchError(() => {
             // If forkJoin times out, return 0 distance - user must fill in manually
+            // But preserve the GPS position we got!
             console.log('[StartStopTracking] forkJoin timeout - user must enter distance manually');
             return of({
               position,
@@ -197,7 +198,8 @@ export class StartStopTrackingService {
       timeout(30000), // 30 second master timeout for entire operation
       catchError(err => {
         console.error('Stop trip error:', err);
-        // Return a fallback result even on error to prevent UI from hanging
+        // GPS failed completely - try to use start location as fallback
+        // This ensures the form is still usable even if GPS fails
         const endDate = new Date(endTime);
         const startDate = new Date(startState.startTime);
         const durationSeconds = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
@@ -205,14 +207,18 @@ export class StartStopTrackingService {
         // Clear the state even on error
         this.clearState();
 
-        // Return a minimal result with 0 distance - user can edit if needed
+        // Return result using START location as fallback for END
+        // This is better than "Unable to determine location" because:
+        // 1. User likely stopped near their start if GPS failed quickly
+        // 2. The address field will be pre-filled with a real address they can edit
+        // 3. If they're actually somewhere else, they can manually update
         return of({
           startLat: startState.startLat,
           startLng: startState.startLng,
           startAddress: startState.startAddress,
-          endLat: startState.startLat, // Use start as end on error
+          endLat: startState.startLat,
           endLng: startState.startLng,
-          endAddress: 'Unable to determine location',
+          endAddress: startState.startAddress, // Use START address instead of error message
           distanceMiles: 0,
           durationSeconds: durationSeconds,
           startTime: startState.startTime,

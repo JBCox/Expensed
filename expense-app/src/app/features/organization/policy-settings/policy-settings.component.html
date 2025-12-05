@@ -75,7 +75,8 @@
             <div class="form-row">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Policy Name</mat-label>
-                <input matInput formControlName="name" placeholder="e.g., Standard Employee Limits">
+                <input matInput formControlName="name">
+                <mat-hint>e.g., Standard Employee Limits</mat-hint>
                 @if (policyForm.get('name')?.hasError('required')) {
                   <mat-error>Name is required</mat-error>
                 }
@@ -84,8 +85,8 @@
             <div class="form-row">
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Description</mat-label>
-                <textarea matInput formControlName="description" rows="2"
-                  placeholder="What does this policy do?"></textarea>
+                <textarea matInput formControlName="description" rows="2"></textarea>
+                <mat-hint>What does this policy do?</mat-hint>
               </mat-form-field>
             </div>
           </div>
@@ -154,17 +155,17 @@
             <div class="form-row three-col">
               <mat-form-field appearance="outline">
                 <mat-label>Max per Transaction</mat-label>
-                <input matInput type="number" formControlName="max_amount" placeholder="e.g., 500">
+                <input matInput type="number" formControlName="max_amount">
                 <span matPrefix>$&nbsp;</span>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Max per Day</mat-label>
-                <input matInput type="number" formControlName="max_daily_total" placeholder="e.g., 1000">
+                <input matInput type="number" formControlName="max_daily_total">
                 <span matPrefix>$&nbsp;</span>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Max per Month</mat-label>
-                <input matInput type="number" formControlName="max_monthly_total" placeholder="e.g., 5000">
+                <input matInput type="number" formControlName="max_monthly_total">
                 <span matPrefix>$&nbsp;</span>
               </mat-form-field>
             </div>
@@ -199,13 +200,13 @@
             <div class="form-row two-col">
               <mat-form-field appearance="outline">
                 <mat-label>Auto-approve under</mat-label>
-                <input matInput type="number" formControlName="auto_approve_under" placeholder="e.g., 50">
+                <input matInput type="number" formControlName="auto_approve_under">
                 <span matPrefix>$&nbsp;</span>
                 <mat-hint>Expenses below this skip approval</mat-hint>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Require approval over</mat-label>
-                <input matInput type="number" formControlName="require_approval_over" placeholder="e.g., 100">
+                <input matInput type="number" formControlName="require_approval_over">
                 <span matPrefix>$&nbsp;</span>
                 <mat-hint>Additional approval for high amounts</mat-hint>
               </mat-form-field>

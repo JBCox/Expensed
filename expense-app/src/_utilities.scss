@@ -2173,7 +2173,6 @@ a.jensify-link {
     display: flex;
     gap: var(--jensify-spacing-md);
     padding: var(--jensify-spacing-lg);
-    position: relative;
   }
 
   .jensify-checkbox-container {
@@ -2323,23 +2322,26 @@ a.jensify-link {
   }
 
   .jensify-trip-amount {
+    position: absolute;
+    top: var(--jensify-spacing-lg);
+    right: var(--jensify-spacing-lg);
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: var(--jensify-spacing-xs);
-    flex-shrink: 0;
+    text-align: right;
 
     .jensify-amount-value {
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--jensify-primary);
+      white-space: nowrap;
     }
 
     .jensify-amount-label {
-      font-size: 0.75rem;
+      font-size: 0.625rem;
       color: var(--jensify-text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
   }
 

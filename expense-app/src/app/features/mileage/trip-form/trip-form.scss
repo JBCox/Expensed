@@ -8,6 +8,45 @@
   padding: 24px 0;
 }
 
+// Warning banner for manual entry
+.jensify-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  border: 1px solid #ffc107;
+  border-left: 4px solid #ff9800;
+  border-radius: 8px;
+  margin-bottom: 8px;
+
+  mat-icon {
+    color: #f57c00;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    color: #e65100;
+    font-size: 14px;
+  }
+
+  span {
+    color: #795548;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
 .jensify-tracking-start {
   text-align: center;
   padding: 40px 20px;

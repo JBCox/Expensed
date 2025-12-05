@@ -109,6 +109,7 @@ export interface CreateMileageTripDto {
 
   // GPS distance tracking (for fraud prevention)
   original_gps_distance?: number; // Set to distance_miles when tracking_method is 'start_stop' or 'full_gps'
+  distance_manually_modified?: boolean; // True if user modified GPS-calculated distance
   distance_modification_reason?: string; // Reason for modifying GPS-calculated distance
 }
 

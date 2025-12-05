@@ -110,6 +110,16 @@
   display: flex;
   align-items: center;
   gap: var(--jensify-spacing-sm);
+  // Ensure buttons are always clickable (fixes occasional click-blocking on initial load)
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+
+  button, app-notification-center {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
 
   button {
     color: var(--jensify-text-strong);
