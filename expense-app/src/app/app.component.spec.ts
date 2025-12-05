@@ -277,11 +277,10 @@ describe('App Component', () => {
 
       userProfileSubject.next(mockEmployee);
 
-      setTimeout(() => {
+      
         expect(profiles.length).toBeGreaterThan(0);
         expect(profiles[profiles.length - 1]).toEqual(mockEmployee);
         done();
-      }, 100);
     });
 
     it('should provide display name for templates', (done) => {
@@ -315,14 +314,13 @@ describe('App Component', () => {
       userProfileSubject.next(mockFinanceUser);
       userProfileSubject.next(null);
 
-      setTimeout(() => {
+      
         expect(profiles.length).toBe(4); // Initial null + 3 updates
         expect(profiles[0]).toBeNull();
         expect(profiles[1]).toEqual(mockEmployee);
         expect(profiles[2]).toEqual(mockFinanceUser);
         expect(profiles[3]).toBeNull();
         done();
-      }, 100);
     });
   });
 

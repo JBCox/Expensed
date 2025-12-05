@@ -180,7 +180,7 @@ export class OrganizationSetupComponent implements OnInit, OnDestroy {
             `Successfully joined ${invitation.organization?.name || 'organization'}!`
           );
           // Reload organization context and redirect
-          window.location.href = '/home'; // Force reload to get fresh context
+          this.router.navigate(['/home']);
         },
         error: (error) => {
           this.isLoading.set(false);

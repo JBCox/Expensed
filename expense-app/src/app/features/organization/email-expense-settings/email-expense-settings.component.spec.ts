@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { of, throwError } from 'rxjs';
 import { EmailExpenseSettingsComponent } from './email-expense-settings.component';
@@ -122,7 +122,8 @@ describe('EmailExpenseSettingsComponent', () => {
         { provide: EmailExpenseService, useValue: emailServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
         { provide: Router, useValue: routerMock },
-        { provide: Clipboard, useValue: clipboardMock }
+        { provide: Clipboard, useValue: clipboardMock },
+        provideRouter([])
       ]
     }).compileComponents();
 
@@ -140,12 +141,11 @@ describe('EmailExpenseSettingsComponent', () => {
     expect(component.loading()).toBe(false);
   });
 
-  it('should load stats on init', () => {
-    setTimeout(() => {
-      expect(emailServiceMock.getProcessingStats).toHaveBeenCalled();
-      expect(component.stats()).toEqual(mockStats);
-    });
-  });
+  it('should load stats on init', fakeAsync(() => {
+    expect(emailServiceMock.getProcessingStats).toHaveBeenCalled();
+    tick();
+    expect(component.stats()).toEqual(mockStats);
+  }));
 
   it('should navigate back to admin', () => {
     component.goBack();
@@ -159,46 +159,49 @@ describe('EmailExpenseSettingsComponent', () => {
     expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Copied to clipboard');
   });
 
-  it('should toggle enabled status', () => {
+  it('should toggle enabled status', fakeAsync(() => {
     component.toggleEnabled(false);
+    tick();
     expect(emailServiceMock.updateInboxConfig).toHaveBeenCalledWith({ is_enabled: false });
-  });
+  }));
 
-  it('should update config successfully', () => {
+  it('should update config successfully', fakeAsync(() => {
     const updates = { auto_create_expense: false };
     component.updateConfig(updates);
 
-    setTimeout(() => {
-      expect(emailServiceMock.updateInboxConfig).toHaveBeenCalledWith(updates);
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Settings updated');
-    });
-  });
+    tick();
+    expect(emailServiceMock.updateInboxConfig).toHaveBeenCalledWith(updates);
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Settings updated');
+  }));
 
-  it('should handle update config error', () => {
+  it('should handle update config error', fakeAsync(() => {
     emailServiceMock.updateInboxConfig.and.returnValue(
       throwError(() => new Error('Update failed'))
     );
 
     component.updateConfig({ is_enabled: false });
 
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to update settings');
-    });
-  });
+    tick();
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to update settings');
+  }));
 
-  it('should add email alias successfully', () => {
+  it('should add email alias successfully', fakeAsync(() => {
     component.aliasForm.patchValue({ email: 'newemail@example.com' });
+
+    expect(component.addingAlias()).toBe(false);
     component.addAlias();
 
+    // Component sets addingAlias to true synchronously
     expect(component.addingAlias()).toBe(true);
-    setTimeout(() => {
-      expect(emailServiceMock.addEmailAlias).toHaveBeenCalledWith({ email: 'newemail@example.com' });
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith(
-        'Email added. Check your inbox for verification.'
-      );
-      expect(component.addingAlias()).toBe(false);
-    });
-  });
+
+    tick();
+
+    expect(emailServiceMock.addEmailAlias).toHaveBeenCalledWith({ email: 'newemail@example.com' });
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith(
+      'Email added. Check your inbox for verification.'
+    );
+    expect(component.addingAlias()).toBe(false);
+  }));
 
   it('should not add alias if form is invalid', () => {
     component.aliasForm.patchValue({ email: '' });
@@ -206,16 +209,15 @@ describe('EmailExpenseSettingsComponent', () => {
     expect(emailServiceMock.addEmailAlias).not.toHaveBeenCalled();
   });
 
-  it('should reset alias form after successful add', () => {
+  it('should reset alias form after successful add', fakeAsync(() => {
     component.aliasForm.patchValue({ email: 'test@example.com' });
     component.addAlias();
 
-    setTimeout(() => {
-      expect(component.aliasForm.value.email).toBe('');
-    });
-  });
+    tick();
+    expect(component.aliasForm.value.email).toBe('');
+  }));
 
-  it('should handle add alias error', () => {
+  it('should handle add alias error', fakeAsync(() => {
     emailServiceMock.addEmailAlias.and.returnValue(
       throwError(() => new Error('Add failed'))
     );
@@ -223,20 +225,20 @@ describe('EmailExpenseSettingsComponent', () => {
     component.aliasForm.patchValue({ email: 'test@example.com' });
     component.addAlias();
 
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to add email');
-      expect(component.addingAlias()).toBe(false);
-    });
-  });
+    tick();
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to add email');
+    expect(component.addingAlias()).toBe(false);
+  }));
 
-  it('should remove email alias when confirmed', () => {
+  it('should remove email alias when confirmed', fakeAsync(() => {
     spyOn(window, 'confirm').and.returnValue(true);
 
     component.removeAlias(mockEmailAlias);
 
     expect(window.confirm).toHaveBeenCalledWith('Remove user@example.com?');
+    tick();
     expect(emailServiceMock.removeEmailAlias).toHaveBeenCalledWith('alias-1');
-  });
+  }));
 
   it('should not remove alias if not confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(false);
@@ -246,7 +248,7 @@ describe('EmailExpenseSettingsComponent', () => {
     expect(emailServiceMock.removeEmailAlias).not.toHaveBeenCalled();
   });
 
-  it('should handle remove alias error', () => {
+  it('should handle remove alias error', fakeAsync(() => {
     spyOn(window, 'confirm').and.returnValue(true);
     emailServiceMock.removeEmailAlias.and.returnValue(
       throwError(() => new Error('Remove failed'))
@@ -254,10 +256,9 @@ describe('EmailExpenseSettingsComponent', () => {
 
     component.removeAlias(mockEmailAlias);
 
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to remove email');
-    });
-  });
+    tick();
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to remove email');
+  }));
 
   it('should show warning for resend verification', () => {
     component.resendVerification(mockEmailAlias);
@@ -301,20 +302,19 @@ describe('EmailExpenseSettingsComponent', () => {
     expect(component.aliasForm.valid).toBe(false);
   });
 
-  it('should handle load inbox config error', () => {
+  it('should handle load inbox config error', fakeAsync(() => {
     emailServiceMock.getInboxConfig.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
 
     component.ngOnInit();
 
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load email settings');
-      expect(component.loading()).toBe(false);
-    });
-  });
+    tick();
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load email settings');
+    expect(component.loading()).toBe(false);
+  }));
 
-  it('should handle load stats error silently', () => {
+  it('should handle load stats error silently', fakeAsync(() => {
     emailServiceMock.getProcessingStats.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
@@ -322,11 +322,10 @@ describe('EmailExpenseSettingsComponent', () => {
     spyOn(console, 'error');
     component.ngOnInit();
 
-    setTimeout(() => {
-      // Stats errors should be silent (no notification shown)
-      expect(notificationServiceMock.showError).not.toHaveBeenCalled();
-    });
-  });
+    tick();
+    // Stats errors should be silent (no notification shown)
+    expect(notificationServiceMock.showError).not.toHaveBeenCalled();
+  }));
 
   it('should update inbox config signal from service', () => {
     const newConfig = { ...mockInboxConfig, is_enabled: false };

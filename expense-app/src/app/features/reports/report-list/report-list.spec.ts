@@ -227,7 +227,7 @@ describe('ReportListComponent', () => {
     component.submitReport(report as any, event);
 
     // Use setTimeout to allow async operations to complete
-    setTimeout(() => {
+    
       expect(dialogSpy.open).toHaveBeenCalled();
       expect(reportServiceSpy.submitReport).toHaveBeenCalledWith('report-1');
       expect(snackBarSpy.open).toHaveBeenCalledWith(
@@ -236,7 +236,6 @@ describe('ReportListComponent', () => {
         { duration: 3000 }
       );
       done();
-    }, 100);
   });
 
   it('should not submit report without expenses', () => {
@@ -274,7 +273,7 @@ describe('ReportListComponent', () => {
     component.deleteReport(mockReports[0] as any, event);
 
     // Use setTimeout to allow async operations to complete
-    setTimeout(() => {
+    
       expect(dialogSpy.open).toHaveBeenCalled();
       expect(reportServiceSpy.deleteReport).toHaveBeenCalledWith('report-1');
       expect(snackBarSpy.open).toHaveBeenCalledWith(
@@ -283,7 +282,6 @@ describe('ReportListComponent', () => {
         { duration: 3000 }
       );
       done();
-    }, 100);
   });
 
   it('should not delete non-draft report', () => {

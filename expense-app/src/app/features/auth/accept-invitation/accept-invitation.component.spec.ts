@@ -97,34 +97,31 @@ describe('AcceptInvitationComponent', () => {
   it('should load invitation on init with token from query params', (done) => {
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       expect(mockInvitationService.getInvitationByToken).toHaveBeenCalledWith('test-token-123');
       expect(component.invitation()).toEqual(mockInvitation);
       expect(component.isLoading()).toBe(false);
       done();
-    }, 100);
   });
 
   it('should set error if no token in query params', (done) => {
     queryParamsSubject.next({});
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       expect(component.error()).toBe('Invalid invitation link');
       expect(component.isLoading()).toBe(false);
       done();
-    }, 100);
   });
 
   it('should set error if invitation not found', (done) => {
     mockInvitationService.getInvitationByToken.and.returnValue(of(null));
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       expect(component.error()).toBe('Invitation not found or expired');
       expect(component.isLoading()).toBe(false);
       done();
-    }, 100);
   });
 
   it('should handle error when loading invitation fails', (done) => {
@@ -133,11 +130,10 @@ describe('AcceptInvitationComponent', () => {
     );
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       expect(component.error()).toBe('Failed to load invitation');
       expect(component.isLoading()).toBe(false);
       done();
-    }, 100);
   });
 
   it('should accept invitation when authenticated', (done) => {
@@ -145,10 +141,10 @@ describe('AcceptInvitationComponent', () => {
 
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       component.acceptInvitation();
 
-      setTimeout(() => {
+      
         expect(mockInvitationService.acceptInvitation).toHaveBeenCalledWith({
           token: 'test-token-123'
         });
@@ -156,8 +152,6 @@ describe('AcceptInvitationComponent', () => {
           'Successfully joined Acme Corp!'
         );
         done();
-      }, 100);
-    }, 100);
   });
 
   it('should redirect to login if not authenticated', (done) => {
@@ -168,14 +162,13 @@ describe('AcceptInvitationComponent', () => {
 
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       component.acceptInvitation();
 
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login'], {
         queryParams: { returnUrl: '/auth/accept-invitation?token=test-token-123' }
       });
       done();
-    }, 100);
   });
 
   it('should handle error when accepting invitation fails', (done) => {
@@ -185,15 +178,13 @@ describe('AcceptInvitationComponent', () => {
 
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       component.acceptInvitation();
 
-      setTimeout(() => {
+      
         expect(component.error()).toBe('Invitation expired');
         expect(component.isLoading()).toBe(false);
         done();
-      }, 100);
-    }, 100);
   });
 
   it('should navigate to home on decline', () => {
@@ -204,13 +195,12 @@ describe('AcceptInvitationComponent', () => {
   it('should navigate to login with return URL', (done) => {
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       component.goToLogin();
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login'], {
         queryParams: { returnUrl: '/auth/accept-invitation?token=test-token-123' }
       });
       done();
-    }, 100);
   });
 
   it('should navigate to login without return URL if no token', () => {
@@ -222,13 +212,12 @@ describe('AcceptInvitationComponent', () => {
   it('should navigate to register with return URL', (done) => {
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       component.goToRegister();
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/register'], {
         queryParams: { returnUrl: '/auth/accept-invitation?token=test-token-123' }
       });
       done();
-    }, 100);
   });
 
   it('should navigate to register without return URL if no token', () => {
@@ -242,21 +231,19 @@ describe('AcceptInvitationComponent', () => {
 
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       expect(component.isLoading()).toBe(false);
       component.acceptInvitation();
       expect(component.isLoading()).toBe(true);
       done();
-    }, 100);
   });
 
   it('should store token from query params', (done) => {
     fixture.detectChanges();
 
-    setTimeout(() => {
+    
       expect(component.token).toBe('test-token-123');
       done();
-    }, 100);
   });
 
   it('should cleanup subscriptions on destroy', () => {
@@ -269,9 +256,13 @@ describe('AcceptInvitationComponent', () => {
   });
 
   it('should render loading spinner when loading', () => {
-    component.isLoading.set(true);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
+    // Set loading before fixture creation to ensure template renders correctly
+    const testFixture = TestBed.createComponent(AcceptInvitationComponent);
+    const testComponent = testFixture.componentInstance;
+    testComponent.isLoading.set(true);
+    testFixture.detectChanges();
+
+    const compiled = testFixture.nativeElement as HTMLElement;
     const spinner = compiled.querySelector('mat-spinner');
     expect(spinner).toBeTruthy();
   });

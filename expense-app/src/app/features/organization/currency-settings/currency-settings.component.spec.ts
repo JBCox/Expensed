@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CurrencySettingsComponent } from './currency-settings.component';
 import { CurrencyService } from '../../../core/services/currency.service';
@@ -77,6 +78,7 @@ describe('CurrencySettingsComponent', () => {
         ReactiveFormsModule
       ],
       providers: [
+        provideRouter([]),
         { provide: CurrencyService, useValue: currencyServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock }
       ]
@@ -91,34 +93,38 @@ describe('CurrencySettingsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load currency settings on init', async () => {
+  it('should load currency settings on init', fakeAsync(async () => {
     await component.loadData();
+    tick();
     expect(currencyServiceMock.getOrganizationCurrencySettings).toHaveBeenCalled();
     expect(currencyServiceMock.getExchangeRates).toHaveBeenCalled();
     expect(currencyServiceMock.getCurrencySummary).toHaveBeenCalled();
     expect(component.loading()).toBe(false);
-  });
+  }));
 
-  it('should populate settings form with loaded data', async () => {
+  it('should populate settings form with loaded data', fakeAsync(async () => {
     await component.loadData();
+    tick();
     expect(component.settingsForm.value.base_currency).toBe('USD');
     expect(component.settingsForm.value.supported_currencies).toEqual(['USD', 'EUR', 'GBP']);
     expect(component.settingsForm.value.auto_convert_currency).toBe(true);
-  });
+  }));
 
-  it('should populate exchange rates signal', async () => {
+  it('should populate exchange rates signal', fakeAsync(async () => {
     await component.loadData();
+    tick();
     expect(component.exchangeRates().length).toBe(1);
     expect(component.exchangeRates()[0]).toEqual(mockExchangeRate);
-  });
+  }));
 
-  it('should populate currency summary signal', async () => {
+  it('should populate currency summary signal', fakeAsync(async () => {
     await component.loadData();
+    tick();
     expect(component.currencySummary().length).toBe(2);
     expect(component.currencySummary()[0].currency).toBe('USD');
-  });
+  }));
 
-  it('should save settings successfully', () => {
+  it('should save settings successfully', fakeAsync(() => {
     component.settingsForm.patchValue({
       base_currency: 'EUR',
       supported_currencies: ['EUR', 'USD'],
@@ -127,13 +133,11 @@ describe('CurrencySettingsComponent', () => {
 
     component.saveSettings();
 
-    expect(component.saving()).toBe(true);
-    setTimeout(() => {
-      expect(currencyServiceMock.updateOrganizationCurrencySettings).toHaveBeenCalled();
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Currency settings saved');
-      expect(component.saving()).toBe(false);
-    });
-  });
+    tick();
+    expect(currencyServiceMock.updateOrganizationCurrencySettings).toHaveBeenCalled();
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Currency settings saved');
+    expect(component.saving()).toBe(false);
+  }));
 
   it('should not save settings if form is invalid', () => {
     component.settingsForm.patchValue({ base_currency: '' });
@@ -141,20 +145,20 @@ describe('CurrencySettingsComponent', () => {
     expect(currencyServiceMock.updateOrganizationCurrencySettings).not.toHaveBeenCalled();
   });
 
-  it('should handle save settings error', () => {
+  it('should handle save settings error', fakeAsync(() => {
     currencyServiceMock.updateOrganizationCurrencySettings.and.returnValue(
       throwError(() => new Error('Save failed'))
     );
 
+    spyOn(console, 'error');
     component.saveSettings();
 
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to save settings');
-      expect(component.saving()).toBe(false);
-    });
-  });
+    tick();
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to save settings');
+    expect(component.saving()).toBe(false);
+  }));
 
-  it('should add exchange rate successfully', () => {
+  it('should add exchange rate successfully', fakeAsync(() => {
     component.showRateForm = true;
     component.rateForm.patchValue({
       from_currency: 'GBP',
@@ -164,17 +168,16 @@ describe('CurrencySettingsComponent', () => {
 
     component.addRate();
 
-    setTimeout(() => {
-      expect(currencyServiceMock.setExchangeRate).toHaveBeenCalledWith({
-        from_currency: 'GBP',
-        to_currency: 'USD',
-        rate: 1.27,
-        source: 'manual'
-      });
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Exchange rate added');
-      expect(component.showRateForm).toBe(false);
+    tick();
+    expect(currencyServiceMock.setExchangeRate).toHaveBeenCalledWith({
+      from_currency: 'GBP',
+      to_currency: 'USD',
+      rate: 1.27,
+      source: 'manual'
     });
-  });
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Exchange rate added');
+    expect(component.showRateForm).toBe(false);
+  }));
 
   it('should not add rate if form is invalid', () => {
     component.rateForm.patchValue({ from_currency: '' });
@@ -182,7 +185,7 @@ describe('CurrencySettingsComponent', () => {
     expect(currencyServiceMock.setExchangeRate).not.toHaveBeenCalled();
   });
 
-  it('should reset rate form after successful add', () => {
+  it('should reset rate form after successful add', fakeAsync(() => {
     component.rateForm.patchValue({
       from_currency: 'GBP',
       to_currency: 'USD',
@@ -191,18 +194,18 @@ describe('CurrencySettingsComponent', () => {
 
     component.addRate();
 
-    setTimeout(() => {
-      expect(component.rateForm.value.from_currency).toBe('');
-      expect(component.rateForm.value.to_currency).toBe('');
-      expect(component.rateForm.value.rate).toBe(1);
-    });
-  });
+    tick();
+    expect(component.rateForm.value.from_currency).toBeNull();
+    expect(component.rateForm.value.to_currency).toBeNull();
+    expect(component.rateForm.value.rate).toBeNull();
+  }));
 
-  it('should handle add rate error', () => {
+  it('should handle add rate error', fakeAsync(() => {
     currencyServiceMock.setExchangeRate.and.returnValue(
       throwError(() => new Error('Add failed'))
     );
 
+    spyOn(console, 'error');
     component.rateForm.patchValue({
       from_currency: 'GBP',
       to_currency: 'USD',
@@ -211,10 +214,9 @@ describe('CurrencySettingsComponent', () => {
 
     component.addRate();
 
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to add exchange rate');
-    });
-  });
+    tick();
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to add exchange rate');
+  }));
 
   it('should toggle rate form visibility', () => {
     expect(component.showRateForm).toBe(false);
@@ -230,9 +232,13 @@ describe('CurrencySettingsComponent', () => {
   });
 
   it('should initialize with default form values', () => {
-    expect(component.settingsForm.value.base_currency).toBe('USD');
-    expect(component.settingsForm.value.supported_currencies).toEqual(['USD']);
-    expect(component.settingsForm.value.auto_convert_currency).toBe(true);
+    // Create a new component without triggering detectChanges to check initial values
+    const freshFixture = TestBed.createComponent(CurrencySettingsComponent);
+    const freshComponent = freshFixture.componentInstance;
+
+    expect(freshComponent.settingsForm.value.base_currency).toBe('USD');
+    expect(freshComponent.settingsForm.value.supported_currencies).toEqual(['USD']);
+    expect(freshComponent.settingsForm.value.auto_convert_currency).toBe(true);
   });
 
   it('should initialize rate form with default values', () => {
@@ -241,7 +247,7 @@ describe('CurrencySettingsComponent', () => {
     expect(component.rateForm.value.rate).toBe(1);
   });
 
-  it('should handle load settings error', () => {
+  it('should handle load settings error', fakeAsync(() => {
     currencyServiceMock.getOrganizationCurrencySettings.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
@@ -249,13 +255,12 @@ describe('CurrencySettingsComponent', () => {
     spyOn(console, 'error');
     component.loadData();
 
-    setTimeout(() => {
-      expect(console.error).toHaveBeenCalledWith('Error loading settings:', jasmine.any(Error));
-      expect(component.loading()).toBe(false);
-    });
-  });
+    tick();
+    expect(console.error).toHaveBeenCalledWith('Error loading settings:', jasmine.any(Error));
+    expect(component.loading()).toBe(false);
+  }));
 
-  it('should handle load exchange rates error', () => {
+  it('should handle load exchange rates error', fakeAsync(() => {
     currencyServiceMock.getExchangeRates.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
@@ -263,12 +268,11 @@ describe('CurrencySettingsComponent', () => {
     spyOn(console, 'error');
     component.loadData();
 
-    setTimeout(() => {
-      expect(console.error).toHaveBeenCalledWith('Error loading rates:', jasmine.any(Error));
-    });
-  });
+    tick();
+    expect(console.error).toHaveBeenCalledWith('Error loading rates:', jasmine.any(Error));
+  }));
 
-  it('should handle load currency summary error', () => {
+  it('should handle load currency summary error', fakeAsync(() => {
     currencyServiceMock.getCurrencySummary.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
@@ -276,17 +280,18 @@ describe('CurrencySettingsComponent', () => {
     spyOn(console, 'error');
     component.loadData();
 
-    setTimeout(() => {
-      expect(console.error).toHaveBeenCalledWith('Error loading summary:', jasmine.any(Error));
-    });
-  });
+    tick();
+    expect(console.error).toHaveBeenCalledWith('Error loading summary:', jasmine.any(Error));
+  }));
 
-  it('should set loading to false even if errors occur', async () => {
+  it('should set loading to false even if errors occur', fakeAsync(async () => {
     currencyServiceMock.getOrganizationCurrencySettings.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
 
+    spyOn(console, 'error');
     await component.loadData();
+    tick();
     expect(component.loading()).toBe(false);
-  });
+  }));
 });

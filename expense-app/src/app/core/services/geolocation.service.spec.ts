@@ -286,9 +286,8 @@ describe('GeolocationService', () => {
         // Emit first position immediately
         success(mockBrowserPosition as unknown as GeolocationPosition);
         // Emit second position after delay
-        setTimeout(() => {
+        
           success(secondMockPosition as unknown as GeolocationPosition);
-        }, 10);
         return 1;
       });
 

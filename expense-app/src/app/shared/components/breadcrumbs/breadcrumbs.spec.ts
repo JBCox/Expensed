@@ -86,11 +86,10 @@ describe('Breadcrumbs', () => {
     // Trigger navigation event
     routerEventsSubject.next(new NavigationEnd(1, '/expenses', '/expenses'));
 
-    setTimeout(() => {
+    
       const breadcrumbs = component.breadcrumbs();
       expect(breadcrumbs.length).toBeGreaterThan(0);
       done();
-    }, 100);
   });
 
   it('should navigate to breadcrumb URL', () => {

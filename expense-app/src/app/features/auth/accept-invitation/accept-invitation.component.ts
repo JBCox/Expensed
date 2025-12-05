@@ -120,7 +120,7 @@ export class AcceptInvitationComponent implements OnInit, OnDestroy {
             `Successfully joined ${this.invitation()?.organization?.name || 'organization'}!`
           );
           // Force reload to get fresh organization context
-          window.location.href = '/home';
+          this.router.navigate(['/home']);
         },
         error: (error) => {
           this.isLoading.set(false);

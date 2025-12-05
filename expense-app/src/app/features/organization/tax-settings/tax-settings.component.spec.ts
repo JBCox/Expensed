@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { TaxSettingsComponent } from './tax-settings.component';
 import { TaxService } from '../../../core/services/tax.service';
@@ -87,6 +88,7 @@ describe('TaxSettingsComponent', () => {
         ReactiveFormsModule
       ],
       providers: [
+        provideRouter([]),
         { provide: TaxService, useValue: taxServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
         { provide: Router, useValue: routerMock }
@@ -133,7 +135,7 @@ describe('TaxSettingsComponent', () => {
     expect(component.editingRate()).toBe(mockTaxRate);
   });
 
-  it('should save new tax rate', () => {
+  it('should save new tax rate', fakeAsync(() => {
     component.openAddRateDialog();
     component.rateForm.patchValue({
       name: 'New Rate',
@@ -149,15 +151,14 @@ describe('TaxSettingsComponent', () => {
     });
 
     component.saveRate();
+    tick();
 
-    expect(component.saving()).toBe(true);
-    setTimeout(() => {
-      expect(taxServiceMock.createTaxRate).toHaveBeenCalled();
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Tax rate created');
-    });
-  });
+    expect(component.saving()).toBe(false);
+    expect(taxServiceMock.createTaxRate).toHaveBeenCalled();
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Tax rate created');
+  }));
 
-  it('should update existing tax rate', () => {
+  it('should update existing tax rate', fakeAsync(() => {
     component.openEditRateDialog(mockTaxRate);
     component.rateForm.patchValue({
       name: 'Updated Rate',
@@ -165,21 +166,21 @@ describe('TaxSettingsComponent', () => {
     });
 
     component.saveRate();
+    tick();
 
-    setTimeout(() => {
-      expect(taxServiceMock.updateTaxRate).toHaveBeenCalled();
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Tax rate updated');
-    });
-  });
+    expect(taxServiceMock.updateTaxRate).toHaveBeenCalled();
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Tax rate updated');
+  }));
 
-  it('should delete tax rate when confirmed', () => {
+  it('should delete tax rate when confirmed', fakeAsync(() => {
     spyOn(window, 'confirm').and.returnValue(true);
 
     component.deleteRate(mockTaxRate);
+    tick();
 
     expect(window.confirm).toHaveBeenCalled();
     expect(taxServiceMock.deleteTaxRate).toHaveBeenCalledWith('rate-1');
-  });
+  }));
 
   it('should open add category dialog', () => {
     component.openAddCategoryDialog();
@@ -193,7 +194,7 @@ describe('TaxSettingsComponent', () => {
     expect(component.editingCategory()).toBe(mockTaxCategory);
   });
 
-  it('should save new tax category', () => {
+  it('should save new tax category', fakeAsync(() => {
     component.openAddCategoryDialog();
     component.categoryForm.patchValue({
       name: 'New Category',
@@ -206,22 +207,22 @@ describe('TaxSettingsComponent', () => {
     });
 
     component.saveCategory();
+    tick();
 
-    expect(component.saving()).toBe(true);
-    setTimeout(() => {
-      expect(taxServiceMock.createTaxCategory).toHaveBeenCalled();
-      expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Tax category created');
-    });
-  });
+    expect(component.saving()).toBe(false);
+    expect(taxServiceMock.createTaxCategory).toHaveBeenCalled();
+    expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Tax category created');
+  }));
 
-  it('should delete tax category when confirmed', () => {
+  it('should delete tax category when confirmed', fakeAsync(() => {
     spyOn(window, 'confirm').and.returnValue(true);
 
     component.deleteCategory(mockTaxCategory);
+    tick();
 
     expect(window.confirm).toHaveBeenCalled();
     expect(taxServiceMock.deleteTaxCategory).toHaveBeenCalledWith('cat-1');
-  });
+  }));
 
   it('should close dialog', () => {
     component.openAddRateDialog();
@@ -230,14 +231,15 @@ describe('TaxSettingsComponent', () => {
     expect(component.editingRate()).toBeNull();
   });
 
-  it('should seed default rates when confirmed', () => {
+  it('should seed default rates when confirmed', fakeAsync(() => {
     spyOn(window, 'confirm').and.returnValue(true);
 
     component.seedDefaults();
+    tick();
 
     expect(window.confirm).toHaveBeenCalled();
     expect(taxServiceMock.seedDefaultRates).toHaveBeenCalled();
-  });
+  }));
 
   it('should format rate correctly', () => {
     expect(component.formatRate(0.0825)).toBeTruthy();
@@ -255,20 +257,24 @@ describe('TaxSettingsComponent', () => {
     expect(component.getTaxTypeIcon('sales_tax')).toBeTruthy();
   });
 
-  it('should handle load rates error', () => {
+  it('should handle load rates error', fakeAsync(() => {
+    spyOn(console, 'error');
     taxServiceMock.getTaxRates.and.returnValue(throwError(() => new Error('Load failed')));
-    component.ngOnInit();
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load tax rates');
-      expect(component.loading()).toBe(false);
-    });
-  });
 
-  it('should handle load categories error', () => {
-    taxServiceMock.getTaxCategories.and.returnValue(throwError(() => new Error('Load failed')));
     component.ngOnInit();
-    setTimeout(() => {
-      expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load tax categories');
-    });
-  });
+    tick();
+
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load tax rates');
+    expect(component.loading()).toBe(false);
+  }));
+
+  it('should handle load categories error', fakeAsync(() => {
+    spyOn(console, 'error');
+    taxServiceMock.getTaxCategories.and.returnValue(throwError(() => new Error('Load failed')));
+
+    component.ngOnInit();
+    tick();
+
+    expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load tax categories');
+  }));
 });

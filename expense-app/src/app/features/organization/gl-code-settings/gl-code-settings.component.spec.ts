@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { GlCodeSettingsComponent } from './gl-code-settings.component';
 import { CategoryService } from '../../../core/services/category.service';
@@ -11,7 +12,7 @@ describe('GlCodeSettingsComponent', () => {
   let component: GlCodeSettingsComponent;
   let fixture: ComponentFixture<GlCodeSettingsComponent>;
   let categoryServiceMock: jasmine.SpyObj<CategoryService>;
-  let dialogMock: jasmine.SpyObj<MatDialog>;
+  let matDialog: MatDialog;
   let snackBarMock: jasmine.SpyObj<MatSnackBar>;
 
   const mockGLCode: GLCode = {
@@ -51,7 +52,7 @@ describe('GlCodeSettingsComponent', () => {
       'updateCategory',
       'deleteCategory'
     ]);
-    dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
+
     snackBarMock = jasmine.createSpyObj('MatSnackBar', ['open']);
 
     // Default return values
@@ -69,13 +70,14 @@ describe('GlCodeSettingsComponent', () => {
       ],
       providers: [
         { provide: CategoryService, useValue: categoryServiceMock },
-        { provide: MatDialog, useValue: dialogMock },
-        { provide: MatSnackBar, useValue: snackBarMock }
+        { provide: MatSnackBar, useValue: snackBarMock },
+        provideRouter([])
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(GlCodeSettingsComponent);
     component = fixture.componentInstance;
+    matDialog = TestBed.inject(MatDialog);
     fixture.detectChanges();
   });
 
@@ -100,27 +102,27 @@ describe('GlCodeSettingsComponent', () => {
     expect(categories).toEqual(['Travel']);
   });
 
-  it('should open GL code dialog', () => {
-    const dialogRefMock = {
+  it('should open GL code dialog', fakeAsync(() => {
+    spyOn(component['dialog'], 'open').and.returnValue({
       afterClosed: () => of(true)
-    };
-    dialogMock.open.and.returnValue(dialogRefMock as any);
+    } as any);
 
     component.openGLCodeDialog();
+    tick();
 
-    expect(dialogMock.open).toHaveBeenCalled();
-  });
+    expect(component['dialog'].open).toHaveBeenCalled();
+  }));
 
-  it('should open GL code dialog with existing code', () => {
-    const dialogRefMock = {
+  it('should open GL code dialog with existing code', fakeAsync(() => {
+    spyOn(component['dialog'], 'open').and.returnValue({
       afterClosed: () => of(true)
-    };
-    dialogMock.open.and.returnValue(dialogRefMock as any);
+    } as any);
 
     component.openGLCodeDialog(mockGLCode);
+    tick();
 
-    expect(dialogMock.open).toHaveBeenCalled();
-  });
+    expect(component['dialog'].open).toHaveBeenCalled();
+  }));
 
   it('should toggle GL code active status', () => {
     component.toggleGLCodeActive(mockGLCode);
@@ -128,17 +130,20 @@ describe('GlCodeSettingsComponent', () => {
     expect(categoryServiceMock.updateGLCode).toHaveBeenCalledWith('gl-1', { is_active: false });
   });
 
-  it('should not delete GL code if in use', () => {
+  it('should not delete GL code if in use', fakeAsync(() => {
     spyOn(window, 'confirm');
+    spyOn(component['snackBar'], 'open');
+    
     component.deleteGLCode(mockGLCode);
+    tick();
 
-    expect(snackBarMock.open).toHaveBeenCalledWith(
+    expect(component['snackBar'].open).toHaveBeenCalledWith(
       'Cannot delete GL code that is assigned to categories',
       'Close',
       { duration: 3000 }
     );
     expect(window.confirm).not.toHaveBeenCalled();
-  });
+  }));
 
   it('should delete GL code if not in use', () => {
     spyOn(window, 'confirm').and.returnValue(true);
@@ -150,16 +155,16 @@ describe('GlCodeSettingsComponent', () => {
     expect(categoryServiceMock.deleteGLCode).toHaveBeenCalledWith('gl-1');
   });
 
-  it('should open category dialog', () => {
-    const dialogRefMock = {
+  it('should open category dialog', fakeAsync(() => {
+    spyOn(component['dialog'], 'open').and.returnValue({
       afterClosed: () => of(true)
-    };
-    dialogMock.open.and.returnValue(dialogRefMock as any);
+    } as any);
 
     component.openCategoryDialog();
+    tick();
 
-    expect(dialogMock.open).toHaveBeenCalled();
-  });
+    expect(component['dialog'].open).toHaveBeenCalled();
+  }));
 
   it('should toggle category active status', () => {
     component.toggleCategoryActive(mockCategory);

@@ -181,10 +181,9 @@ describe('VendorManagementComponent', () => {
     component.saveVendor();
 
     expect(component.saving()).toBe(true);
-    setTimeout(() => {
+    
       expect(vendorServiceMock.createVendor).toHaveBeenCalled();
       expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Vendor created');
-    });
   });
 
   it('should update existing vendor', () => {
@@ -195,10 +194,9 @@ describe('VendorManagementComponent', () => {
 
     component.saveVendor();
 
-    setTimeout(() => {
+    
       expect(vendorServiceMock.updateVendor).toHaveBeenCalled();
       expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Vendor updated');
-    });
   });
 
   it('should delete vendor when confirmed', () => {
@@ -254,9 +252,8 @@ describe('VendorManagementComponent', () => {
   it('should handle load vendors error', () => {
     vendorServiceMock.getVendors.and.returnValue(throwError(() => new Error('Load failed')));
     component.ngOnInit();
-    setTimeout(() => {
+    
       expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load vendors');
       expect(component.loading()).toBe(false);
-    });
   });
 });

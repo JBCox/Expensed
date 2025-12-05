@@ -198,6 +198,7 @@ describe('MileageSettingsComponent', () => {
     });
 
     it('should not save if no organization selected', () => {
+      // Directly modify the mock's currentOrganizationId property
       Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
         get: () => null,
         configurable: true
@@ -210,9 +211,18 @@ describe('MileageSettingsComponent', () => {
         'Close',
         { duration: 3000 }
       );
+      expect(component.saving()).toBe(false);
+
+      // Restore for other tests
+      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
+        get: () => 'org-1',
+        configurable: true
+      });
     });
 
     it('should save mileage settings successfully', fakeAsync(() => {
+      mockSnackBar.open.calls.reset();
+
       component.settingsForm.patchValue({
         use_custom_rate: true,
         custom_rate_per_mile: 0.75,
@@ -245,6 +255,7 @@ describe('MileageSettingsComponent', () => {
     }));
 
     it('should handle save error', fakeAsync(() => {
+      mockSnackBar.open.calls.reset();
       mockOrganizationService.updateOrganization.and.returnValue(
         throwError(() => new Error('Save failed'))
       );
@@ -260,10 +271,15 @@ describe('MileageSettingsComponent', () => {
       expect(component.saving()).toBe(false);
     }));
 
-    it('should set saving state during save operation', () => {
+    it('should set saving state during save operation', fakeAsync(() => {
+      mockSnackBar.open.calls.reset();
+
       component.onSave();
       expect(component.saving()).toBeTrue();
-    });
+
+      tick();
+      expect(component.saving()).toBeFalse();
+    }));
   });
 
   describe('formatCurrency', () => {

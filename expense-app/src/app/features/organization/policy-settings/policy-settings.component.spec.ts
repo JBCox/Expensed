@@ -3,6 +3,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { PolicySettingsComponent } from './policy-settings.component';
 import { PolicyService } from '../../../core/services/policy.service';
@@ -93,7 +94,15 @@ describe('PolicySettingsComponent', () => {
     mockPolicyService.applyPreset.and.returnValue(of({ policies_created: 3 }));
 
     mockSnackBar = jasmine.createSpyObj('MatSnackBar', ['open']);
+
+    // Create proper MatDialog mock with _openDialogs array
+    const dialogRefMock = {
+      afterClosed: () => of(true),
+      close: jasmine.createSpy('close')
+    };
     mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
+    mockDialog.open.and.returnValue(dialogRefMock as any);
+    (mockDialog as any)._openDialogs = []; // Required by MatDialog
 
     await TestBed.configureTestingModule({
       imports: [
@@ -104,7 +113,8 @@ describe('PolicySettingsComponent', () => {
       providers: [
         { provide: PolicyService, useValue: mockPolicyService },
         { provide: MatSnackBar, useValue: mockSnackBar },
-        { provide: MatDialog, useValue: mockDialog }
+        { provide: MatDialog, useValue: mockDialog },
+        provideRouter([])
       ]
     }).compileComponents();
 
@@ -144,15 +154,42 @@ describe('PolicySettingsComponent', () => {
     }));
 
     it('should handle policy load error', fakeAsync(() => {
-      mockPolicyService.getPolicies.and.returnValue(
-        throwError(() => new Error('Load failed'))
+      spyOn(console, 'error');
+
+      // Reset the mock to return error
+      const errorMockService = jasmine.createSpyObj('PolicyService', [
+        'getPolicies',
+        'getPresets',
+        'getPolicyStats'
+      ]);
+      errorMockService.getPolicies.and.returnValue(
+        throwError(() => ({ message: 'Load failed' }))
       );
+      errorMockService.getPresets.and.returnValue(of([]));
+      errorMockService.getPolicyStats.and.returnValue(of(null));
+
+      const errorSnackBar = jasmine.createSpyObj('MatSnackBar', ['open']);
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [
+          PolicySettingsComponent,
+          ReactiveFormsModule,
+          NoopAnimationsModule
+        ],
+        providers: [
+          { provide: PolicyService, useValue: errorMockService },
+          { provide: MatSnackBar, useValue: errorSnackBar },
+          { provide: MatDialog, useValue: mockDialog },
+          provideRouter([])
+        ]
+      });
 
       const newFixture = TestBed.createComponent(PolicySettingsComponent);
       newFixture.detectChanges();
       tick();
 
-      expect(mockSnackBar.open).toHaveBeenCalledWith(
+      expect(errorSnackBar.open).toHaveBeenCalledWith(
         'Load failed',
         'Close',
         { duration: 4000 }
@@ -205,6 +242,7 @@ describe('PolicySettingsComponent', () => {
   describe('savePolicy', () => {
     beforeEach(fakeAsync(() => {
       tick();
+      mockSnackBar.open.calls.reset();
     }));
 
     it('should not save if form is invalid', () => {
@@ -255,8 +293,9 @@ describe('PolicySettingsComponent', () => {
     }));
 
     it('should handle save error', fakeAsync(() => {
+      spyOn(console, 'error');
       mockPolicyService.createPolicy.and.returnValue(
-        throwError(() => new Error('Save failed'))
+        throwError(() => ({ message: 'Save failed' }))
       );
 
       component.openCreateForm();
@@ -276,10 +315,17 @@ describe('PolicySettingsComponent', () => {
         'Close',
         { duration: 4000 }
       );
+
+      // Reset the mock
+      mockPolicyService.createPolicy.and.returnValue(of(mockPolicies[0]));
     }));
   });
 
   describe('deletePolicy', () => {
+    beforeEach(() => {
+      mockSnackBar.open.calls.reset();
+    });
+
     it('should open confirm dialog and delete policy', fakeAsync(() => {
       const dialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       dialogRef.afterClosed.and.returnValue(of(true));
@@ -310,6 +356,10 @@ describe('PolicySettingsComponent', () => {
   });
 
   describe('togglePolicy', () => {
+    beforeEach(() => {
+      mockSnackBar.open.calls.reset();
+    });
+
     it('should toggle policy active state', fakeAsync(() => {
       component.togglePolicy(mockPolicies[0]);
       tick();
@@ -323,8 +373,9 @@ describe('PolicySettingsComponent', () => {
     }));
 
     it('should handle toggle error', fakeAsync(() => {
+      spyOn(console, 'error');
       mockPolicyService.togglePolicyActive.and.returnValue(
-        throwError(() => new Error('Toggle failed'))
+        throwError(() => ({ message: 'Toggle failed' }))
       );
 
       component.togglePolicy(mockPolicies[0]);
@@ -335,6 +386,9 @@ describe('PolicySettingsComponent', () => {
         'Close',
         { duration: 4000 }
       );
+
+      // Reset the mock
+      mockPolicyService.togglePolicyActive.and.returnValue(of(mockPolicies[0]));
     }));
   });
 
@@ -349,6 +403,10 @@ describe('PolicySettingsComponent', () => {
   });
 
   describe('applyPreset', () => {
+    beforeEach(() => {
+      mockSnackBar.open.calls.reset();
+    });
+
     it('should apply preset after confirmation', fakeAsync(() => {
       const dialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       dialogRef.afterClosed.and.returnValue(of(true));

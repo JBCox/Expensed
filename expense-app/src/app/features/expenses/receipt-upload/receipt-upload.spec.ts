@@ -236,7 +236,7 @@ describe('ReceiptUpload', () => {
       expect(expenseServiceSpy.uploadReceipt).toHaveBeenCalledWith(mockFile);
 
       // Wait for observable to complete and component state to update
-      setTimeout(() => {
+      
         fixture.detectChanges();
         // After async completion, uploadedReceipt is set and isUploading is false
         expect(component.uploadedReceipt()).toEqual(mockReceipt.receipt);
@@ -248,7 +248,6 @@ describe('ReceiptUpload', () => {
           jasmine.objectContaining({ duration: 3000, panelClass: ['success-snackbar'] })
         );
         done();
-      }, 200);
     });
 
     it('should handle upload error', (done) => {
@@ -263,7 +262,7 @@ describe('ReceiptUpload', () => {
       component.uploadReceipt();
       fixture.detectChanges();
 
-      setTimeout(() => {
+      
         fixture.detectChanges();
         expect(component.isUploading()).toBe(false);
         expect(component.errorMessage()).toBe(errorMessage);
@@ -273,7 +272,6 @@ describe('ReceiptUpload', () => {
           jasmine.objectContaining({ duration: 5000, panelClass: ['error-snackbar'] })
         );
         done();
-      }, 250);
     });
 
     it('should not upload if no file selected', () => {

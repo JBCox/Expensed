@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CompanySettingsComponent } from './company-settings.component';
 import { OrganizationService } from '../../../core/services/organization.service';
@@ -55,6 +56,7 @@ describe('CompanySettingsComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
+        provideRouter([]),
         { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: ThemeService, useValue: mockThemeService },
         { provide: MatSnackBar, useValue: mockSnackBar }
@@ -64,6 +66,9 @@ describe('CompanySettingsComponent', () => {
     fixture = TestBed.createComponent(CompanySettingsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    
+    // Reset spy call history after component initialization
+    mockSnackBar.open.calls.reset();
   });
 
   it('should create', () => {
@@ -216,11 +221,13 @@ describe('CompanySettingsComponent', () => {
       mockOrganizationService.updateOrganization.and.returnValue(of(mockOrganization));
       mockOrganizationService.uploadLogo.and.returnValue(of('https://example.com/new-logo.png'));
       mockOrganizationService.deleteLogo.and.returnValue(of(undefined));
+      mockSnackBar.open.calls.reset();
     });
 
     it('should not save if form is invalid', async () => {
       component.settingsForm.get('name')?.setValue('');
       await component.saveSettings();
+
 
       expect(mockOrganizationService.updateOrganization).not.toHaveBeenCalled();
     });
@@ -252,6 +259,7 @@ describe('CompanySettingsComponent', () => {
 
       await component.saveSettings();
 
+
       expect(mockOrganizationService.uploadLogo).toHaveBeenCalledWith('org-1', file);
       expect(mockOrganizationService.updateOrganization).toHaveBeenCalled();
     });
@@ -261,6 +269,7 @@ describe('CompanySettingsComponent', () => {
       component.settingsForm.markAsDirty();
 
       await component.saveSettings();
+
 
       expect(mockOrganizationService.deleteLogo).toHaveBeenCalledWith('org-1');
       expect(mockOrganizationService.updateOrganization).toHaveBeenCalledWith(
@@ -272,6 +281,7 @@ describe('CompanySettingsComponent', () => {
     });
 
     it('should handle save error', async () => {
+      spyOn(console, 'error');
       mockOrganizationService.updateOrganization.and.returnValue(
         throwError(() => new Error('Save failed'))
       );
@@ -294,6 +304,7 @@ describe('CompanySettingsComponent', () => {
       expect(component.saving()).toBeTrue();
 
       await savePromise;
+
       expect(component.saving()).toBeFalse();
     });
   });

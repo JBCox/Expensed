@@ -172,19 +172,17 @@ describe('OrganizationSetupComponent', () => {
     mockOrganizationService.getUserOrganizationContext.and.returnValue(of(mockOrganizationContext));
     component.createOrgForm.patchValue({ name: 'Test Company', domain: 'test.com' });
     component.createOrganization();
-    setTimeout(() => {
+    
       expect(mockOrganizationService.createOrganization).toHaveBeenCalled();
       done();
-    }, 100);
   });
 
   it('should accept invitation with valid token', (done) => {
     mockInvitationService.acceptInvitation.and.returnValue(of({ id: 'mem-123' } as any));
     component.acceptInvitation(mockInvitation);
-    setTimeout(() => {
+    
       expect(mockInvitationService.acceptInvitation).toHaveBeenCalledWith({ token: 'test-token-123' });
       done();
-    }, 100);
   });
 
   it('should handle invitation without token', () => {

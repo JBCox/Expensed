@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { PayoutSettingsComponent } from './payout-settings.component';
 import { PayoutService } from '../../../core/services/payout.service';
@@ -68,7 +69,8 @@ describe('PayoutSettingsComponent', () => {
           useValue: {
             queryParams: of({})
           }
-        }
+        },
+        provideRouter([])
       ]
     }).compileComponents();
 
@@ -81,11 +83,12 @@ describe('PayoutSettingsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load Stripe status on init', () => {
+  it('should load Stripe status on init', fakeAsync(() => {
+    flushMicrotasks();
     expect(payoutServiceMock.getStripeAccountStatus).toHaveBeenCalledWith('org-123');
     expect(component.payoutMethod()).toBe('manual');
     expect(component.stripeConfigured()).toBe(false);
-  });
+  }));
 
   it('should initialize form with validators', () => {
     expect(component.keyForm.get('stripeKey')?.hasError('required')).toBe(true);
@@ -103,12 +106,17 @@ describe('PayoutSettingsComponent', () => {
     expect(component.showKey()).toBe(true);
   });
 
-  it('should select manual payout method', () => {
+  it('should select manual payout method', fakeAsync(() => {
+    flushMicrotasks();
+    component.payoutMethod.set('stripe');
     component.selectMethod('manual');
+    flushMicrotasks();
+    fixture.detectChanges();
     expect(payoutServiceMock.updatePayoutMethod).toHaveBeenCalledWith('org-123', 'manual');
-  });
+  }));
 
-  it('should not select Stripe method if not configured', () => {
+  it('should not select Stripe method if not configured', fakeAsync(() => {
+    flushMicrotasks();
     component.stripeConfigured.set(false);
     component.selectMethod('stripe');
 
@@ -118,43 +126,48 @@ describe('PayoutSettingsComponent', () => {
       { duration: 3000 }
     );
     expect(payoutServiceMock.updatePayoutMethod).not.toHaveBeenCalled();
-  });
+  }));
 
-  it('should test Stripe key', () => {
+  it('should test Stripe key', fakeAsync(() => {
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     component.testStripeKey();
 
     expect(component.testing()).toBe(true);
-    setTimeout(() => {
-      expect(payoutServiceMock.testStripeKey).toHaveBeenCalledWith('sk_test_123');
-      expect(component.testResult()?.valid).toBe(true);
-      expect(component.testing()).toBe(false);
-    });
-  });
+    flushMicrotasks();
+    fixture.detectChanges();
+    expect(payoutServiceMock.testStripeKey).toHaveBeenCalledWith('sk_test_123');
+    expect(component.testResult()?.valid).toBe(true);
+    expect(component.testing()).toBe(false);
+  }));
 
-  it('should save Stripe key', () => {
+  it('should save Stripe key', fakeAsync(() => {
+    flushMicrotasks();
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     component.saveStripeKey();
 
     expect(component.saving()).toBe(true);
-    setTimeout(() => {
-      expect(payoutServiceMock.setStripeKey).toHaveBeenCalledWith('org-123', 'sk_test_123');
-      expect(snackBarMock.open).toHaveBeenCalledWith(
-        'Stripe API key saved successfully!',
-        'Close',
-        { duration: 5000 }
-      );
-    });
-  });
+    flushMicrotasks();
+    fixture.detectChanges();
+    expect(payoutServiceMock.setStripeKey).toHaveBeenCalledWith('org-123', 'sk_test_123');
+    expect(snackBarMock.open).toHaveBeenCalledWith(
+      'Stripe API key saved successfully!',
+      'Close',
+      { duration: 5000 }
+    );
+    expect(component.saving()).toBe(false);
+  }));
 
-  it('should remove Stripe key when confirmed', () => {
+  it('should remove Stripe key when confirmed', fakeAsync(() => {
+    flushMicrotasks();
     spyOn(window, 'confirm').and.returnValue(true);
 
     component.removeStripeKey();
+    flushMicrotasks();
+    fixture.detectChanges();
 
     expect(window.confirm).toHaveBeenCalled();
     expect(payoutServiceMock.removeStripeKey).toHaveBeenCalledWith('org-123');
-  });
+  }));
 
   it('should not remove Stripe key when cancelled', () => {
     spyOn(window, 'confirm').and.returnValue(false);
@@ -165,34 +178,36 @@ describe('PayoutSettingsComponent', () => {
     expect(payoutServiceMock.removeStripeKey).not.toHaveBeenCalled();
   });
 
-  it('should handle test key error', () => {
+  it('should handle test key error', fakeAsync(() => {
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     payoutServiceMock.testStripeKey.and.returnValue(
       throwError(() => ({ message: 'Invalid key' }))
     );
 
     component.testStripeKey();
+    flushMicrotasks();
+    fixture.detectChanges();
 
-    setTimeout(() => {
-      expect(component.testResult()?.valid).toBe(false);
-      expect(component.testResult()?.error).toBe('Invalid key');
-    });
-  });
+    expect(component.testResult()?.valid).toBe(false);
+    expect(component.testResult()?.error).toBe('Invalid key');
+  }));
 
-  it('should handle save key error', () => {
+  it('should handle save key error', fakeAsync(() => {
+    flushMicrotasks();
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     payoutServiceMock.setStripeKey.and.returnValue(
       throwError(() => ({ message: 'Save failed' }))
     );
 
     component.saveStripeKey();
+    flushMicrotasks();
+    fixture.detectChanges();
 
-    setTimeout(() => {
-      expect(snackBarMock.open).toHaveBeenCalledWith(
-        'Save failed',
-        'Close',
-        { duration: 3000 }
-      );
-    });
-  });
+    expect(snackBarMock.open).toHaveBeenCalledWith(
+      'Save failed',
+      'Close',
+      { duration: 3000 }
+    );
+    expect(component.saving()).toBe(false);
+  }));
 });

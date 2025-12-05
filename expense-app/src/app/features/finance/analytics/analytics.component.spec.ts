@@ -78,18 +78,16 @@ describe('AnalyticsComponent', () => {
 
   it('should set loading to false after data loads', (done) => {
     fixture.detectChanges();
-    setTimeout(() => {
+    
       expect(component.loading()).toBe(false);
       done();
-    }, 100);
   });
 
   it('should populate data signal after successful load', (done) => {
     fixture.detectChanges();
-    setTimeout(() => {
+    
       expect(component.data()).toEqual(mockAnalyticsData);
       done();
-    }, 100);
   });
 
   it('should handle error when loading data fails', (done) => {
@@ -97,11 +95,10 @@ describe('AnalyticsComponent', () => {
       throwError(() => new Error('Failed to load'))
     );
     fixture.detectChanges();
-    setTimeout(() => {
+    
       expect(mockNotificationService.showError).toHaveBeenCalledWith('Failed to load analytics data');
       expect(component.loading()).toBe(false);
       done();
-    }, 100);
   });
 
   it('should initialize with date presets', () => {

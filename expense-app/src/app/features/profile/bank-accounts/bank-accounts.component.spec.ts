@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
@@ -53,7 +54,7 @@ describe('BankAccountsComponent', () => {
     }
   ];
 
-  beforeEach(async () => {
+  beforeEach(fakeAsync(async () => {
     mockPayoutService = jasmine.createSpyObj('PayoutService', [
       'getMyBankAccounts',
       'addBankAccount',
@@ -75,6 +76,7 @@ describe('BankAccountsComponent', () => {
     });
 
     mockSnackBar = jasmine.createSpyObj('MatSnackBar', ['open']);
+    mockSnackBar.open.and.returnValue({ onAction: () => ({ subscribe: () => {} }), dismiss: () => {} } as any);
     mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
 
     await TestBed.configureTestingModule({
@@ -83,6 +85,7 @@ describe('BankAccountsComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
+        provideRouter([]),
         { provide: PayoutService, useValue: mockPayoutService },
         { provide: OrganizationService, useValue: mockOrganizationService },
         { provide: MatSnackBar, useValue: mockSnackBar },
@@ -93,7 +96,10 @@ describe('BankAccountsComponent', () => {
     fixture = TestBed.createComponent(BankAccountsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  });
+    tick();  // Wait for ngOnInit and loadBankAccounts to complete
+    // Ensure organizationId is set (it's private, so we use bracket notation)
+    (component as any)['organizationId'] = 'org-1';
+  }));
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -108,6 +114,7 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should handle load error', fakeAsync(() => {
+      spyOn(console, 'error');
       mockPayoutService.getMyBankAccounts.and.returnValue(
         throwError(() => new Error('Load failed'))
       );
@@ -140,6 +147,9 @@ describe('BankAccountsComponent', () => {
 
   describe('onTokenCreated', () => {
     it('should add bank account with token', fakeAsync(() => {
+      // Verify organizationId is set
+      expect((component as any)['organizationId']).toBe('org-1');
+      
       component.onTokenCreated('tok_test_123');
       tick();
 
@@ -168,6 +178,7 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should handle add error', fakeAsync(() => {
+      spyOn(console, 'error');
       mockPayoutService.addBankAccount.and.returnValue(
         throwError(() => new Error('Network error'))
       );
@@ -182,16 +193,16 @@ describe('BankAccountsComponent', () => {
       );
     }));
 
-    it('should not add if no organization', () => {
-      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
-        get: () => null,
-        configurable: true
-      });
+    it('should not add if no organization', fakeAsync(() => {
+      // Set organizationId to null directly on the component instance
+      (component as any)['organizationId'] = null;
+
 
       component.onTokenCreated('tok_test_123');
+      tick();
 
       expect(mockPayoutService.addBankAccount).not.toHaveBeenCalled();
-    });
+    }));
   });
 
   describe('onFormError', () => {
@@ -229,6 +240,7 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should handle set default error', fakeAsync(() => {
+      spyOn(console, 'error');
       mockPayoutService.setDefaultBankAccount.and.returnValue(
         throwError(() => new Error('Update failed'))
       );
@@ -341,6 +353,7 @@ describe('BankAccountsComponent', () => {
     });
 
     it('should handle delete error', fakeAsync(() => {
+      spyOn(console, 'error');
       spyOn(window, 'confirm').and.returnValue(true);
       mockPayoutService.deleteBankAccount.and.returnValue(
         throwError(() => new Error('Delete failed'))

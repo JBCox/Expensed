@@ -12,7 +12,7 @@ import { KeyboardShortcutsService } from './core/services/keyboard-shortcuts.ser
 import { ThemeService } from './core/services/theme.service';
 import { OrganizationService } from './core/services/organization.service';
 import { Observable, Subject, combineLatest, map, filter, fromEvent } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, startWith } from 'rxjs/operators';
 import { User } from './core/models/user.model';
 import { SidebarNav } from './core/components/sidebar-nav/sidebar-nav';
 import { NotificationCenterComponent } from './shared/components/notification-center/notification-center';
@@ -27,6 +27,17 @@ interface ShellViewModel {
   displayName: string;
   email: string;
 }
+
+/**
+ * Default view model for immediate rendering
+ * Prevents click-blocking on initial page load
+ */
+const DEFAULT_VM: ShellViewModel = {
+  profile: null,
+  isAuthenticated: false,
+  displayName: '',
+  email: ''
+};
 
 /**
  * Root application component with navigation
@@ -48,8 +59,7 @@ interface ShellViewModel {
     OfflineIndicator
   ],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
-,
+  styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App implements OnInit, OnDestroy {
@@ -79,6 +89,7 @@ export class App implements OnInit, OnDestroy {
         this.isAuthRoute = event.urlAfterRedirects.startsWith('/auth');
       });
 
+    // Use startWith to emit immediately with default value - prevents click-blocking on initial load
     this.vm$ = combineLatest([this.authService.userProfile$, this.authService.session$]).pipe(
       map(([profile, session]): ShellViewModel => {
         const sessionMetadata = (session?.user?.user_metadata ?? {}) as Record<string, unknown>;
@@ -96,7 +107,8 @@ export class App implements OnInit, OnDestroy {
           displayName,
           email
         };
-      })
+      }),
+      startWith(DEFAULT_VM)
     );
   }
 

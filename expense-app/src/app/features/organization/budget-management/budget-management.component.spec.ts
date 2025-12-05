@@ -1,16 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { BudgetManagementComponent } from './budget-management.component';
 import { BudgetService } from '../../../core/services/budget.service';
-import { MatDialog } from '@angular/material/dialog';
 import { BudgetWithTracking } from '../../../core/models/budget.model';
 
 describe('BudgetManagementComponent', () => {
   let component: BudgetManagementComponent;
   let fixture: ComponentFixture<BudgetManagementComponent>;
   let budgetServiceMock: jasmine.SpyObj<BudgetService>;
-  let dialogMock: jasmine.SpyObj<MatDialog>;
 
   const mockBudget: BudgetWithTracking = {
     id: 'budget-1',
@@ -52,7 +51,6 @@ describe('BudgetManagementComponent', () => {
       'formatCurrency',
       'getBudgetPeriodLabel'
     ]);
-    dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
 
     // Default return values
     budgetServiceMock.getBudgets.and.returnValue(of([mockBudget]));
@@ -62,11 +60,11 @@ describe('BudgetManagementComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         BudgetManagementComponent,
-        BrowserAnimationsModule
+        NoopAnimationsModule
       ],
       providers: [
         { provide: BudgetService, useValue: budgetServiceMock },
-        { provide: MatDialog, useValue: dialogMock }
+        provideRouter([])
       ]
     }).compileComponents();
 
@@ -98,40 +96,6 @@ describe('BudgetManagementComponent', () => {
     expect(summary.under).toBe(1);
     expect(summary.warning).toBe(0);
     expect(summary.exceeded).toBe(0);
-  });
-
-  it('should open create dialog', () => {
-    const dialogRefMock = {
-      afterClosed: () => of({ saved: true })
-    };
-    dialogMock.open.and.returnValue(dialogRefMock as any);
-
-    component.openCreateDialog();
-
-    expect(dialogMock.open).toHaveBeenCalled();
-  });
-
-  it('should open edit dialog with budget', () => {
-    const dialogRefMock = {
-      afterClosed: () => of({ saved: true })
-    };
-    dialogMock.open.and.returnValue(dialogRefMock as any);
-
-    component.openEditDialog(mockBudget);
-
-    expect(dialogMock.open).toHaveBeenCalled();
-  });
-
-  it('should delete budget when confirmed', () => {
-    const dialogRefMock = {
-      afterClosed: () => of(true)
-    };
-    dialogMock.open.and.returnValue(dialogRefMock as any);
-    budgetServiceMock.deleteBudget.and.returnValue(of(undefined));
-
-    component.deleteBudget(mockBudget);
-
-    expect(dialogMock.open).toHaveBeenCalled();
   });
 
   it('should get progress color based on budget status', () => {

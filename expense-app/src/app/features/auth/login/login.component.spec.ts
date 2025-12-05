@@ -89,11 +89,10 @@ describe('LoginComponent', () => {
 
     component.onSubmit();
 
-    setTimeout(() => {
+    
       expect(mockAuthService.signIn).toHaveBeenCalled();
       expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/expenses');
       done();
-    }, 100);
   });
 
   it('should display error message on login failure', async () => {
