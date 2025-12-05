@@ -648,18 +648,34 @@ describe('MileageService', () => {
   describe('submitTrip', () => {
     it('should submit a trip', (done) => {
       const submittedTrip = { ...mockTrip, status: 'submitted' as MileageStatus, submitted_at: '2025-11-20T10:00:00Z' };
-      const singleSpy = jasmine.createSpy('single').and.returnValue(
-        Promise.resolve({ data: submittedTrip, error: null })
-      );
 
-      mockSupabaseClient.from.and.returnValue({
-        update: jasmine.createSpy('update').and.returnValue({
-          eq: jasmine.createSpy('eq').and.returnValue({
-            select: jasmine.createSpy('select').and.returnValue({
-              single: singleSpy
-            })
+      // Mock for getTripById (select chain)
+      const selectChain = {
+        eq: jasmine.createSpy('eq').and.returnValue({
+          single: jasmine.createSpy('single').and.returnValue(
+            Promise.resolve({ data: { ...mockTrip, purpose: 'Business trip' }, error: null })
+          )
+        })
+      };
+
+      // Mock for update chain
+      const updateChain = {
+        eq: jasmine.createSpy('eq').and.returnValue({
+          select: jasmine.createSpy('select').and.returnValue({
+            single: jasmine.createSpy('single').and.returnValue(
+              Promise.resolve({ data: submittedTrip, error: null })
+            )
           })
         })
+      };
+
+      // Setup conditional mock for from()
+      mockSupabaseClient.from.and.callFake((table: string) => {
+        const mock: any = {
+          select: jasmine.createSpy('select').and.returnValue(selectChain),
+          update: jasmine.createSpy('update').and.returnValue(updateChain)
+        };
+        return mock;
       });
 
       service.submitTrip('trip-1').subscribe({

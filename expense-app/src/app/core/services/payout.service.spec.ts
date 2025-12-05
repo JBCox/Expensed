@@ -132,11 +132,11 @@ describe('PayoutService', () => {
     it('should get Stripe account status and update settings', (done) => {
       const mockResponse: StripeAccountStatusResponse = {
         connected: true,
+        has_key: true,
         status: 'active',
         payout_method: 'stripe',
-        charges_enabled: true,
-        payouts_enabled: true,
-        business_name: 'Acme Corp'
+        key_last4: '1234',
+        key_set_at: '2024-01-01T10:00:00Z'
       };
 
       fetchSpy.and.returnValue(Promise.resolve({
@@ -152,7 +152,7 @@ describe('PayoutService', () => {
           // Check that settings were updated
           service.payoutSettings$.subscribe(settings => {
             expect(settings?.stripe_account_status).toBe('active');
-            expect(settings?.stripe_account_details?.business_name).toBe('Acme Corp');
+            expect(settings?.stripe_account_details?.key_last4).toBe('1234');
             done();
           });
         },

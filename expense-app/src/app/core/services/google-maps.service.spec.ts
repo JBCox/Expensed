@@ -153,19 +153,19 @@ describe('GoogleMapsService', () => {
       expect(mockGeocoder.geocode).toHaveBeenCalledWith({ location: { lat: 32.7767, lng: -96.7970 } });
     }));
 
-    it('should throw error when no address found', fakeAsync(() => {
+    it('should return coordinates as fallback when no address found', fakeAsync(() => {
       mockGeocoder.geocode.and.resolveTo({ results: [] });
 
-      let error: Error | undefined;
+      let result: string | undefined;
       tick();
 
       service.reverseGeocode(0, 0).subscribe({
-        error: (e) => { error = e; }
+        next: (r) => { result = r; }
       });
 
       tick();
 
-      expect(error?.message).toBe('No address found for coordinates');
+      expect(result).toBe('0.000000, 0.000000');
     }));
   });
 

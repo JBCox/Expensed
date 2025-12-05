@@ -257,15 +257,17 @@ export class ReceiptService {
    * Call validateReceiptFileAsync for full validation including magic numbers
    */
   validateReceiptFile(file: File): string | null {
+    // Check size FIRST - more efficient and user-friendly error
+    if (file.size > this.MAX_FILE_SIZE) {
+      const maxSizeMB = this.MAX_FILE_SIZE / BYTES_PER_MB;
+      return `File size exceeds ${maxSizeMB}MB limit`;
+    }
+
+    // Then check file type
     if (!this.ALLOWED_FILE_TYPES.includes(file.type)) {
       return `Invalid file type. Allowed types: ${
         this.ALLOWED_FILE_TYPES.join(", ")
       }`;
-    }
-
-    if (file.size > this.MAX_FILE_SIZE) {
-      const maxSizeMB = this.MAX_FILE_SIZE / BYTES_PER_MB;
-      return `File size exceeds ${maxSizeMB}MB limit`;
     }
 
     return null;

@@ -247,7 +247,7 @@ describe('ExpenseService', () => {
     });
 
     it('should reject file exceeding size limit', (done) => {
-      const largeContent = new Array(6 * 1024 * 1024).fill('a').join('');
+      const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
       const mockFile = new File([largeContent], 'large.jpg', { type: 'image/jpeg' });
 
       service.uploadReceipt(mockFile).subscribe({
@@ -286,7 +286,7 @@ describe('ExpenseService', () => {
     });
 
     it('should reject file exceeding size limit', () => {
-      const largeContent = new Array(6 * 1024 * 1024).fill('a').join('');
+      const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
       const mockFile = new File([largeContent], 'large.jpg', { type: 'image/jpeg' });
       const result = service.validateReceiptFile(mockFile);
       expect(result).toContain('File size exceeds');

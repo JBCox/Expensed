@@ -17,6 +17,7 @@ describe('OrganizationService', () => {
   let supabaseServiceMock: jasmine.SpyObj<SupabaseService>;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
   let loggerServiceMock: jasmine.SpyObj<LoggerService>;
+  let localStorageMock: any;
 
   const mockOrganization: Organization = {
     id: 'org-123',
@@ -52,8 +53,24 @@ describe('OrganizationService', () => {
     // Reset TestBed to clear any previous singleton instances
     TestBed.resetTestingModule();
 
-    // Clear localStorage before each test to ensure isolation
-    localStorage.clear();
+    // Mock localStorage
+    let store: { [key: string]: string } = {};
+    localStorageMock = {
+      getItem: jasmine.createSpy('getItem').and.callFake((key: string) => store[key] || null),
+      setItem: jasmine.createSpy('setItem').and.callFake((key: string, value: string) => {
+        store[key] = value;
+      }),
+      removeItem: jasmine.createSpy('removeItem').and.callFake((key: string) => {
+        delete store[key];
+      }),
+      clear: jasmine.createSpy('clear').and.callFake(() => {
+        store = {};
+      }),
+      length: 0,
+      key: jasmine.createSpy('key')
+    };
+
+    spyOnProperty(window, 'localStorage', 'get').and.returnValue(localStorageMock);
 
     const supabaseSpy = jasmine.createSpyObj('SupabaseService', ['client'], {
       userId: 'user-123'
@@ -83,11 +100,6 @@ describe('OrganizationService', () => {
     supabaseServiceMock = TestBed.inject(SupabaseService) as jasmine.SpyObj<SupabaseService>;
     notificationServiceMock = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
     loggerServiceMock = TestBed.inject(LoggerService) as jasmine.SpyObj<LoggerService>;
-  });
-
-  afterEach(() => {
-    // Clean up localStorage after each test
-    localStorage.clear();
   });
 
   it('should be created', () => {

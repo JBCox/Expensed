@@ -1,0 +1,115 @@
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m                    [2m | [22m[1mNames[22m                      [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mchunk-C2QZQ6J5.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m430.28 kB[39m[2m | [22m              [36m108.95 kB[39m
+[32mchunk-LYD6U3Z6.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m230.60 kB[39m[2m | [22m               [36m53.69 kB[39m
+[32mchunk-XWLEMIWB.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m171.67 kB[39m[2m | [22m               [36m36.92 kB[39m
+[32mstyles-DQWPAIL7.css[39m                    [2m | [22m[2mstyles[22m                     [2m | [22m[36m148.41 kB[39m[2m | [22m               [36m17.06 kB[39m
+[32mmain-GKFQLOF7.js[39m                       [2m | [22m[2mmain[22m                       [2m | [22m[36m140.98 kB[39m[2m | [22m               [36m32.73 kB[39m
+[32mchunk-VGTDF62V.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m93.25 kB[39m[2m | [22m               [36m21.00 kB[39m
+[32mchunk-VRW64BRU.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m57.60 kB[39m[2m | [22m                [36m8.66 kB[39m
+[32mchunk-HNW2QC4X.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m45.02 kB[39m[2m | [22m                [36m8.88 kB[39m
+[32mpolyfills-5CFQRCPP.js[39m                  [2m | [22m[2mpolyfills[22m                  [2m | [22m [36m34.59 kB[39m[2m | [22m               [36m11.33 kB[39m
+[32mchunk-ZIF7CLNT.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m28.99 kB[39m[2m | [22m                [36m6.83 kB[39m
+[32mchunk-XNUQEPS3.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m24.81 kB[39m[2m | [22m                [36m6.56 kB[39m
+[32mchunk-T4YXB2NF.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m24.67 kB[39m[2m | [22m                [36m6.74 kB[39m
+[32mchunk-VJJQIUO7.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m23.74 kB[39m[2m | [22m                [36m4.13 kB[39m
+[32mchunk-Z6S26GKI.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m17.28 kB[39m[2m | [22m                [36m4.67 kB[39m
+[32mchunk-HRQ3O7JM.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m10.69 kB[39m[2m | [22m                [36m2.76 kB[39m
+[32mchunk-Y44UAIJI.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m9.83 kB[39m[2m | [22m                [36m2.34 kB[39m
+[32mchunk-O5JJTJRD.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m9.09 kB[39m[2m | [22m                [36m1.95 kB[39m
+[32mchunk-IL4VHUMG.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m7.84 kB[39m[2m | [22m                [36m1.95 kB[39m
+[32mchunk-G4AUBHVH.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m7.50 kB[39m[2m | [22m                [36m1.55 kB[39m
+[32mchunk-AOPTEW7Q.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m6.62 kB[39m[2m | [22m                [36m1.91 kB[39m
+[32mchunk-DFBCMPIC.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m4.38 kB[39m[2m | [22m              [36m975 bytes[39m
+[32mchunk-RMPN547Q.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m3.16 kB[39m[2m | [22m                [36m1.01 kB[39m
+[32mchunk-KJYJKQSE.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m2.74 kB[39m[2m | [22m              [36m965 bytes[39m
+[32mchunk-6YE5P6V5.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m1.43 kB[39m[2m | [22m              [36m522 bytes[39m
+[32mchunk-LEO5CU7B.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m  [36m1.23 kB[39m[2m | [22m              [36m469 bytes[39m
+[32mchunk-BJN3X5A2.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m861 bytes[39m[2m | [22m              [36m861 bytes[39m
+[32mchunk-GH75HO5B.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m831 bytes[39m[2m | [22m              [36m831 bytes[39m
+[32mchunk-NPTHPNNQ.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m387 bytes[39m[2m | [22m              [36m387 bytes[39m
+[32mchunk-NFUCFC7R.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m[36m333 bytes[39m[2m | [22m              [36m333 bytes[39m
+
+[1m [22m                                      [2m | [22m[1mInitial total[22m              [2m | [22m  [1m[93m1.54 MB[39m[22m[2m | [22m              [1m346.96 kB[22m
+
+[1mLazy chunk files[22m                       [2m | [22m[1mNames[22m                      [2m | [22m [1mRaw size[22m[2m | [22m[1mEstimated transfer size[22m
+[32mhome-A2YWSNOA.js[39m                       [2m | [22m[2mhome[22m                       [2m | [22m[36m103.07 kB[39m[2m | [22m                [36m9.49 kB[39m
+[32mchunk-UAMJJH3M.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m94.67 kB[39m[2m | [22m               [36m17.91 kB[39m
+[32mexpense-list-N6V2OWII.js[39m               [2m | [22m[2mexpense-list[22m               [2m | [22m [36m70.66 kB[39m[2m | [22m               [36m10.94 kB[39m
+[32mbudget-management.component-TIQB36GR.js[39m[2m | [22m[2mbudget-management-component[22m[2m | [22m [36m63.98 kB[39m[2m | [22m               [36m13.62 kB[39m
+[32mpolicy-settings.component-I7BHYKXP.js[39m  [2m | [22m[2mpolicy-settings-component[22m  [2m | [22m [36m62.67 kB[39m[2m | [22m               [36m13.96 kB[39m
+[32mdashboard-C66ENCKU.js[39m                  [2m | [22m[2mdashboard[22m                  [2m | [22m [36m58.96 kB[39m[2m | [22m               [36m12.14 kB[39m
+[32mapproval-settings-LM7BYBS5.js[39m          [2m | [22m[2mapproval-settings[22m          [2m | [22m [36m58.83 kB[39m[2m | [22m                [36m9.90 kB[39m
+[32mchunk-PBGVI7AI.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m58.29 kB[39m[2m | [22m                [36m9.78 kB[39m
+[32mapproval-queue-RXS4M3AQ.js[39m             [2m | [22m[2mapproval-queue[22m             [2m | [22m [36m57.53 kB[39m[2m | [22m                [36m8.41 kB[39m
+[32mtrip-form-A2LHHLJQ.js[39m                  [2m | [22m[2mtrip-form[22m                  [2m | [22m [36m50.45 kB[39m[2m | [22m               [36m11.33 kB[39m
+[32muser-management.component-PULF2TIN.js[39m  [2m | [22m[2muser-management-component[22m  [2m | [22m [36m47.32 kB[39m[2m | [22m                [36m8.44 kB[39m
+[32mtrip-list-WRJOC5VB.js[39m                  [2m | [22m[2mtrip-list[22m                  [2m | [22m [36m44.94 kB[39m[2m | [22m                [36m9.48 kB[39m
+[32mexpense-form-DXQAANEA.js[39m               [2m | [22m[2mexpense-form[22m               [2m | [22m [36m44.68 kB[39m[2m | [22m                [36m9.38 kB[39m
+[32mchunk-EJQXTS7B.js[39m                      [2m | [22m[2m-[22m                          [2m | [22m [36m42.58 kB[39m[2m | [22m                [36m9.18 kB[39m
+[32mvendor-management.component-M6K4EVK6.js[39m[2m | [22m[2mvendor-management-component[22m[2m | [22m [36m41.56 kB[39m[2m | [22m                [36m9.31 kB[39m
+[2m...and 51 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [10.366 seconds] - 2025-12-05T12:56:50.279Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left side of this optional chain operation does not include 'null' or 'undefined' in its type, therefore the '?.' operator can be replaced with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/approvals/approval-queue/approval-queue.html:114:62:
+[37m      114 │ ...-value">{{approval.workflow?.[32mname[37m || 'Direct Approval'}} (Step...
+          ╵                                 [32m~~~~[0m
+
+  Warning occurs in the template of component ApprovalQueue.
+
+    src/app/features/approvals/approval-queue/approval-queue.ts:52:15:
+[37m      52 │   templateUrl: [32m'./approval-queue.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8011: Node matches the ".material-icons:not([iconPositionEnd]), mat-icon:not([iconPositionEnd]), [matButtonIcon]:not([iconPositionEnd])" slot of the "MatButton" component, but will not be projected into the specific slot because the surrounding @else has more than one node at its root. To project the node in the right slot, you can:
+
+1. Wrap the content of the @else block in an <ng-container/> that matches the ".material-icons:not([iconPositionEnd]), mat-icon:not([iconPositionEnd]), [matButtonIcon]:not([iconPositionEnd])" selector.
+2. Split the content of the @else block across multiple @else blocks such that each one only has a single projectable node at its root.
+3. Remove all content from the @else block, except for the node being projected.
+
+This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.`[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/organization/payout-settings/payout-settings.component.ts:208:22:
+[37m      208 │                       [32m<mat-icon>[37mscience</mat-icon>
+          ╵                       [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8011: Node matches the ".material-icons:not([iconPositionEnd]), mat-icon:not([iconPositionEnd]), [matButtonIcon]:not([iconPositionEnd])" slot of the "MatButton" component, but will not be projected into the specific slot because the surrounding @else has more than one node at its root. To project the node in the right slot, you can:
+
+1. Wrap the content of the @else block in an <ng-container/> that matches the ".material-icons:not([iconPositionEnd]), mat-icon:not([iconPositionEnd]), [matButtonIcon]:not([iconPositionEnd])" selector.
+2. Split the content of the @else block across multiple @else blocks such that each one only has a single projectable node at its root.
+3. Remove all content from the @else block, except for the node being projected.
+
+This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.`[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/organization/payout-settings/payout-settings.component.ts:222:22:
+[37m      222 │                       [32m<mat-icon>[37msave</mat-icon>
+          ╵                       [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8011: Node matches the ".material-icons:not([iconPositionEnd]), mat-icon:not([iconPositionEnd]), [matButtonIcon]:not([iconPositionEnd])" slot of the "MatButton" component, but will not be projected into the specific slot because the surrounding @else has more than one node at its root. To project the node in the right slot, you can:
+
+1. Wrap the content of the @else block in an <ng-container/> that matches the ".material-icons:not([iconPositionEnd]), mat-icon:not([iconPositionEnd]), [matButtonIcon]:not([iconPositionEnd])" selector.
+2. Split the content of the @else block across multiple @else blocks such that each one only has a single projectable node at its root.
+3. Remove all content from the @else block, except for the node being projected.
+
+This check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress" compiler option.`[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/organization/payout-settings/payout-settings.component.ts:264:20:
+[37m      264 │                     [32m<mat-icon>[37mdelete</mat-icon>
+          ╵                     [32m~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mbundle initial exceeded maximum budget. Budget 1.30 MB was not met by 238.82 kB with a total of 1.54 MB.[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1msrc/app/features/expenses/expense-list/expense-list.scss exceeded maximum budget. Budget 15.00 kB was not met by 684 bytes with a total of 15.68 kB.[0m
+
+[39m[22m
+Output location: C:\Jensify\expense-app\dist\expense-app
+
