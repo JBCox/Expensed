@@ -81,7 +81,7 @@ import { PayoutMethod } from '../../../core/models/payout.model';
               </div>
               <div class="method-details">
                 <h3>Manual / CSV Export</h3>
-                <p>Export approved expenses to CSV and process payments outside Jensify using your existing payroll or banking system.</p>
+                <p>Export approved expenses to CSV and process payments outside Expensed using your existing payroll or banking system.</p>
                 <div class="method-features">
                   <span class="feature"><mat-icon>check</mat-icon> No setup required</span>
                   <span class="feature"><mat-icon>check</mat-icon> Use your existing process</span>
@@ -295,7 +295,7 @@ import { PayoutMethod } from '../../../core/models/payout.model';
               <mat-icon>account_balance_wallet</mat-icon>
               <div>
                 <h4>Your Stripe Account</h4>
-                <p>All fees are billed directly to your Stripe account. Jensify doesn't charge any additional fees.</p>
+                <p>All fees are billed directly to your Stripe account. Expensed doesn't charge any additional fees.</p>
               </div>
             </div>
 

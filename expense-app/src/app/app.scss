@@ -44,25 +44,16 @@
 .logo-section {
   display: flex;
   align-items: center;
-  gap: var(--jensify-spacing-sm);
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--jensify-primary-strong);
 
-  .logo-icon {
-    font-size: 2rem;
-    height: 2rem;
-    width: 2rem;
-  }
-
-  .app-name {
-    font-size: 1.5rem;
-    font-weight: 600;
+  .app-logo {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
   }
 
   @media (max-width: 767px) {
-    .app-name {
-      display: none;
+    .app-logo {
+      height: 28px;
     }
   }
 }

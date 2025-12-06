@@ -1,8 +1,8 @@
-# How Jensify Works
+# How Expensed Works
 
-Jensify is a modern expense and receipt application, similar to tools like Expensify. Employees upload receipts and create expenses; those expenses are grouped into **expense reports** that are submitted for approval; approvers and finance teams approve/reject reports and then mark them as reimbursed.
+Expensed is a modern expense and receipt application, similar to tools like Expensify. Employees upload receipts and create expenses; those expenses are grouped into **expense reports** that are submitted for approval; approvers and finance teams approve/reject reports and then mark them as reimbursed.
 
-This document gives a detailed overview of how Jensify works today for each role.
+This document gives a detailed overview of how Expensed works today for each role.
 
 ---
 
@@ -12,7 +12,7 @@ This document gives a detailed overview of how Jensify works today for each role
 
 After logging in, users see a consistent three-part layout:
 
-- **Top bar** - Jensify logo on the left, a central area reserved for search, and a right section with notifications, the user name/email, and a Sign Out option.
+- **Top bar** - Expensed logo on the left, a central area reserved for search, and a right section with notifications, the user name/email, and a Sign Out option.
 - **Sidebar navigation** - A collapsible vertical menu on the left: expanded shows icons and text; collapsed shows icons only.
 - **Main content area** - The central pane where pages (dashboard, expenses, approvals, finance) are displayed.
 

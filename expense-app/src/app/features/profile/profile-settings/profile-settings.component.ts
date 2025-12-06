@@ -102,7 +102,7 @@ interface UserProfile {
             <mat-card-header>
               <mat-icon mat-card-avatar class="card-icon">palette</mat-icon>
               <mat-card-title>Appearance</mat-card-title>
-              <mat-card-subtitle>Customize how Jensify looks</mat-card-subtitle>
+              <mat-card-subtitle>Customize how Expensed looks</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
               <div class="setting-row">

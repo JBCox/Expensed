@@ -706,6 +706,13 @@ body {
         color: var(--jensify-text-strong);
       }
     }
+
+    .auth-brand-logo {
+      height: 80px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px color-mix(in srgb, var(--jensify-primary) 30%, transparent));
+    }
   }
 
   h3 {

@@ -157,7 +157,12 @@ describe('ForgotPasswordComponent', () => {
     it('should set loading to true during submission', (done) => {
       // Simulate delayed Observable
       mockAuthService.resetPassword.and.returnValue(
-        new Observable(sub => {  sub.next({ success: true }); sub.complete(); }) as any
+        new Observable(sub => {
+          setTimeout(() => {
+            sub.next({ success: true });
+            sub.complete();
+          }, 10);
+        }) as any
       );
 
       component.forgotPasswordForm.patchValue({
@@ -166,13 +171,14 @@ describe('ForgotPasswordComponent', () => {
 
       component.onSubmit();
 
-      // Check loading is true immediately after calling onSubmit
+      // Check loading is true immediately after calling onSubmit (before async completes)
       expect(component.loading).toBeTrue();
 
       // Wait for the observable to complete
-      
+      setTimeout(() => {
         expect(component.loading).toBeFalse();
         done();
+      }, 50);
     });
   });
 });

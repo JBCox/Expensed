@@ -1,6 +1,6 @@
 {
-  "name": "Jensify - Expense Management",
-  "short_name": "Jensify",
+  "name": "Expensed - Expense Management",
+  "short_name": "Expensed",
   "description": "Modern expense tracking with receipt scanning and mileage logging",
   "theme_color": "#FF5900",
   "background_color": "#FFFFFF",

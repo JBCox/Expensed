@@ -21,7 +21,7 @@ import { PwaService } from '../../../core/services/pwa.service';
           <div class="install-content">
             <mat-icon class="install-icon">get_app</mat-icon>
             <div class="install-text">
-              <h3>Install Jensify</h3>
+              <h3>Install Expensed</h3>
               <p>Get quick access and offline support</p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export class InstallPrompt {
     // Check if we should show the prompt
     setTimeout(() => {
       if (this.shouldShowPrompt()) {
-        const dismissed = localStorage.getItem('jensify_install_dismissed');
+        const dismissed = localStorage.getItem('expensed_install_dismissed');
         if (!dismissed || Date.now() - parseInt(dismissed) > 7 * 24 * 60 * 60 * 1000) {
           this.showPrompt.set(true);
         }
@@ -129,12 +129,12 @@ export class InstallPrompt {
     const installed = await this.pwaService.showInstallPrompt();
     if (installed) {
       this.showPrompt.set(false);
-      localStorage.removeItem('jensify_install_dismissed');
+      localStorage.removeItem('expensed_install_dismissed');
     }
   }
 
   dismiss(): void {
     this.showPrompt.set(false);
-    localStorage.setItem('jensify_install_dismissed', Date.now().toString());
+    localStorage.setItem('expensed_install_dismissed', Date.now().toString());
   }
 }

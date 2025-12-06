@@ -22,7 +22,7 @@ export const routes: Routes = [
     canActivate: [authGuard], // Temporarily disabled for UI verification
     loadComponent: () =>
       import("./features/home/home/home").then((m) => m.Home),
-    title: "Home - Jensify",
+    title: "Home - Expensed",
     data: { breadcrumb: "Home", breadcrumbIcon: "home" },
   },
 
@@ -36,7 +36,7 @@ export const routes: Routes = [
           import("./features/auth/login/login.component").then((m) =>
             m.LoginComponent
           ),
-        title: "Sign In - Jensify",
+        title: "Sign In - Expensed",
       },
       {
         path: "register",
@@ -44,14 +44,14 @@ export const routes: Routes = [
           import("./features/auth/register/register.component").then((m) =>
             m.RegisterComponent
           ),
-        title: "Create Account - Jensify",
+        title: "Create Account - Expensed",
       },
       {
         path: "forgot-password",
         loadComponent: () =>
           import("./features/auth/forgot-password/forgot-password.component")
             .then((m) => m.ForgotPasswordComponent),
-        title: "Reset Password - Jensify",
+        title: "Reset Password - Expensed",
       },
       {
         path: "reset-password",
@@ -59,7 +59,7 @@ export const routes: Routes = [
           import("./features/auth/reset-password/reset-password").then((m) =>
             m.ResetPasswordComponent
           ),
-        title: "Set New Password - Jensify",
+        title: "Set New Password - Expensed",
       },
       {
         path: "confirm-email",
@@ -67,7 +67,7 @@ export const routes: Routes = [
           import("./features/auth/confirm-email/confirm-email").then((m) =>
             m.ConfirmEmailComponent
           ),
-        title: "Confirm Email - Jensify",
+        title: "Confirm Email - Expensed",
       },
       {
         path: "accept-invitation",
@@ -75,7 +75,7 @@ export const routes: Routes = [
           import(
             "./features/auth/accept-invitation/accept-invitation.component"
           ).then((m) => m.AcceptInvitationComponent),
-        title: "Accept Invitation - Jensify",
+        title: "Accept Invitation - Expensed",
       },
       {
         path: "callback",
@@ -83,7 +83,7 @@ export const routes: Routes = [
           import("./features/auth/auth-callback/auth-callback").then(
             (m) => m.AuthCallbackComponent
           ),
-        title: "Verifying... - Jensify",
+        title: "Verifying... - Expensed",
       },
       {
         path: "",
@@ -100,7 +100,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./features/organization/admin-hub/admin-hub.component")
         .then((m) => m.AdminHubComponent),
-    title: "Admin - Jensify",
+    title: "Admin - Expensed",
     data: { breadcrumb: "Admin", breadcrumbIcon: "admin_panel_settings" },
   },
 
@@ -115,7 +115,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import("./features/organization/setup/organization-setup.component")
             .then((m) => m.OrganizationSetupComponent),
-        title: "Organization Setup - Jensify",
+        title: "Organization Setup - Expensed",
         data: { breadcrumb: "Setup" },
       },
       {
@@ -125,7 +125,7 @@ export const routes: Routes = [
           import(
             "./features/organization/company-settings/company-settings.component"
           ).then((m) => m.CompanySettingsComponent),
-        title: "Company Settings - Jensify",
+        title: "Company Settings - Expensed",
         data: { breadcrumb: "Company Settings" },
       },
       {
@@ -135,7 +135,7 @@ export const routes: Routes = [
           import(
             "./features/organization/user-management/user-management.component"
           ).then((m) => m.UserManagementComponent),
-        title: "User Management - Jensify",
+        title: "User Management - Expensed",
         data: { breadcrumb: "User Management" },
       },
       {
@@ -145,7 +145,7 @@ export const routes: Routes = [
           import(
             "./features/organization/mileage-settings/mileage-settings.component"
           ).then((m) => m.MileageSettingsComponent),
-        title: "Mileage Settings - Jensify",
+        title: "Mileage Settings - Expensed",
         data: { breadcrumb: "Mileage Settings" },
       },
       {
@@ -155,7 +155,7 @@ export const routes: Routes = [
           import(
             "./features/organization/budget-management/budget-management.component"
           ).then((m) => m.BudgetManagementComponent),
-        title: "Budget Management - Jensify",
+        title: "Budget Management - Expensed",
         data: { breadcrumb: "Budgets" },
       },
       {
@@ -165,7 +165,7 @@ export const routes: Routes = [
           import(
             "./features/organization/gl-code-settings/gl-code-settings.component"
           ).then((m) => m.GlCodeSettingsComponent),
-        title: "GL Code Mappings - Jensify",
+        title: "GL Code Mappings - Expensed",
         data: { breadcrumb: "GL Codes" },
       },
       {
@@ -175,7 +175,7 @@ export const routes: Routes = [
           import(
             "./features/organization/payout-settings/payout-settings.component"
           ).then((m) => m.PayoutSettingsComponent),
-        title: "Payout Settings - Jensify",
+        title: "Payout Settings - Expensed",
         data: { breadcrumb: "Payout Settings" },
       },
       {
@@ -185,7 +185,7 @@ export const routes: Routes = [
           import(
             "./features/organization/policy-settings/policy-settings.component"
           ).then((m) => m.PolicySettingsComponent),
-        title: "Expense Policies - Jensify",
+        title: "Expense Policies - Expensed",
         data: { breadcrumb: "Expense Policies" },
       },
       {
@@ -195,7 +195,7 @@ export const routes: Routes = [
           import(
             "./features/organization/delegation-settings/delegation-settings.component"
           ).then((m) => m.DelegationSettingsComponent),
-        title: "Delegation Settings - Jensify",
+        title: "Delegation Settings - Expensed",
         data: { breadcrumb: "Delegation" },
       },
       {
@@ -205,7 +205,7 @@ export const routes: Routes = [
           import(
             "./features/organization/currency-settings/currency-settings.component"
           ).then((m) => m.CurrencySettingsComponent),
-        title: "Currency Settings - Jensify",
+        title: "Currency Settings - Expensed",
         data: { breadcrumb: "Currency" },
       },
       {
@@ -215,7 +215,7 @@ export const routes: Routes = [
           import(
             "./features/organization/per-diem-settings/per-diem-settings.component"
           ).then((m) => m.PerDiemSettingsComponent),
-        title: "Per Diem Settings - Jensify",
+        title: "Per Diem Settings - Expensed",
         data: { breadcrumb: "Per Diem" },
       },
       {
@@ -225,7 +225,7 @@ export const routes: Routes = [
           import(
             "./features/organization/tax-settings/tax-settings.component"
           ).then((m) => m.TaxSettingsComponent),
-        title: "Tax & VAT Settings - Jensify",
+        title: "Tax & VAT Settings - Expensed",
         data: { breadcrumb: "Tax & VAT" },
       },
       {
@@ -235,7 +235,7 @@ export const routes: Routes = [
           import(
             "./features/organization/vendor-management/vendor-management.component"
           ).then((m) => m.VendorManagementComponent),
-        title: "Vendor Management - Jensify",
+        title: "Vendor Management - Expensed",
         data: { breadcrumb: "Vendors" },
       },
       {
@@ -245,7 +245,7 @@ export const routes: Routes = [
           import(
             "./features/organization/email-expense-settings/email-expense-settings.component"
           ).then((m) => m.EmailExpenseSettingsComponent),
-        title: "Email-to-Expense - Jensify",
+        title: "Email-to-Expense - Expensed",
         data: { breadcrumb: "Email-to-Expense" },
       },
     ],
@@ -263,7 +263,7 @@ export const routes: Routes = [
           import("./features/expenses/expense-list/expense-list").then((m) =>
             m.ExpenseList
           ),
-        title: "My Expenses - Jensify",
+        title: "My Expenses - Expensed",
         data: { breadcrumb: "My Expenses" },
       },
       {
@@ -277,7 +277,7 @@ export const routes: Routes = [
           import("./features/expenses/expense-form/expense-form").then((m) =>
             m.ExpenseFormComponent
           ),
-        title: "New Expense - Jensify",
+        title: "New Expense - Expensed",
         data: { breadcrumb: "New Expense" },
       },
       {
@@ -286,7 +286,7 @@ export const routes: Routes = [
           import("./features/expenses/expense-detail/expense-detail").then(
             (m) => m.ExpenseDetailComponent,
           ),
-        title: "Expense Details - Jensify",
+        title: "Expense Details - Expensed",
         data: { breadcrumb: "Details" },
       },
       {
@@ -295,7 +295,7 @@ export const routes: Routes = [
           import("./features/expenses/expense-edit/expense-edit").then((m) =>
             m.ExpenseEditComponent
           ),
-        title: "Edit Expense - Jensify",
+        title: "Edit Expense - Expensed",
         data: { breadcrumb: "Edit" },
       },
     ],
@@ -313,7 +313,7 @@ export const routes: Routes = [
           import("./features/approvals/approval-queue/approval-queue").then((m) =>
             m.ApprovalQueue
           ),
-        title: "Approval Queue - Jensify",
+        title: "Approval Queue - Expensed",
         data: { breadcrumb: "Queue" },
       },
       {
@@ -323,7 +323,7 @@ export const routes: Routes = [
           import("./features/approvals/approval-settings/approval-settings").then((m) =>
             m.ApprovalSettings
           ),
-        title: "Approval Settings - Jensify",
+        title: "Approval Settings - Expensed",
         data: { breadcrumb: "Settings" },
       },
     ],
@@ -341,7 +341,7 @@ export const routes: Routes = [
           import("./features/reports/report-list/report-list").then((m) =>
             m.ReportListComponent
           ),
-        title: "Expense Reports - Jensify",
+        title: "Expense Reports - Expensed",
         data: { breadcrumb: "All Reports" },
       },
       {
@@ -350,7 +350,7 @@ export const routes: Routes = [
           import("./features/reports/report-detail/report-detail").then((m) =>
             m.ReportDetailComponent
           ),
-        title: "Report Details - Jensify",
+        title: "Report Details - Expensed",
         data: { breadcrumb: "Details" },
       },
     ],
@@ -363,7 +363,7 @@ export const routes: Routes = [
       import("./features/expenses/receipt-list/receipt-list").then((m) =>
         m.ReceiptList
       ),
-    title: "Receipts - Jensify",
+    title: "Receipts - Expensed",
     data: { breadcrumb: "Receipts", breadcrumbIcon: "receipt" },
   },
   {
@@ -377,7 +377,7 @@ export const routes: Routes = [
           import("./features/mileage/trip-list/trip-list").then((m) =>
             m.TripList
           ),
-        title: "Mileage Trips - Jensify",
+        title: "Mileage Trips - Expensed",
         data: { breadcrumb: "Trips" },
       },
       {
@@ -386,7 +386,7 @@ export const routes: Routes = [
           import("./features/mileage/trip-form/trip-form").then((m) =>
             m.TripForm
           ),
-        title: "New Mileage Trip - Jensify",
+        title: "New Mileage Trip - Expensed",
         data: { breadcrumb: "New Trip" },
       },
       {
@@ -395,7 +395,7 @@ export const routes: Routes = [
           import("./features/mileage/trip-detail/trip-detail").then((m) =>
             m.TripDetailComponent
           ),
-        title: "Trip Details - Jensify",
+        title: "Trip Details - Expensed",
         data: { breadcrumb: "Details" },
       },
       {
@@ -404,7 +404,7 @@ export const routes: Routes = [
           import("./features/mileage/trip-form/trip-form").then((m) =>
             m.TripForm
           ),
-        title: "Edit Mileage Trip - Jensify",
+        title: "Edit Mileage Trip - Expensed",
         data: { breadcrumb: "Edit" },
       },
     ],
@@ -422,7 +422,7 @@ export const routes: Routes = [
           import("./features/profile/profile-settings/profile-settings.component").then(
             (m) => m.ProfileSettingsComponent
           ),
-        title: "Profile Settings - Jensify",
+        title: "Profile Settings - Expensed",
         data: { breadcrumb: "Settings" },
       },
       {
@@ -431,7 +431,7 @@ export const routes: Routes = [
           import("./features/profile/notification-preferences/notification-preferences.component").then(
             (m) => m.NotificationPreferencesComponent
           ),
-        title: "Notification Preferences - Jensify",
+        title: "Notification Preferences - Expensed",
         data: { breadcrumb: "Notifications" },
       },
       {
@@ -440,7 +440,7 @@ export const routes: Routes = [
           import("./features/profile/bank-accounts/bank-accounts.component").then(
             (m) => m.BankAccountsComponent
           ),
-        title: "Bank Accounts - Jensify",
+        title: "Bank Accounts - Expensed",
         data: { breadcrumb: "Bank Accounts" },
       },
     ],
@@ -463,7 +463,7 @@ export const routes: Routes = [
           import("./features/finance/dashboard/dashboard").then((m) =>
             m.FinanceDashboardComponent
           ),
-        title: "Finance Dashboard - Jensify",
+        title: "Finance Dashboard - Expensed",
         data: { breadcrumb: "Dashboard", breadcrumbIcon: "dashboard" },
       },
       {

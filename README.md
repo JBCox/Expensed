@@ -1,6 +1,8 @@
-# Jensify - Modern Expense Management Platform
+# Expensed - Modern Expense Management Platform
 
 > A mobile-first expense management platform built for Corvaer Manufacturing, designed to rival Expensify, Ramp, and Brex.
+>
+> **URL**: https://expensed.app
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Angular](https://img.shields.io/badge/Angular-20-red)](https://angular.io/)
@@ -9,7 +11,7 @@
 
 ## 🎯 Overview
 
-Jensify is a comprehensive expense management solution for tracking all business expenses (gas, hotels, flights, meals, and more), expanding to include:
+Expensed is a comprehensive expense management solution for tracking all business expenses (gas, hotels, flights, meals, and more), expanding to include:
 - 📸 Smart receipt capture with OCR
 - 💰 Multi-level approval workflows
 - 💳 Corporate card integration

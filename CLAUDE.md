@@ -1,4 +1,6 @@
-# Jensify - Expense Management Platform
+# Expensed - Expense Management Platform
+
+**URL**: expensed.app
 
 ## Project Overview
 Full-featured expense management platform starting with gas receipt tracking for Corvaer Manufacturing, expanding to compete with Expensify, Ramp, Brex, and similar platforms.
@@ -25,7 +27,7 @@ Full-featured expense management platform starting with gas receipt tracking for
 **📖 Essential Documentation (Minimal):**
 - This file (CLAUDE.md) - Development guide, coding standards, and project structure
 - `FEATURES.md` - Detailed documentation for all completed features
-- `HOW_JENSIFY_WORKS.md` - System architecture and feature overview
+- `HOW_EXPENSED_WORKS.md` - System architecture and feature overview
 - `FIX_AND_PREVENT_SYNC_ISSUES.md` - Database migration workflow (critical!)
 - `README.md` - Project setup and getting started
 - `DOCUMENTATION_INDEX.md` - Quick navigation and "I want to..." finder
