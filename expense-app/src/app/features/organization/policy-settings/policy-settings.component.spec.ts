@@ -112,11 +112,12 @@ describe('PolicySettingsComponent', () => {
       ],
       providers: [
         { provide: PolicyService, useValue: mockPolicyService },
-        { provide: MatSnackBar, useValue: mockSnackBar },
-        { provide: MatDialog, useValue: mockDialog },
         provideRouter([])
       ]
-    }).compileComponents();
+    })
+    .overrideProvider(MatSnackBar, { useValue: mockSnackBar })
+    .overrideProvider(MatDialog, { useValue: mockDialog })
+    .compileComponents();
 
     fixture = TestBed.createComponent(PolicySettingsComponent);
     component = fixture.componentInstance;
@@ -179,11 +180,11 @@ describe('PolicySettingsComponent', () => {
         ],
         providers: [
           { provide: PolicyService, useValue: errorMockService },
-          { provide: MatSnackBar, useValue: errorSnackBar },
-          { provide: MatDialog, useValue: mockDialog },
           provideRouter([])
         ]
-      });
+      })
+      .overrideProvider(MatSnackBar, { useValue: errorSnackBar })
+      .overrideProvider(MatDialog, { useValue: mockDialog });
 
       const newFixture = TestBed.createComponent(PolicySettingsComponent);
       newFixture.detectChanges();

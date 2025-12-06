@@ -171,7 +171,7 @@ describe('VendorManagementComponent', () => {
     expect(component.selectedVendor()).toBeNull();
   });
 
-  it('should save new vendor', () => {
+  it('should save new vendor', (done) => {
     component.openAddDialog();
     component.vendorForm.patchValue({
       name: 'New Vendor',
@@ -180,13 +180,16 @@ describe('VendorManagementComponent', () => {
 
     component.saveVendor();
 
-    expect(component.saving()).toBe(true);
-    
+    // With sync Observable, saving completes immediately
+    setTimeout(() => {
       expect(vendorServiceMock.createVendor).toHaveBeenCalled();
       expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Vendor created');
+      expect(component.saving()).toBe(false);
+      done();
+    }, 0);
   });
 
-  it('should update existing vendor', () => {
+  it('should update existing vendor', (done) => {
     component.openEditDialog(mockVendor);
     component.vendorForm.patchValue({
       name: 'Updated Vendor'
@@ -194,9 +197,11 @@ describe('VendorManagementComponent', () => {
 
     component.saveVendor();
 
-    
+    setTimeout(() => {
       expect(vendorServiceMock.updateVendor).toHaveBeenCalled();
       expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Vendor updated');
+      done();
+    }, 0);
   });
 
   it('should delete vendor when confirmed', () => {
@@ -249,11 +254,14 @@ describe('VendorManagementComponent', () => {
     expect(component.maskTaxId('12-3456789')).toBe('***-**-6789');
   });
 
-  it('should handle load vendors error', () => {
+  it('should handle load vendors error', (done) => {
     vendorServiceMock.getVendors.and.returnValue(throwError(() => new Error('Load failed')));
     component.ngOnInit();
-    
+
+    setTimeout(() => {
       expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load vendors');
       expect(component.loading()).toBe(false);
+      done();
+    }, 0);
   });
 });

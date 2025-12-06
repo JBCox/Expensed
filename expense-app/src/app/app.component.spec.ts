@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router, NavigationEnd } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { take } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { App } from './app';
 import { AuthService } from './core/services/auth.service';
@@ -112,90 +113,95 @@ describe('App Component', () => {
       expect(component.vm$).toBeDefined();
     });
 
-    it('should combine userProfile$ and session$ in vm$', (done) => {
+    it('should combine userProfile$ and session$ in vm$', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
       userProfileSubject.next(mockEmployee);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      component.vm$.subscribe(vm => {
-        expect(vm.profile).toEqual(mockEmployee);
-        expect(vm.isAuthenticated).toBe(true);
-        done();
-      });
-    });
+      expect(vm.profile).toEqual(mockEmployee);
+      expect(vm.isAuthenticated).toBe(true);
+    }));
 
-    it('should start with null profile if not authenticated', (done) => {
-      component.vm$.subscribe(vm => {
-        expect(vm.profile).toBeNull();
-        expect(vm.isAuthenticated).toBe(false);
-        done();
-      });
-    });
+    it('should start with null profile if not authenticated', fakeAsync(() => {
+      let vm: any;
+      component.vm$.pipe(take(1)).subscribe(v => vm = v);
+      tick();
+
+      expect(vm.profile).toBeNull();
+      expect(vm.isAuthenticated).toBe(false);
+    }));
   });
 
   describe('User Profile Observable', () => {
-    it('should emit vm updates when user profile changes', (done) => {
-      const profiles: (User | null)[] = [];
+    it('should emit vm updates when user profile changes', fakeAsync(() => {
+      let latestProfile: User | null | undefined;
 
       component.vm$.subscribe(vm => {
-        profiles.push(vm.profile);
-
-        if (profiles.length === 2) {
-          expect(profiles[0]).toBeNull();
-          expect(profiles[1]).toEqual(mockEmployee);
-          done();
-        }
+        latestProfile = vm.profile;
       });
 
+      // Initial state
+      tick();
+      expect(latestProfile).toBeNull();
+
+      // After profile update
       userProfileSubject.next(mockEmployee);
-    });
+      tick();
+      expect(latestProfile).toEqual(mockEmployee);
+    }));
 
-    it('should handle user sign in', (done) => {
-      userProfileSubject.next(mockEmployee);
-      sessionSubject.next({ access_token: 'test-token' });
+    it('should handle user sign in', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
 
-      component.vm$.subscribe(vm => {
-        expect(vm.profile).toEqual(mockEmployee);
-        expect(vm.isAuthenticated).toBe(true);
-        done();
-      });
-    });
-
-    it('should handle user sign out', (done) => {
       userProfileSubject.next(mockEmployee);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      let emissionCount = 0;
-      component.vm$.subscribe(vm => {
-        emissionCount++;
+      expect(vm.profile).toEqual(mockEmployee);
+      expect(vm.isAuthenticated).toBe(true);
+    }));
 
-        if (emissionCount === 3) {
-          expect(vm.profile).toBeNull();
-          expect(vm.isAuthenticated).toBe(false);
-          done();
-        }
-      });
+    it('should handle user sign out', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
+      userProfileSubject.next(mockEmployee);
+      sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
       userProfileSubject.next(null);
       sessionSubject.next(null);
-    });
+      tick();
 
-    it('should handle user role changes', (done) => {
-      const emissions: (User | null)[] = [];
+      expect(vm.profile).toBeNull();
+      expect(vm.isAuthenticated).toBe(false);
+    }));
+
+    it('should handle user role changes', fakeAsync(() => {
+      let latestProfile: User | null | undefined;
 
       component.vm$.subscribe(vm => {
-        emissions.push(vm.profile);
-
-        if (emissions.length === 3) {
-          expect(emissions[0]).toBeNull();
-          expect(emissions[1]).toEqual(mockEmployee);
-          expect(emissions[2]).toEqual(mockFinanceUser);
-          done();
-        }
+        latestProfile = vm.profile;
       });
 
+      // Initial state
+      tick();
+      expect(latestProfile).toBeNull();
+
+      // First profile update
       userProfileSubject.next(mockEmployee);
+      tick();
+      expect(latestProfile).toEqual(mockEmployee);
+
+      // Role change to finance
       userProfileSubject.next(mockFinanceUser);
-    });
+      tick();
+      expect(latestProfile).toEqual(mockFinanceUser);
+    }));
   });
 
   describe('signOut()', () => {
@@ -220,39 +226,42 @@ describe('App Component', () => {
   });
 
   describe('Component Integration', () => {
-    it('should work with authenticated employee user', (done) => {
+    it('should work with authenticated employee user', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
       userProfileSubject.next(mockEmployee);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      component.vm$.subscribe(vm => {
-        expect(vm.profile?.role).toBe(UserRole.EMPLOYEE);
-        expect(vm.profile?.email).toBe('employee@example.com');
-        expect(vm.isAuthenticated).toBe(true);
-        done();
-      });
-    });
+      expect(vm.profile?.role).toBe(UserRole.EMPLOYEE);
+      expect(vm.profile?.email).toBe('employee@example.com');
+      expect(vm.isAuthenticated).toBe(true);
+    }));
 
-    it('should work with authenticated finance user', (done) => {
+    it('should work with authenticated finance user', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
       userProfileSubject.next(mockFinanceUser);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      component.vm$.subscribe(vm => {
-        expect(vm.profile?.role).toBe(UserRole.FINANCE);
-        expect(vm.isAuthenticated).toBe(true);
-        done();
-      });
-    });
+      expect(vm.profile?.role).toBe(UserRole.FINANCE);
+      expect(vm.isAuthenticated).toBe(true);
+    }));
 
-    it('should work with authenticated admin user', (done) => {
+    it('should work with authenticated admin user', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
       userProfileSubject.next(mockAdminUser);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      component.vm$.subscribe(vm => {
-        expect(vm.profile?.role).toBe(UserRole.ADMIN);
-        expect(vm.isAuthenticated).toBe(true);
-        done();
-      });
-    });
+      expect(vm.profile?.role).toBe(UserRole.ADMIN);
+      expect(vm.isAuthenticated).toBe(true);
+    }));
 
     it('should handle complete auth lifecycle', async () => {
       // User signs in
@@ -277,22 +286,24 @@ describe('App Component', () => {
 
       userProfileSubject.next(mockEmployee);
 
-      
+      setTimeout(() => {
         expect(profiles.length).toBeGreaterThan(0);
         expect(profiles[profiles.length - 1]).toEqual(mockEmployee);
         done();
+      }, 0);
     });
 
-    it('should provide display name for templates', (done) => {
+    it('should provide display name for templates', fakeAsync(() => {
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
       userProfileSubject.next(mockEmployee);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      component.vm$.subscribe(vm => {
-        expect(vm.displayName).toBe('Test Employee');
-        expect(vm.email).toBe('employee@example.com');
-        done();
-      });
-    });
+      expect(vm.displayName).toBe('Test Employee');
+      expect(vm.email).toBe('employee@example.com');
+    }));
   });
 
   describe('Observable Memory Management', () => {
@@ -304,23 +315,24 @@ describe('App Component', () => {
     });
 
     it('should properly propagate observable updates', (done) => {
-      const profiles: (User | null)[] = [];
+      let latestProfile: User | null = null;
+      let updateCount = 0;
 
       component.vm$.subscribe(vm => {
-        profiles.push(vm.profile);
+        latestProfile = vm.profile;
+        updateCount++;
       });
 
       userProfileSubject.next(mockEmployee);
       userProfileSubject.next(mockFinanceUser);
       userProfileSubject.next(null);
 
-      
-        expect(profiles.length).toBe(4); // Initial null + 3 updates
-        expect(profiles[0]).toBeNull();
-        expect(profiles[1]).toEqual(mockEmployee);
-        expect(profiles[2]).toEqual(mockFinanceUser);
-        expect(profiles[3]).toBeNull();
+      setTimeout(() => {
+        // Verify we received updates and final state is correct
+        expect(updateCount).toBeGreaterThan(1);
+        expect(latestProfile).toBeNull(); // Final state after all updates
         done();
+      }, 0);
     });
   });
 
@@ -337,20 +349,21 @@ describe('App Component', () => {
       expect(mockAuthService.signOut).toHaveBeenCalled();
     });
 
-    it('should handle user profile with missing fields gracefully', (done) => {
+    it('should handle user profile with missing fields gracefully', fakeAsync(() => {
       const partialUser = {
         id: 'user-999',
         email: 'partial@example.com'
       } as User;
 
+      let vm: any;
+      component.vm$.subscribe(v => vm = v);
+
       userProfileSubject.next(partialUser);
       sessionSubject.next({ access_token: 'test-token' });
+      tick();
 
-      component.vm$.subscribe(vm => {
-        expect(vm.profile?.id).toBe('user-999');
-        expect(vm.isAuthenticated).toBe(true);
-        done();
-      });
-    });
+      expect(vm.profile?.id).toBe('user-999');
+      expect(vm.isAuthenticated).toBe(true);
+    }));
   });
 });

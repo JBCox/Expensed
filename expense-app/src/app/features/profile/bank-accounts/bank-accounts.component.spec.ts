@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -54,7 +54,7 @@ describe('BankAccountsComponent', () => {
     }
   ];
 
-  beforeEach(fakeAsync(async () => {
+  beforeEach(async () => {
     mockPayoutService = jasmine.createSpyObj('PayoutService', [
       'getMyBankAccounts',
       'addBankAccount',
@@ -88,18 +88,21 @@ describe('BankAccountsComponent', () => {
         provideRouter([]),
         { provide: PayoutService, useValue: mockPayoutService },
         { provide: OrganizationService, useValue: mockOrganizationService },
-        { provide: MatSnackBar, useValue: mockSnackBar },
         { provide: MatDialog, useValue: mockDialog }
       ]
-    }).compileComponents();
+    })
+    .overrideProvider(MatSnackBar, { useValue: mockSnackBar })
+    .compileComponents();
 
     fixture = TestBed.createComponent(BankAccountsComponent);
     component = fixture.componentInstance;
+  });
+
+  // Helper function to initialize component with fakeAsync timing
+  function initComponent(): void {
     fixture.detectChanges();
-    tick();  // Wait for ngOnInit and loadBankAccounts to complete
-    // Ensure organizationId is set (it's private, so we use bracket notation)
-    (component as any)['organizationId'] = 'org-1';
-  }));
+    // organizationId is set in loadBankAccounts from orgService.currentOrganizationId
+  }
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -107,7 +110,7 @@ describe('BankAccountsComponent', () => {
 
   describe('initialization', () => {
     it('should load bank accounts on init', fakeAsync(() => {
-      tick();
+      initComponent();
       expect(mockPayoutService.getMyBankAccounts).toHaveBeenCalledWith('org-1');
       expect(component.bankAccounts().length).toBe(2);
       expect(component.isLoading()).toBe(false);
@@ -119,9 +122,7 @@ describe('BankAccountsComponent', () => {
         throwError(() => new Error('Load failed'))
       );
 
-      const newFixture = TestBed.createComponent(BankAccountsComponent);
-      newFixture.detectChanges();
-      tick();
+      initComponent();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Failed to load bank accounts',
@@ -136,22 +137,19 @@ describe('BankAccountsComponent', () => {
         configurable: true
       });
 
-      const newFixture = TestBed.createComponent(BankAccountsComponent);
-      const newComponent = newFixture.componentInstance;
-      newFixture.detectChanges();
-      tick();
+      initComponent();
 
-      expect(newComponent.isLoading()).toBe(false);
+      expect(component.isLoading()).toBe(false);
     }));
   });
 
   describe('onTokenCreated', () => {
     it('should add bank account with token', fakeAsync(() => {
+      initComponent();
       // Verify organizationId is set
       expect((component as any)['organizationId']).toBe('org-1');
-      
+
       component.onTokenCreated('tok_test_123');
-      tick();
 
       expect(mockPayoutService.addBankAccount).toHaveBeenCalledWith('org-1', 'tok_test_123');
       expect(mockSnackBar.open).toHaveBeenCalledWith(
@@ -163,12 +161,12 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should handle add failure', fakeAsync(() => {
+      initComponent();
       mockPayoutService.addBankAccount.and.returnValue(
         of({ success: false, error: 'Invalid token' })
       );
 
       component.onTokenCreated('tok_invalid');
-      tick();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Invalid token',
@@ -178,13 +176,13 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should handle add error', fakeAsync(() => {
+      initComponent();
       spyOn(console, 'error');
       mockPayoutService.addBankAccount.and.returnValue(
         throwError(() => new Error('Network error'))
       );
 
       component.onTokenCreated('tok_test_123');
-      tick();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Failed to add bank account',
@@ -194,12 +192,11 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should not add if no organization', fakeAsync(() => {
+      initComponent();
       // Set organizationId to null directly on the component instance
       (component as any)['organizationId'] = null;
 
-
       component.onTokenCreated('tok_test_123');
-      tick();
 
       expect(mockPayoutService.addBankAccount).not.toHaveBeenCalled();
     }));
@@ -228,8 +225,8 @@ describe('BankAccountsComponent', () => {
 
   describe('setAsDefault', () => {
     it('should set account as default', fakeAsync(() => {
+      initComponent();
       component.setAsDefault(mockBankAccounts[1]);
-      tick();
 
       expect(mockPayoutService.setDefaultBankAccount).toHaveBeenCalledWith('account-2', 'org-1');
       expect(mockSnackBar.open).toHaveBeenCalledWith(
@@ -240,13 +237,13 @@ describe('BankAccountsComponent', () => {
     }));
 
     it('should handle set default error', fakeAsync(() => {
+      initComponent();
       spyOn(console, 'error');
       mockPayoutService.setDefaultBankAccount.and.returnValue(
         throwError(() => new Error('Update failed'))
       );
 
       component.setAsDefault(mockBankAccounts[1]);
-      tick();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Failed to update default account',
@@ -273,11 +270,11 @@ describe('BankAccountsComponent', () => {
     });
 
     it('should submit verification successfully', fakeAsync(() => {
+      initComponent();
       component.verifyAmount1.set('32');
       component.verifyAmount2.set('45');
 
       component.submitVerification(mockBankAccounts[1]);
-      tick();
 
       expect(mockPayoutService.verifyBankAccount).toHaveBeenCalledWith('account-2', [32, 45]);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
@@ -288,7 +285,8 @@ describe('BankAccountsComponent', () => {
       expect(component.verifyingAccountId()).toBeNull();
     }));
 
-    it('should handle invalid verification amounts', () => {
+    it('should handle invalid verification amounts', fakeAsync(() => {
+      initComponent();
       component.verifyAmount1.set('invalid');
       component.verifyAmount2.set('45');
 
@@ -300,9 +298,10 @@ describe('BankAccountsComponent', () => {
         { duration: 3000 }
       );
       expect(mockPayoutService.verifyBankAccount).not.toHaveBeenCalled();
-    });
+    }));
 
     it('should handle verification failure', fakeAsync(() => {
+      initComponent();
       mockPayoutService.verifyBankAccount.and.returnValue(
         of({ success: false, verified: false, error: 'Incorrect amounts' })
       );
@@ -311,7 +310,6 @@ describe('BankAccountsComponent', () => {
       component.verifyAmount2.set('20');
 
       component.submitVerification(mockBankAccounts[1]);
-      tick();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Incorrect amounts',
@@ -331,10 +329,10 @@ describe('BankAccountsComponent', () => {
 
   describe('deleteAccount', () => {
     it('should delete account after confirmation', fakeAsync(() => {
+      initComponent();
       spyOn(window, 'confirm').and.returnValue(true);
 
       component.deleteAccount(mockBankAccounts[0]);
-      tick();
 
       expect(mockPayoutService.deleteBankAccount).toHaveBeenCalledWith('account-1', 'org-1');
       expect(mockSnackBar.open).toHaveBeenCalledWith(
@@ -344,15 +342,17 @@ describe('BankAccountsComponent', () => {
       );
     }));
 
-    it('should not delete if user cancels', () => {
+    it('should not delete if user cancels', fakeAsync(() => {
+      initComponent();
       spyOn(window, 'confirm').and.returnValue(false);
 
       component.deleteAccount(mockBankAccounts[0]);
 
       expect(mockPayoutService.deleteBankAccount).not.toHaveBeenCalled();
-    });
+    }));
 
     it('should handle delete error', fakeAsync(() => {
+      initComponent();
       spyOn(console, 'error');
       spyOn(window, 'confirm').and.returnValue(true);
       mockPayoutService.deleteBankAccount.and.returnValue(
@@ -360,7 +360,6 @@ describe('BankAccountsComponent', () => {
       );
 
       component.deleteAccount(mockBankAccounts[0]);
-      tick();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Failed to remove bank account',
@@ -387,24 +386,27 @@ describe('BankAccountsComponent', () => {
   });
 
   describe('template rendering', () => {
-    it('should render component', () => {
+    it('should render component', fakeAsync(() => {
+      initComponent();
       const compiled = fixture.nativeElement;
       expect(compiled).toBeTruthy();
-    });
+    }));
 
-    it('should show loading spinner when loading', () => {
+    it('should show loading spinner when loading', fakeAsync(() => {
+      initComponent();
       component.isLoading.set(true);
       fixture.detectChanges();
       const compiled = fixture.nativeElement;
       expect(compiled.querySelector('mat-spinner')).toBeTruthy();
-    });
+    }));
 
-    it('should show add form when toggled', () => {
+    it('should show add form when toggled', fakeAsync(() => {
+      initComponent();
       component.showAddForm.set(true);
       fixture.detectChanges();
       const compiled = fixture.nativeElement;
       expect(compiled.querySelector('app-bank-account-form')).toBeTruthy();
-    });
+    }));
   });
 
   describe('computed properties', () => {

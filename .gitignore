@@ -41,3 +41,23 @@ _archived/
 # Local Netlify folder
 .netlify
 ChromeDevProfile/
+
+# Temp files and backups
+*.bak
+*.backup
+*.orig
+*.old
+*.py
+*.patch
+*.sed
+*.log
+dev-server.log
+test-output.txt
+test-result.txt
+test-results.log
+failures.txt
+test-mileage-output.txt
+PHASE1_COMPLETE.md
+TEST_FIX_SUMMARY.md
+policy-settings-spec-fix-summary.md
+fix-perdiem-spec.js

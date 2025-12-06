@@ -18,6 +18,7 @@ describe('OrganizationService', () => {
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
   let loggerServiceMock: jasmine.SpyObj<LoggerService>;
   let localStorageMock: any;
+  let originalLocalStorage: Storage;
 
   const mockOrganization: Organization = {
     id: 'org-123',
@@ -53,6 +54,9 @@ describe('OrganizationService', () => {
     // Reset TestBed to clear any previous singleton instances
     TestBed.resetTestingModule();
 
+    // Save original localStorage for restoration in afterEach (prevents test pollution)
+    originalLocalStorage = window.localStorage;
+
     // Mock localStorage
     let store: { [key: string]: string } = {};
     localStorageMock = {
@@ -70,7 +74,11 @@ describe('OrganizationService', () => {
       key: jasmine.createSpy('key')
     };
 
-    spyOnProperty(window, 'localStorage', 'get').and.returnValue(localStorageMock);
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true,
+      configurable: true
+    });
 
     const supabaseSpy = jasmine.createSpyObj('SupabaseService', ['client'], {
       userId: 'user-123'
@@ -100,6 +108,15 @@ describe('OrganizationService', () => {
     supabaseServiceMock = TestBed.inject(SupabaseService) as jasmine.SpyObj<SupabaseService>;
     notificationServiceMock = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
     loggerServiceMock = TestBed.inject(LoggerService) as jasmine.SpyObj<LoggerService>;
+  });
+
+  afterEach(() => {
+    // Restore original localStorage to prevent test pollution
+    Object.defineProperty(window, 'localStorage', {
+      value: originalLocalStorage,
+      writable: true,
+      configurable: true
+    });
   });
 
   it('should be created', () => {

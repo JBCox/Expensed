@@ -155,14 +155,16 @@ describe('AddExpensesDialogComponent', () => {
   });
 
   it('should format date correctly', () => {
-    const formatted = component.formatDate('2025-01-15');
+    // Use a date string with time to avoid timezone shifting issues
+    const formatted = component.formatDate('2025-01-15T12:00:00');
     // The date format can vary by locale, so check for key components
-    expect(formatted).toContain('1');
+    // Month can be '1', '01', 'Jan', or 'January' depending on locale
+    expect(formatted).toMatch(/1|Jan/);
     expect(formatted).toContain('15');
     expect(formatted).toContain('2025');
   });
 
-  it('should handle load expenses error', () => {
+  it('should handle load expenses error', (done) => {
     expenseServiceMock.getMyExpenses.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
@@ -170,39 +172,46 @@ describe('AddExpensesDialogComponent', () => {
     spyOn(console, 'error');
     component.loadExpenses();
 
-    
+    setTimeout(() => {
       expect(console.error).toHaveBeenCalledWith('Failed to load expenses', jasmine.any(Error));
       expect(component.loading()).toBe(false);
+      done();
+    }, 0);
   });
 
   it('should set loading to false after successful load', () => {
     expect(component.loading()).toBe(false);
   });
 
-  it('should set loading to false even if load fails', () => {
+  it('should set loading to false even if load fails', (done) => {
     expenseServiceMock.getMyExpenses.and.returnValue(
       throwError(() => new Error('Load failed'))
     );
 
+    spyOn(console, 'error');
     component.loadExpenses();
 
-    
+    setTimeout(() => {
       expect(component.loading()).toBe(false);
+      done();
+    }, 0);
   });
 
   it('should initialize with empty selection', () => {
     expect(component.selectedExpenses().size).toBe(0);
   });
 
-  it('should handle empty expenses list', () => {
+  it('should handle empty expenses list', (done) => {
     expenseServiceMock.getMyExpenses.and.returnValue(of([]));
     component.loadExpenses();
 
-    
+    setTimeout(() => {
       expect(component.expenses().length).toBe(0);
+      done();
+    }, 0);
   });
 
-  it('should handle all expenses having report_id', () => {
+  it('should handle all expenses having report_id', (done) => {
     const expensesWithReports = [
       { ...mockExpense1, report_id: 'report-1' },
       { ...mockExpense2, report_id: 'report-2' }
@@ -211,8 +220,10 @@ describe('AddExpensesDialogComponent', () => {
     expenseServiceMock.getMyExpenses.and.returnValue(of(expensesWithReports));
     component.loadExpenses();
 
-    
+    setTimeout(() => {
       expect(component.expenses().length).toBe(0);
+      done();
+    }, 0);
   });
 
   it('should preserve selection when toggling same expense twice', () => {

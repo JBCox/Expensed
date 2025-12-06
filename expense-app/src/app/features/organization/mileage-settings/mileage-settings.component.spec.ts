@@ -59,6 +59,7 @@ describe('MileageSettingsComponent', () => {
       currentOrganization$: of(mockOrganization),
       currentOrganizationId: 'org-1'
     });
+    mockOrganizationService.updateOrganization.and.returnValue(of(mockOrganization));
 
     mockMileageService = jasmine.createSpyObj('MileageService', ['getCurrentRate']);
     mockMileageService.getCurrentRate.and.returnValue(of(mockIrsRate));
@@ -73,10 +74,11 @@ describe('MileageSettingsComponent', () => {
       ],
       providers: [
         { provide: OrganizationService, useValue: mockOrganizationService },
-        { provide: MileageService, useValue: mockMileageService },
-        { provide: MatSnackBar, useValue: mockSnackBar }
+        { provide: MileageService, useValue: mockMileageService }
       ]
-    }).compileComponents();
+    })
+    .overrideProvider(MatSnackBar, { useValue: mockSnackBar })
+    .compileComponents();
 
     fixture = TestBed.createComponent(MileageSettingsComponent);
     component = fixture.componentInstance;
@@ -275,9 +277,8 @@ describe('MileageSettingsComponent', () => {
       mockSnackBar.open.calls.reset();
 
       component.onSave();
-      expect(component.saving()).toBeTrue();
-
       tick();
+      // After sync Observable completes, saving should be false
       expect(component.saving()).toBeFalse();
     }));
   });

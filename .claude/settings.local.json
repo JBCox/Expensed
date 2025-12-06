@@ -22,7 +22,9 @@
       "Bash(Select-String -Pattern \"TOTAL:|FAILED\")",
       "Bash(Select-Object -Last 5)",
       "Bash(timeout 300 npm test -- --no-watch --browsers=ChromeHeadless)",
-      "Bash(timeout 240 npm test:*)"
+      "Bash(timeout 240 npm test:*)",
+      "Bash(npm start)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [],

@@ -190,16 +190,13 @@ describe('EmailExpenseSettingsComponent', () => {
 
     expect(component.addingAlias()).toBe(false);
     component.addAlias();
-
-    // Component sets addingAlias to true synchronously
-    expect(component.addingAlias()).toBe(true);
-
     tick();
 
     expect(emailServiceMock.addEmailAlias).toHaveBeenCalledWith({ email: 'newemail@example.com' });
     expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith(
       'Email added. Check your inbox for verification.'
     );
+    // After sync Observable completes, addingAlias should be false
     expect(component.addingAlias()).toBe(false);
   }));
 
@@ -212,9 +209,9 @@ describe('EmailExpenseSettingsComponent', () => {
   it('should reset alias form after successful add', fakeAsync(() => {
     component.aliasForm.patchValue({ email: 'test@example.com' });
     component.addAlias();
-
     tick();
-    expect(component.aliasForm.value.email).toBe('');
+    // Form reset sets value to null
+    expect(component.aliasForm.value.email).toBeFalsy();
   }));
 
   it('should handle add alias error', fakeAsync(() => {

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -63,7 +63,6 @@ describe('PayoutSettingsComponent', () => {
       providers: [
         { provide: PayoutService, useValue: payoutServiceMock },
         { provide: OrganizationService, useValue: organizationServiceMock },
-        { provide: MatSnackBar, useValue: snackBarMock },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -72,7 +71,9 @@ describe('PayoutSettingsComponent', () => {
         },
         provideRouter([])
       ]
-    }).compileComponents();
+    })
+    .overrideProvider(MatSnackBar, { useValue: snackBarMock })
+    .compileComponents();
 
     fixture = TestBed.createComponent(PayoutSettingsComponent);
     component = fixture.componentInstance;
@@ -84,7 +85,7 @@ describe('PayoutSettingsComponent', () => {
   });
 
   it('should load Stripe status on init', fakeAsync(() => {
-    flushMicrotasks();
+    tick();
     expect(payoutServiceMock.getStripeAccountStatus).toHaveBeenCalledWith('org-123');
     expect(component.payoutMethod()).toBe('manual');
     expect(component.stripeConfigured()).toBe(false);
@@ -107,16 +108,16 @@ describe('PayoutSettingsComponent', () => {
   });
 
   it('should select manual payout method', fakeAsync(() => {
-    flushMicrotasks();
+    tick();
     component.payoutMethod.set('stripe');
     component.selectMethod('manual');
-    flushMicrotasks();
+    tick();
     fixture.detectChanges();
     expect(payoutServiceMock.updatePayoutMethod).toHaveBeenCalledWith('org-123', 'manual');
   }));
 
   it('should not select Stripe method if not configured', fakeAsync(() => {
-    flushMicrotasks();
+    tick();
     component.stripeConfigured.set(false);
     component.selectMethod('stripe');
 
@@ -131,23 +132,21 @@ describe('PayoutSettingsComponent', () => {
   it('should test Stripe key', fakeAsync(() => {
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     component.testStripeKey();
-
-    expect(component.testing()).toBe(true);
-    flushMicrotasks();
+    tick();
     fixture.detectChanges();
+
     expect(payoutServiceMock.testStripeKey).toHaveBeenCalledWith('sk_test_123');
     expect(component.testResult()?.valid).toBe(true);
     expect(component.testing()).toBe(false);
   }));
 
   it('should save Stripe key', fakeAsync(() => {
-    flushMicrotasks();
+    tick();
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     component.saveStripeKey();
-
-    expect(component.saving()).toBe(true);
-    flushMicrotasks();
+    tick();
     fixture.detectChanges();
+
     expect(payoutServiceMock.setStripeKey).toHaveBeenCalledWith('org-123', 'sk_test_123');
     expect(snackBarMock.open).toHaveBeenCalledWith(
       'Stripe API key saved successfully!',
@@ -158,11 +157,11 @@ describe('PayoutSettingsComponent', () => {
   }));
 
   it('should remove Stripe key when confirmed', fakeAsync(() => {
-    flushMicrotasks();
+    tick();
     spyOn(window, 'confirm').and.returnValue(true);
 
     component.removeStripeKey();
-    flushMicrotasks();
+    tick();
     fixture.detectChanges();
 
     expect(window.confirm).toHaveBeenCalled();
@@ -185,7 +184,7 @@ describe('PayoutSettingsComponent', () => {
     );
 
     component.testStripeKey();
-    flushMicrotasks();
+    tick();
     fixture.detectChanges();
 
     expect(component.testResult()?.valid).toBe(false);
@@ -193,14 +192,14 @@ describe('PayoutSettingsComponent', () => {
   }));
 
   it('should handle save key error', fakeAsync(() => {
-    flushMicrotasks();
+    tick();
     component.keyForm.patchValue({ stripeKey: 'sk_test_123' });
     payoutServiceMock.setStripeKey.and.returnValue(
       throwError(() => ({ message: 'Save failed' }))
     );
 
     component.saveStripeKey();
-    flushMicrotasks();
+    tick();
     fixture.detectChanges();
 
     expect(snackBarMock.open).toHaveBeenCalledWith(

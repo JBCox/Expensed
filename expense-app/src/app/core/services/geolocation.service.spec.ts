@@ -275,6 +275,7 @@ describe('GeolocationService', () => {
     it('should emit multiple positions', (done) => {
       let callCount = 0;
       const positions: ServiceGeolocationPosition[] = [];
+      let subscriptionRef: { unsubscribe: () => void } | null = null;
 
       const secondMockPosition = {
         coords: { ...mockCoords, latitude: 32.7800 },
@@ -286,19 +287,22 @@ describe('GeolocationService', () => {
         // Emit first position immediately
         success(mockBrowserPosition as unknown as GeolocationPosition);
         // Emit second position after delay
-        
+        setTimeout(() => {
           success(secondMockPosition as unknown as GeolocationPosition);
+        }, 10);
         return 1;
       });
 
-      const subscription = service.watchPosition().subscribe({
+      subscriptionRef = service.watchPosition().subscribe({
         next: (position) => {
           positions.push(position);
           callCount++;
           if (callCount === 2) {
             expect(positions[0].latitude).toBe(32.7767);
             expect(positions[1].latitude).toBe(32.7800);
-            subscription.unsubscribe();
+            if (subscriptionRef) {
+              subscriptionRef.unsubscribe();
+            }
             done();
           }
         }

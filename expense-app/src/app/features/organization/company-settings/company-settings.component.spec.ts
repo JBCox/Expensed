@@ -58,10 +58,11 @@ describe('CompanySettingsComponent', () => {
       providers: [
         provideRouter([]),
         { provide: OrganizationService, useValue: mockOrganizationService },
-        { provide: ThemeService, useValue: mockThemeService },
-        { provide: MatSnackBar, useValue: mockSnackBar }
+        { provide: ThemeService, useValue: mockThemeService }
       ]
-    }).compileComponents();
+    })
+    .overrideProvider(MatSnackBar, { useValue: mockSnackBar })
+    .compileComponents();
 
     fixture = TestBed.createComponent(CompanySettingsComponent);
     component = fixture.componentInstance;
