@@ -79,23 +79,40 @@ All commits now pushed to `main`. Cloudflare should build and deploy within 2-5 
 
 ---
 
-## Notification Issue
+## Notification Issue - FIXED (December 11, 2024 @ 4:37 PM CST)
 
-4 notifications appearing - need to investigate:
-1. Where are notifications being created?
-2. Is it a database trigger?
-3. Is it frontend code?
-4. Is it realtime subscription duplicating?
+### Root Cause
+The `tap(async () => {...})` operator in RxJS doesn't properly handle async functions - it fires and forgets. This caused timing issues where notifications could be triggered multiple times.
+
+### Evidence from Database
+2 notifications per invite ~1.5 seconds apart:
+- 22:23:12.538 - "Invitation sent to josh.cox@corvaer.com"
+- 22:23:14.129 - "Invitation sent to josh.cox@corvaer.com"
+
+### Fix Applied
+**Commit**: `b4d0840 fix(notifications): move success notifications to component handlers`
+
+**Changes**:
+1. **invitation.service.ts**: Removed `showSuccess` from `tap()` operators for:
+   - `createInvitation()`
+   - `createBulkInvitations()`
+   - `resendInvitation()`
+2. **user-management.component.ts**: Added `showSuccess` to subscribe handlers instead
+
+This ensures exactly ONE notification per successful operation, because the component's subscribe handler only fires once when the observable completes.
+
+### Deployment
+- Pushed to `main` branch
+- Deployed via Wrangler CLI to Cloudflare Pages
+- Preview URL: https://0e62b57f.expensed.pages.dev
+- Test data cleaned (josh.cox@corvaer.com deleted)
 
 ---
 
 ## Next Steps
 
-1. **VERIFY DEPLOYMENT** - Check Cloudflare Pages dashboard
-2. **CHECK BRANCH CONFIG** - Is Cloudflare watching `main` or `master`?
-3. **ADD VERSION MARKER** - Add a visible version string to the app to confirm deployment
-4. **CHECK BROWSER CACHE** - Hard refresh / incognito test
-5. **CHECK NOTIFICATION SOURCE** - Where are the 4 notifications coming from?
+1. **TEST INVITATION FLOW** - Send new invitation and verify only 1 notification appears
+2. **TEST FULL FLOW** - Complete invitation → registration → email confirmation → accept invitation
 
 ---
 
