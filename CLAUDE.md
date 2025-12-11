@@ -232,6 +232,50 @@ src/
 - Add indexes for frequently queried columns
 - Use foreign key constraints for referential integrity
 
+### Database Security Requirements (MANDATORY)
+
+**Function Security:**
+```sql
+-- ALL functions MUST include search_path to prevent injection attacks
+CREATE OR REPLACE FUNCTION public.my_function()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp  -- REQUIRED
+AS $function$
+BEGIN
+  -- function body
+END;
+$function$;
+```
+
+**View Security:**
+```sql
+-- ALL views SHOULD use security_invoker unless SECURITY DEFINER is specifically needed
+CREATE VIEW public.my_view
+WITH (security_invoker = true)  -- Respects RLS policies
+AS
+SELECT ...
+```
+
+**Foreign Key Indexes:**
+```sql
+-- ALL foreign key columns MUST have indexes for JOIN performance
+CREATE INDEX idx_tablename_fk_column ON public.tablename(fk_column);
+```
+
+**RLS Performance Pattern:**
+```sql
+-- Use subquery pattern for auth.uid() to enable initplan optimization
+-- BAD (evaluated per row):
+USING (organization_id = (SELECT org_id FROM org_members WHERE user_id = auth.uid()))
+
+-- GOOD (evaluated once):
+USING (organization_id = (select get_current_user_org_id()))
+```
+
+See FEATURES.md → "Database Security & Performance Hardening" for complete documentation.
+
 ### RLS Policy Examples
 ```sql
 -- Users can only read their own data
@@ -278,6 +322,73 @@ USING (
 - Use Supabase's real-time features sparingly
 - Consider Edge Functions for heavy processing
 
+## Code Review Guidelines
+
+When reviewing code or running automated code analysis, verify these items BEFORE reporting issues:
+
+### Services & Dependencies
+Before claiming a service is "missing":
+1. Search for the file: `Glob("**/service-name.service.ts")`
+2. Check the imports in the file being reviewed
+3. Services in `core/services/` include: `LoggerService`, `NotificationService`, `SubscriptionService`, `SuperAdminService`, `FeatureGateService`, etc.
+
+### Test Infrastructure
+Before claiming "no tests":
+1. Check `package.json` for test scripts (lines 11-14)
+2. Check for `*.spec.ts` files alongside services
+3. Edge Function tests use Deno format: `*.test.ts`
+
+### Database Design Decisions
+Some things are intentional:
+- **Stripe IDs NULL**: Set during Stripe product setup, not a bug
+- **super_admin_organization_summary view**: Only billing data by design, NOT a security issue
+- **Coupon validation**: Exists in migration `20251210100000_coupon_code_validation.sql`
+
+### Circular Dependencies
+Before claiming circular deps:
+1. Check actual imports, not just service names
+2. `SubscriptionService → OrganizationService` is one-way (not circular)
+3. `OrganizationService` does NOT import `SubscriptionService`
+
+### Angular Service Lifecycle (IMPORTANT)
+Before claiming "memory leak" in services:
+1. **Root services DO call ngOnDestroy** - Angular invokes `ngOnDestroy` on root-level services when the application is destroyed
+2. The `takeUntil(this.destroy$)` pattern with `providedIn: 'root'` is CORRECT and widely used
+3. Only component-level services risk leaks if the component doesn't clean up
+4. Verify by checking if service uses `providedIn: 'root'` AND has `ngOnDestroy` implementation
+
+**Valid Pattern (NOT a leak):**
+```typescript
+@Injectable({ providedIn: 'root' })
+export class MyService implements OnDestroy {
+  private destroy$ = new Subject<void>();
+
+  constructor() {
+    someObservable$.pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+### Supabase SDK Behavior
+Before claiming localStorage issues:
+1. **Supabase SDK clears its own tokens** - `signOut()` automatically removes `sb-*-auth-token` keys
+2. Do NOT manually remove Supabase auth tokens - this is redundant and risks hardcoding project IDs
+3. Only clear app-specific localStorage keys (e.g., `current_organization_id`)
+
+### Edge Function Known Limitations
+These are documented and acceptable:
+1. **In-memory webhook replay prevention** - Acknowledged in code comments; Stripe signature verification is primary protection
+2. **No application-level rate limiting** - Stripe/Supabase have their own rate limits; admin auth required
+
+### Reference
+See `FEATURES.md` → "Subscription & Billing System" → "Architecture Notes" for detailed documentation of what exists.
+See `FEATURES.md` → "Code Review Audit (December 10, 2024)" for examples of verified vs false positive issues.
+
 ## Git Workflow
 
 ### Branch Strategy
@@ -319,25 +430,34 @@ type(scope): subject
 
 ## Deployment
 
+> **Full deployment details:** See [docs/DEPLOYMENT_INFRASTRUCTURE.md](docs/DEPLOYMENT_INFRASTRUCTURE.md)
+
+### Infrastructure Summary
+- **Domain**: expensed.app (registered at Spaceship)
+- **DNS/CDN/Hosting**: Cloudflare (Pages + Workers)
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+- **Email**: Cloudflare Email Routing (support@, receipts@, noreply@expensed.app)
+
 ### Environments
 - **Development**: `npm start` (localhost:4200)
-- **Staging**: Auto-deploy on push to `develop` branch
-- **Production**: Manual deploy from `main` branch with git tag
+- **Staging**: Deploy preview on PR to `main`
+- **Production**: Auto-deploy on push to `main` branch
 
 ### Pre-Deployment Checklist
 - [ ] All tests passing
 - [ ] Code coverage ≥ 70%
 - [ ] No TypeScript errors
 - [ ] No console.logs or debugging code
-- [ ] Environment variables configured
+- [ ] Environment variables configured in Cloudflare Pages
 - [ ] Supabase RLS policies in place
 - [ ] Database migrations applied
 - [ ] No hardcoded credentials or API keys
 
 ### Deployment Platforms
-- **Frontend**: Vercel, Netlify, or Firebase Hosting
+- **Frontend**: Cloudflare Pages
 - **Backend**: Supabase (managed)
-- **CI/CD**: GitHub Actions
+- **Email**: Cloudflare Email Routing
+- **CI/CD**: Cloudflare Pages (auto-deploy from GitHub)
 
 ## Security Checklist
 
@@ -421,7 +541,7 @@ type(scope): subject
 - [x] 70%+ test coverage - **Complete (83 test cases, 95%+ passing)**
 - [ ] Deployed to staging - **Pending**
 
-### Completed Components (Updated November 27, 2024)
+### Completed Components (Updated December 9, 2024)
 - ✅ Database schema with RLS policies
 - ✅ Database trigger for automatic user profile creation
 - ✅ Supabase, Auth, and Expense services
@@ -439,7 +559,7 @@ type(scope): subject
 - ✅ Finance dashboard (Reimbursement queue, metrics, batch actions)
 - ✅ Expense list component (Filters, search, status badges, export)
 - ✅ Approval queue component (Batch approval, filtering, role-guarded)
-- ✅ Shared components library (MetricCard, StatusBadge, EmptyState, LoadingSkeleton)
+- ✅ Shared components library (MetricCard, StatusBadge, EmptyState, LoadingSkeleton, BrandLogo)
 - ✅ Brex-inspired orange color palette (#FF5900)
 - ✅ Mobile-responsive design (all components, 320px+)
 - ✅ Comprehensive unit tests (232 test cases, 95%+ passing)
@@ -454,6 +574,8 @@ type(scope): subject
 - ✅ **Mileage Tracking with GPS & Google Maps** (November 21, 2024)
 - ✅ **GPS Start/Stop Tracking with Real-time Path Rendering** (November 21, 2024)
 - ✅ **Multi-Level Approval System** (November 23, 2024)
+- ✅ **Stripe Payment Integration** (December 6, 2024)
+- ✅ **Organization Branding & Theming** (December 9, 2024)
 
 ## Completed Features
 
@@ -467,6 +589,13 @@ Jensify includes several major features completed in Phase 0. For detailed docum
 - Organization setup wizard and invitation system
 - Bulk CSV user imports
 - Row-Level Security (RLS) at database level
+
+**Organization Branding & Theming** (December 9, 2024)
+- Dynamic brand color applied to all UI elements
+- Expensed logo dynamically colors to match org brand color
+- Organization logo displayed alongside Expensed logo
+- PNG/SVG only logo uploads (transparent background support)
+- Logo guidelines with size, format, and aspect ratio recommendations
 
 **Expense Reports** (November 18, 2024)
 - Expensify-style batch expense grouping
@@ -530,7 +659,7 @@ For complete documentation including code examples, database schemas, and implem
 
 **Update when relevant:**
 - **FEATURES.md** - Add implementation details for new major features
-- **HOW_JENSIFY_WORKS.md** - Update if system architecture changes
+- **HOW_EXPENSED_WORKS.md** - Update if system architecture changes
 - **README.md** - Update if setup steps, dependencies, or config changes
 - **FIX_AND_PREVENT_SYNC_ISSUES.md** - Update if database workflow changes
 

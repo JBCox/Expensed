@@ -62,6 +62,7 @@ Common navigation entries:
 - Manage users and roles.
 - Access all approval and finance functions.
 - Set up amount-based approval thresholds.
+- Customize organization branding (logo, colors).
 
 ---
 
@@ -131,11 +132,96 @@ Shows all submitted reports awaiting approval with batch actions.
 
 ### 4.3 Finance Dashboard (/finance/dashboard)
 
-Shows all approved expenses ready for reimbursement with CSV export.
+Shows all approved expenses ready for reimbursement with CSV export and Stripe payout processing.
+
+### 4.4 Stripe Payouts (/finance/payouts)
+
+Finance and Admin users can process reimbursements directly via Stripe:
+
+1. View approved expenses pending reimbursement
+2. Select expenses to include in payout
+3. Initiate Stripe ACH transfer to employee's bank account
+4. Track payout status (pending → in_transit → paid)
+5. Automatic expense status update to "reimbursed"
 
 ---
 
-## 5. Status Lifecycle
+## 5. Employee Bank Accounts
+
+### 5.1 Bank Account Setup (/profile/bank-accounts)
+
+Employees link their bank accounts for direct deposit reimbursements:
+
+1. Navigate to Profile > Bank Accounts
+2. Click "Add Bank Account"
+3. Enter routing number and account number (via Stripe.js - secure tokenization)
+4. First account automatically set as default
+5. Verify account via micro-deposits (optional)
+
+### 5.2 Verification Flow
+
+For accounts requiring verification:
+1. Stripe sends two small deposits (e.g., $0.32 and $0.45)
+2. Employee checks bank statement for amounts
+3. Enter the amounts to verify account ownership
+4. Account status changes from "Pending" to "Verified"
+
+---
+
+## 6. Admin Stripe Configuration
+
+### 6.1 Setting Up Stripe (/organization/settings/payouts)
+
+Admins configure the organization's Stripe integration:
+
+1. Navigate to Organization Settings > Payout Settings
+2. Enter Stripe API key (test or live mode)
+3. Key is validated against Stripe API
+4. Encrypted and stored securely (AES-256-GCM)
+5. Status shows "Connected" with key mode (test/live)
+
+### 6.2 Security Features
+
+- API key encrypted at rest with AES-256-GCM
+- Per-organization key isolation
+- Rate limiting prevents abuse
+- Complete audit trail for compliance
+- Key rotation support
+
+---
+
+## 7. Organization Branding
+
+### 7.1 Brand Settings (/organization/settings)
+
+Admins can customize the organization's look and feel:
+
+1. **Company Name** - Displayed throughout the app
+2. **Brand Color** - Primary color applied to buttons, icons, charts, and UI accents
+3. **Company Logo** - Displayed alongside Expensed logo in toolbar
+
+### 7.2 Logo Requirements
+
+- **Format:** PNG or SVG only (support transparent backgrounds)
+- **Size:** 200-400px wide, max 2MB file size
+- **Aspect ratio:** Horizontal logos work best (3:1 or 4:1)
+- **Transparency:** Background must be removed before upload
+- Tip: Use [remove.bg](https://remove.bg) for free background removal
+
+### 7.3 Brand Color Application
+
+The brand color is applied across the app:
+- Primary buttons and action items
+- Navigation highlights
+- Charts and data visualizations
+- The "$" symbol in the Expensed logo
+- Status indicators and accents
+
+All organization members see the same branding (employees, managers, finance, admins).
+
+---
+
+## 8. Status Lifecycle
 
 - **Draft** - Created by employee; not yet submitted
 - **Submitted** - Waiting for approval
@@ -145,7 +231,48 @@ Shows all approved expenses ready for reimbursement with CSV export.
 
 ---
 
-## 6. Key Features Summary
+## 9. Database Security Architecture
+
+### 9.1 Row-Level Security (RLS)
+
+All data is protected by PostgreSQL Row-Level Security policies ensuring:
+- **Complete data isolation** between organizations
+- **Role-based access control** enforced at database level
+- Users can only access data within their organization
+- No possibility of cross-tenant data leakage
+
+### 9.2 Function Security
+
+All 42 database functions are hardened with:
+- **Search path protection** (`SET search_path = public, pg_temp`) - prevents search path injection attacks
+- **SECURITY DEFINER** mode with restricted permissions
+- Proper input validation and sanitization
+
+### 9.3 View Security
+
+Database views use `security_invoker = true` to ensure:
+- Views respect RLS policies of the querying user
+- No privilege escalation through view access
+- Consistent security model across direct queries and views
+
+### 9.4 Performance-Optimized Security
+
+RLS policies use an initplan optimization pattern for efficient query execution:
+- Helper functions cache user context (`get_current_user_org_id()`, `is_current_user_org_admin()`)
+- Subquery pattern prevents per-row function evaluation
+- Foreign key indexes on all relationship columns for fast JOINs
+
+### 9.5 Data Protection
+
+- **Encryption at rest** for sensitive data (Stripe API keys use AES-256-GCM)
+- **Audit logging** for compliance and security monitoring
+- **Soft deletes** preserve data integrity and history
+
+For technical implementation details, see FEATURES.md → "Database Security & Performance Hardening".
+
+---
+
+## 10. Key Features Summary
 
 ### Completed Features
 
@@ -158,6 +285,9 @@ Shows all approved expenses ready for reimbursement with CSV export.
 | Expense Reports | Expensify-style batch grouping and submission |
 | Progressive Web App | Installable on mobile/desktop with offline support |
 | Organization Multi-Tenancy | Complete data isolation per organization |
+| Organization Branding | Custom logo and brand color, dynamic Expensed logo coloring |
+| Stripe Payment Integration | Secure API key storage, employee bank accounts, automated ACH payouts |
+| Database Security | Function hardening, view security, RLS optimization, FK indexes |
 
 ### Future Enhancements
 
@@ -168,17 +298,17 @@ Shows all approved expenses ready for reimbursement with CSV export.
 
 ---
 
-## 7. Summary
+## 11. Summary
 
 Jensify provides a complete expense management lifecycle:
 
-- **Employees** upload receipts (with OCR auto-fill), create expenses, attach multiple receipts, log mileage with GPS, and submit reports for approval.
+- **Employees** upload receipts (with OCR auto-fill), create expenses, attach multiple receipts, log mileage with GPS, link bank accounts, and submit reports for approval.
 - **Managers** review and approve team expenses as part of the multi-level workflow.
-- **Finance** processes final approvals and marks expenses as reimbursed.
-- **Admins** configure workflows, manage users, and oversee the organization.
+- **Finance** processes final approvals and initiates Stripe payouts for reimbursement.
+- **Admins** configure workflows, manage users, set up Stripe integration, customize branding, and oversee the organization.
 
-The platform includes modern features like AI-powered OCR, GPS mileage tracking, PWA offline support, multi-level approvals, and organization multi-tenancy.
+The platform includes modern features like AI-powered OCR, GPS mileage tracking, PWA offline support, multi-level approvals, organization multi-tenancy, custom branding, and secure Stripe payment processing.
 
 ---
 
-*Last Updated: November 27, 2024*
+*Last Updated: December 10, 2024*
