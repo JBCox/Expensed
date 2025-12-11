@@ -5,16 +5,20 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/services/auth.service';
+import { SuperAdminService } from '../../../core/services/super-admin.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
+  let mockSuperAdminService: jasmine.SpyObj<SuperAdminService>;
   let mockRouter: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
     // Create mock services
     mockAuthService = jasmine.createSpyObj('AuthService', ['signIn', 'shouldUseDefaultRoute', 'suppressNextDefaultRedirect', 'refreshUserProfile', 'getDefaultRoute']);
+    mockSuperAdminService = jasmine.createSpyObj('SuperAdminService', ['waitForAdminCheck']);
+    mockSuperAdminService.waitForAdminCheck.and.resolveTo(false);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -24,6 +28,7 @@ describe('LoginComponent', () => {
       ],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
+        { provide: SuperAdminService, useValue: mockSuperAdminService },
         provideRouter([])
       ]
     }).compileComponents();

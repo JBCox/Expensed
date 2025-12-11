@@ -195,6 +195,12 @@ describe('BankAccountsComponent', () => {
       initComponent();
       // Set organizationId to null directly on the component instance
       (component as any)['organizationId'] = null;
+      // Also need to mock the service's currentOrganizationId to null
+      // since onTokenCreated falls back to orgService.currentOrganizationId
+      Object.defineProperty(mockOrganizationService, 'currentOrganizationId', {
+        get: () => null,
+        configurable: true
+      });
 
       component.onTokenCreated('tok_test_123');
 
@@ -276,7 +282,7 @@ describe('BankAccountsComponent', () => {
 
       component.submitVerification(mockBankAccounts[1]);
 
-      expect(mockPayoutService.verifyBankAccount).toHaveBeenCalledWith('account-2', [32, 45]);
+      expect(mockPayoutService.verifyBankAccount).toHaveBeenCalledWith('org-1', 'account-2', [32, 45]);
       expect(mockSnackBar.open).toHaveBeenCalledWith(
         'Bank account verified successfully',
         'Dismiss',

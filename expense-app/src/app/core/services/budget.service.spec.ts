@@ -112,10 +112,11 @@ describe('BudgetService', () => {
     Object.defineProperty(supabaseSpy, 'client', { get: () => mockSupabaseClient });
     Object.defineProperty(supabaseSpy, 'userId', { get: () => mockUserId });
 
-    const orgServiceSpy = jasmine.createSpyObj('OrganizationService', [], {
+    const orgServiceSpy = jasmine.createSpyObj('OrganizationService', ['getCurrentUserDepartment'], {
       currentOrganizationId: mockOrganizationId
     });
     Object.defineProperty(orgServiceSpy, 'currentOrganizationId', { get: () => mockOrganizationId });
+    orgServiceSpy.getCurrentUserDepartment.and.returnValue('Engineering');
 
     const notificationSpy = jasmine.createSpyObj('NotificationService', ['showSuccess', 'showError']);
     const loggerSpy = jasmine.createSpyObj('LoggerService', ['error', 'info', 'warn', 'getErrorMessage']);

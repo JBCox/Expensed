@@ -206,7 +206,7 @@ export class ReportDetailComponent implements OnInit, OnDestroy {
     const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--jensify-primary').trim() || '#FF5900';
     this.confirmAction("Resubmit Report", `Resubmit "${r.name}" for approval?`, "Resubmit", "send", primaryColor, () => {
       this.submitting.set(true);
-      this.reportService.submitReport(r.id).pipe(takeUntil(this.destroy$)).subscribe({
+      this.reportService.resubmitReport(r.id).pipe(takeUntil(this.destroy$)).subscribe({
         next: (updated) => {
           this.report.set(updated);
           this.submitting.set(false);
@@ -330,7 +330,7 @@ export class ReportDetailComponent implements OnInit, OnDestroy {
     return map[status] || "draft";
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency = 'USD'): string {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: currency }).format(amount);
   }
 

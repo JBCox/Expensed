@@ -28,6 +28,12 @@ import { StatusBadge } from "../../../shared/components/status-badge/status-badg
           <mat-icon>receipt</mat-icon>
           <h3>Expenses ({{ expenses.length }})</h3>
         </div>
+        @if (canEdit) {
+          <button mat-raised-button color="primary" class="jensify-button" (click)="addExpenses.emit()">
+            <mat-icon>add</mat-icon>
+            Add Expenses
+          </button>
+        }
       </div>
 
       @if (expenses.length === 0) {
@@ -45,7 +51,7 @@ import { StatusBadge } from "../../../shared/components/status-badge/status-badg
         <!-- Mobile Card View -->
         <div class="mobile-expense-cards">
           @for (expense of expenses; track expense.id) {
-            <div class="mobile-expense-card" (click)="viewExpense.emit(expense)">
+            <div class="mobile-expense-card" (click)="viewExpense.emit(expense)" (keydown.enter)="viewExpense.emit(expense)" tabindex="0" role="button" [attr.aria-label]="'View expense from ' + expense.merchant">
               <div class="expense-card-header">
                 <div class="expense-merchant">{{ expense.merchant }}</div>
                 <span class="expense-amount">{{ formatCurrency(expense.amount) }}</span>

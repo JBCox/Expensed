@@ -86,7 +86,7 @@ describe('TaxService', () => {
   function createSmartFromMock(
     mainOperation: 'insert' | 'update' | 'delete',
     mainResponse: any,
-    tableName: string = 'tax_rates'
+    tableName = 'tax_rates'
   ) {
     // Mock for getTaxRates refresh
     const ratesOrder2Spy = jasmine.createSpy('ratesOrder2').and.resolveTo({ data: mockTaxRates, error: null });

@@ -19,6 +19,9 @@ import { takeUntil } from 'rxjs/operators';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { InvitationService } from '../../../core/services/invitation.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FeatureGateService } from '../../../core/services/feature-gate.service';
+import { UsageLimitBannerComponent } from '../../../shared/components/usage-limit-banner/usage-limit-banner.component';
+import { UpgradePromptComponent, UpgradePromptData } from '../../../shared/components/upgrade-prompt/upgrade-prompt.component';
 import { OrganizationMember, Invitation, CreateInvitationDto } from '../../../core/models';
 import { UserRole } from '../../../core/models/enums';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
@@ -53,7 +56,8 @@ import { PullToRefresh } from '../../../shared/components/pull-to-refresh/pull-t
     MatMenuModule,
     EmptyState,
     LoadingSkeleton,
-    PullToRefresh
+    PullToRefresh,
+    UsageLimitBannerComponent
   ],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
@@ -65,6 +69,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   private organizationService = inject(OrganizationService);
   private invitationService = inject(InvitationService);
   private notificationService = inject(NotificationService);
+  private featureGateService = inject(FeatureGateService);
   private dialog = inject(MatDialog);
 
   // Cleanup
@@ -80,6 +85,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   activeMemberCount = computed(() => this.members().filter(member => member.is_active).length);
   inactiveMemberCount = computed(() => this.members().filter(member => !member.is_active).length);
   pendingInvitationCount = computed(() => this.invitations().filter(invite => invite.status === 'pending').length);
+
+  // User limit state
+  userUsage = signal<{ current: number; limit: number | null; remaining: number | null }>({
+    current: 0,
+    limit: null,
+    remaining: null
+  });
+  isAtUserLimit = signal(false);
 
   // Filter signals - Members
   memberRoleFilter = signal<string>('all');
@@ -160,12 +173,24 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       email: ['', [Validators.required, Validators.email]],
       role: [UserRole.EMPLOYEE, Validators.required],
       department: [''],
-      manager_id: ['']
+      manager_id: ['', Validators.required] // Required for employees by default
+    });
+
+    // Dynamic validation: manager_id required only for Employee role
+    this.inviteForm.get('role')?.valueChanges.subscribe(role => {
+      const managerControl = this.inviteForm.get('manager_id');
+      if (role === UserRole.EMPLOYEE) {
+        managerControl?.setValidators([Validators.required]);
+      } else {
+        managerControl?.clearValidators();
+      }
+      managerControl?.updateValueAndValidity();
     });
   }
 
   ngOnInit(): void {
     this.loadData();
+    this.loadUserUsage();
   }
 
   ngOnDestroy(): void {
@@ -238,11 +263,80 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Load user usage limits from FeatureGateService
+   */
+  loadUserUsage(): void {
+    this.featureGateService.getUserUsage()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (usage) => {
+          this.userUsage.set({
+            current: usage.current,
+            limit: usage.limit,
+            remaining: usage.remaining
+          });
+          this.isAtUserLimit.set(usage.limit !== null && usage.current >= usage.limit);
+        }
+      });
+  }
+
+  /**
+   * Check if user can be invited based on user limits
+   * Returns true if allowed, false if blocked
+   */
+  private checkUserLimit(): boolean {
+    const usage = this.userUsage();
+
+    // No limit (paid plan) - always allow
+    if (usage.limit === null) {
+      return true;
+    }
+
+    // At or over limit - show upgrade dialog
+    if (usage.current >= usage.limit) {
+      this.showUpgradeRequiredDialog();
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Show upgrade required dialog when user limit is reached
+   */
+  private showUpgradeRequiredDialog(): void {
+    const usage = this.userUsage();
+    const data: UpgradePromptData = {
+      feature: 'User Limit Reached',
+      description: `Your plan allows ${usage.limit} users. Upgrade to add more team members.`,
+      icon: 'group_add',
+      requiredPlan: 'starter',
+      benefits: [
+        'Add unlimited team members',
+        'Advanced role management',
+        'Multi-level approvals',
+        'Priority support'
+      ]
+    };
+
+    this.dialog.open(UpgradePromptComponent, {
+      data,
+      width: '420px',
+      maxWidth: '95vw'
+    });
+  }
+
+  /**
    * Invite a new user
    */
   inviteUser(): void {
     if (this.inviteForm.invalid) {
       this.inviteForm.markAllAsTouched();
+      return;
+    }
+
+    // Check user limits before proceeding
+    if (!this.checkUserLimit()) {
       return;
     }
 
@@ -432,6 +526,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     if (field.errors['required']) {
+      if (fieldName === 'manager_id') {
+        return 'A manager must be assigned to employees';
+      }
       return 'This field is required';
     }
     if (field.errors['email']) {

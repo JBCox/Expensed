@@ -171,7 +171,7 @@ export interface ApprovalWithDetails extends ExpenseApproval {
       email: string;
     };
   };
-  workflow: {
+  workflow?: {
     name: string;
   };
   current_approver?: {

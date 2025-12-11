@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
 
 /**
  * Register Component
@@ -39,6 +40,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class RegisterComponent implements OnInit, OnDestroy {
   private formBuilder = inject(FormBuilder);
   private authService = inject(AuthService);
+  private supabaseService = inject(SupabaseService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
@@ -47,12 +49,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   registerForm!: FormGroup;
   loading = false;
+  checkingSignupStatus = true;
+  signupsEnabled = true;
   errorMessage = '';
   successMessage = '';
   hidePassword = true;
   hideConfirmPassword = true;
 
   ngOnInit(): void {
+    this.checkSignupStatus();
     this.registerForm = this.formBuilder.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
@@ -70,6 +75,23 @@ export class RegisterComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Check if signups are enabled via platform settings
+   */
+  private async checkSignupStatus(): Promise<void> {
+    this.checkingSignupStatus = true;
+    try {
+      this.signupsEnabled = await this.supabaseService.areSignupsEnabled();
+    } catch (error) {
+      console.error('Failed to check signup status:', error);
+      // Default to enabled on error
+      this.signupsEnabled = true;
+    } finally {
+      this.checkingSignupStatus = false;
+      this.cdr.markForCheck();
+    }
   }
 
   /**

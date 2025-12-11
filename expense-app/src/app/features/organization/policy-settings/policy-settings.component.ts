@@ -155,7 +155,7 @@ export class PolicySettingsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (presets) => this.presets.set(presets),
-        error: () => {} // Silent fail for presets
+        error: () => { /* Silent fail for presets */ }
       });
 
     // Load stats
@@ -163,7 +163,7 @@ export class PolicySettingsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (stats) => this.policyStats.set(stats),
-        error: () => {} // Silent fail for stats
+        error: () => { /* Silent fail for stats */ }
       });
   }
 

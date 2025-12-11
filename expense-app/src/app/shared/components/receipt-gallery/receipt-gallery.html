@@ -54,7 +54,7 @@
             }
 
             <!-- Receipt Thumbnail/Preview -->
-            <div class="receipt-preview" (click)="openReceiptDialog(expenseReceipt)">
+            <div class="receipt-preview" (click)="openReceiptDialog(expenseReceipt)" (keydown.enter)="openReceiptDialog(expenseReceipt)" tabindex="0" role="button" aria-label="View receipt full size">
               @if (expenseReceipt.receipt) {
                 @if (isImage(expenseReceipt.receipt)) {
                   <!-- Image Thumbnail -->

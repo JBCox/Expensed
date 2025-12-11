@@ -382,7 +382,10 @@ ALTER TABLE expense_reports
 
 -- Function to create default approval workflows for new organizations
 CREATE OR REPLACE FUNCTION create_default_approval_workflows(p_organization_id UUID)
-RETURNS VOID AS $$
+RETURNS VOID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_workflow_small UUID;
   v_workflow_medium UUID;
@@ -439,7 +442,7 @@ BEGIN
     (v_workflow_large, 3, 'role', 'admin');
 
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Trigger to create default workflows when new organization is created
 CREATE OR REPLACE FUNCTION trigger_create_default_workflows()

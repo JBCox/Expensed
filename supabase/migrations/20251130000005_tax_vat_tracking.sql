@@ -138,7 +138,10 @@ RETURNS TABLE (
   recoverable_tax DECIMAL(12, 2),
   non_recoverable_tax DECIMAL(12, 2),
   expense_count BIGINT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF p_group_by = 'tax_type' THEN
     RETURN QUERY
@@ -215,7 +218,7 @@ BEGIN
     ORDER BY total_tax DESC;
   END IF;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- AUTO-CALCULATE NET AMOUNT
@@ -223,7 +226,10 @@ $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
 -- Trigger to auto-calculate net amount when tax is set
 CREATE OR REPLACE FUNCTION calculate_expense_net_amount()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   -- If tax_amount is set but net_amount is not, calculate it
   IF NEW.tax_amount IS NOT NULL AND NEW.net_amount IS NULL THEN
@@ -281,7 +287,7 @@ BEGIN
   ORDER BY tr.effective_from DESC
   LIMIT 1;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- SEED COMMON TAX RATES

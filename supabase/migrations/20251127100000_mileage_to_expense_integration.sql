@@ -63,6 +63,7 @@ CREATE OR REPLACE FUNCTION convert_trip_to_expense(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_trip RECORD;

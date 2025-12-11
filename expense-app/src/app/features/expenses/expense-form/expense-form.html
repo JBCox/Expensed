@@ -1,4 +1,14 @@
 <div class="jensify-container-sm">
+  <!-- Usage Limit Banner -->
+  @if (receiptUsage().limit !== null) {
+    <app-usage-limit-banner
+      resource="receipts"
+      [used]="receiptUsage().used"
+      [limit]="receiptUsage().limit!"
+      [dismissible]="!isAtReceiptLimit()"
+    ></app-usage-limit-banner>
+  }
+
   <mat-card class="jensify-card jensify-animate-slide-up">
     <mat-card-header>
       <mat-card-title>New Expense</mat-card-title>
@@ -159,7 +169,13 @@
 
         <div class="jensify-form-actions jensify-sticky-footer">
           <a mat-stroked-button routerLink="/expenses" class="jensify-button">Cancel</a>
-          <button mat-raised-button color="primary" [disabled]="loading" class="jensify-button">Save</button>
+          <button mat-raised-button color="primary" [disabled]="loading || isAtReceiptLimit()" class="jensify-button">
+            @if (isAtReceiptLimit()) {
+              Limit Reached
+            } @else {
+              Save
+            }
+          </button>
         </div>
       </form>
     </mat-card-content>

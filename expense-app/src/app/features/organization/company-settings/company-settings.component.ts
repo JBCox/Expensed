@@ -60,6 +60,7 @@ import { ColorPickerComponent } from '../../../shared/components/color-picker/co
               <div
                 class="logo-upload-area"
                 [class.dragging]="isDragging()"
+                [class.has-preview]="!!logoPreview()"
                 (click)="logoInput.click()"
                 (dragover)="onDragOver($event)"
                 (dragleave)="onDragLeave($event)"
@@ -68,23 +69,60 @@ import { ColorPickerComponent } from '../../../shared/components/color-picker/co
                 tabindex="0"
                 (keyup.enter)="logoInput.click()">
                 @if (logoPreview()) {
-                  <img [src]="logoPreview()" alt="Company logo" class="logo-preview">
+                  <div class="logo-preview-container">
+                    <img [src]="logoPreview()" alt="Company logo" class="logo-preview">
+                    <div class="logo-preview-overlay">
+                      <mat-icon>edit</mat-icon>
+                      <span>Change logo</span>
+                    </div>
+                  </div>
                 } @else {
                   <div class="logo-placeholder">
                     <mat-icon>{{ isDragging() ? 'file_download' : 'add_photo_alternate' }}</mat-icon>
                     <span>{{ isDragging() ? 'Drop image here' : 'Drag & drop or click to upload' }}</span>
-                    <span class="logo-hint">PNG, JPG, SVG up to 2MB</span>
                   </div>
                 }
                 <input
                   #logoInput
                   id="logo-upload-input"
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                  accept="image/png"
                   (change)="onLogoSelected($event)"
                   hidden
                 >
               </div>
+
+              <!-- Logo Guidelines -->
+              <div class="logo-guidelines">
+                <div class="guidelines-header">
+                  <mat-icon>info</mat-icon>
+                  <span>Logo Guidelines</span>
+                </div>
+                <ul class="guidelines-list">
+                  <li>
+                    <strong>Format:</strong> PNG only (supports transparent backgrounds)
+                  </li>
+                  <li>
+                    <strong>Size:</strong> 200-400px wide, max 2MB file size
+                  </li>
+                  <li>
+                    <strong>Aspect ratio:</strong> Horizontal logos work best (e.g., 3:1 or 4:1)
+                  </li>
+                  <li>
+                    <strong>Transparency:</strong> Remove background before uploading.
+                    Use <a href="https://www.remove.bg" target="_blank" rel="noopener">remove.bg</a> (free) to remove backgrounds.
+                  </li>
+                </ul>
+                <div class="format-badges">
+                  <span class="format-badge accepted">
+                    <mat-icon>check_circle</mat-icon> PNG
+                  </span>
+                  <span class="format-badge accepted">
+                    <mat-icon>check_circle</mat-icon> SVG
+                  </span>
+                </div>
+              </div>
+
               @if (logoPreview()) {
                 <button mat-button color="warn" type="button" (click)="removeLogo()">
                   <mat-icon>delete</mat-icon>
@@ -204,10 +242,129 @@ import { ColorPickerComponent } from '../../../shared/components/color-picker/co
       }
     }
 
+    .logo-preview-container {
+      position: relative;
+      display: inline-block;
+    }
+
     .logo-preview {
       max-width: 200px;
       max-height: 100px;
       object-fit: contain;
+    }
+
+    .logo-preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      border-radius: 4px;
+      color: white;
+      gap: 0.25rem;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      span {
+        font-size: 0.75rem;
+      }
+    }
+
+    .logo-upload-area.has-preview:hover .logo-preview-overlay {
+      opacity: 1;
+    }
+
+    .logo-guidelines {
+      background: var(--jensify-surface-alt, #f5f5f5);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      border-left: 3px solid var(--jensify-primary, #ff5900);
+    }
+
+    .guidelines-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: var(--jensify-text-strong, #333);
+      margin-bottom: 0.75rem;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--jensify-primary, #ff5900);
+      }
+    }
+
+    .guidelines-list {
+      margin: 0;
+      padding-left: 1.25rem;
+      font-size: 0.8125rem;
+      color: var(--jensify-text-secondary, #666);
+      line-height: 1.6;
+
+      li {
+        margin-bottom: 0.375rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      strong {
+        color: var(--jensify-text-strong, #333);
+      }
+
+      a {
+        color: var(--jensify-primary, #ff5900);
+        text-decoration: none;
+        font-weight: 500;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .format-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .format-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+
+      &.accepted {
+        background: color-mix(in srgb, var(--jensify-success, #22c55e) 15%, transparent);
+        color: var(--jensify-success, #22c55e);
+      }
     }
 
     .form-actions {
@@ -241,6 +398,19 @@ import { ColorPickerComponent } from '../../../shared/components/color-picker/co
       .logo-placeholder {
         color: rgba(255, 255, 255, 0.6);
       }
+
+      .logo-guidelines {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .guidelines-header,
+      .guidelines-list strong {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .guidelines-list {
+        color: rgba(255, 255, 255, 0.7);
+      }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -267,14 +437,10 @@ export class CompanySettingsComponent implements OnInit {
   ngOnInit(): void {
     // Load current organization data
     this.organizationService.currentOrganization$.subscribe(org => {
-      console.log('[CompanySettings] ngOnInit subscription fired, org:', org?.name);
-      console.log('[CompanySettings] initialLoadComplete:', this.initialLoadComplete);
-      console.log('[CompanySettings] logoFile before check:', this.logoFile);
       if (org) {
         // Only update form/state on initial load or after explicit save
         // Don't reset logoFile if user has selected a new file
         if (!this.initialLoadComplete) {
-          console.log('[CompanySettings] RESETTING STATE - initialLoadComplete was false');
           this.settingsForm.patchValue({ name: org.name });
           // Load existing logo if present
           if (org.logo_url) {
@@ -292,8 +458,6 @@ export class CompanySettingsComponent implements OnInit {
           this.removeExistingLogo = false;
           this.logoFile = null;
           this.initialLoadComplete = true;
-        } else {
-          console.log('[CompanySettings] NOT resetting - initialLoadComplete was true');
         }
       }
     });
@@ -343,16 +507,25 @@ export class CompanySettingsComponent implements OnInit {
     }
   }
 
-  private processFile(file: File): void {
+  private async processFile(file: File): Promise<void> {
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       this.snackBar.open('Logo must be less than 2MB', 'Close', { duration: 3000 });
       return;
     }
 
-    // Validate file type
-    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'].includes(file.type)) {
-      this.snackBar.open('Logo must be PNG, JPG, or SVG format', 'Close', { duration: 3000 });
+    // SECURITY: Only allow PNG format now - SVG can contain XSS scripts
+    // SVG files can contain embedded JavaScript which is a security risk
+    const validTypes = ['image/png'];
+    if (!validTypes.includes(file.type)) {
+      this.snackBar.open('Logo must be PNG format (SVG disabled for security)', 'Close', { duration: 4000 });
+      return;
+    }
+
+    // SECURITY: Validate magic number to prevent file type spoofing
+    const isValidPng = await this.validateFileMagicNumber(file);
+    if (!isValidPng) {
+      this.snackBar.open('Invalid file format. Please upload a valid PNG image.', 'Close', { duration: 4000 });
       return;
     }
 
@@ -369,6 +542,25 @@ export class CompanySettingsComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  /**
+   * SECURITY: Validate file magic number to prevent type spoofing attacks
+   * PNG signature: 89 50 4E 47 0D 0A 1A 0A
+   */
+  private async validateFileMagicNumber(file: File): Promise<boolean> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const arr = new Uint8Array(e.target?.result as ArrayBuffer);
+        // PNG magic number: 89 50 4E 47 0D 0A 1A 0A
+        const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        const isValid = pngSignature.every((byte, i) => arr[i] === byte);
+        resolve(isValid);
+      };
+      reader.onerror = () => resolve(false);
+      reader.readAsArrayBuffer(file.slice(0, 8));
+    });
+  }
+
   async saveSettings(): Promise<void> {
     if (!this.settingsForm.valid) return;
 
@@ -376,9 +568,6 @@ export class CompanySettingsComponent implements OnInit {
     // This prevents race conditions where ngOnInit subscription could reset logoFile
     const fileToUpload = this.logoFile;
     const shouldRemoveLogo = this.removeExistingLogo;
-
-    console.log('[CompanySettings] saveSettings called');
-    console.log('[CompanySettings] fileToUpload captured:', fileToUpload?.name);
 
     this.saving.set(true);
 
@@ -392,15 +581,10 @@ export class CompanySettingsComponent implements OnInit {
       let logoUrl: string | undefined = currentOrg.logo_url || undefined;
 
       // Handle logo upload if a new file was selected
-      console.log('[CompanySettings] Checking fileToUpload:', fileToUpload?.name);
       if (fileToUpload) {
-        console.log('[CompanySettings] Uploading logo...');
         logoUrl = await firstValueFrom(
           this.organizationService.uploadLogo(currentOrg.id, fileToUpload)
         );
-        console.log('[CompanySettings] Upload complete, logoUrl:', logoUrl);
-      } else {
-        console.log('[CompanySettings] No file to upload');
       }
 
       // Handle logo removal
@@ -424,8 +608,7 @@ export class CompanySettingsComponent implements OnInit {
       this.removeExistingLogo = false;
       // Allow subscription to update with new logo_url from server
       this.initialLoadComplete = false;
-    } catch (error) {
-      console.error('Failed to save settings:', error);
+    } catch {
       this.snackBar.open('Failed to save settings', 'Close', { duration: 3000 });
     } finally {
       this.saving.set(false);

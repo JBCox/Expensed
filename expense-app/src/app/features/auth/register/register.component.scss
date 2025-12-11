@@ -4,3 +4,92 @@
  */
 
 // Component-specific styles removed - now using global .jensify-password-requirements from _utilities.scss
+
+// Signup status checking state
+.jensify-signup-checking {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.7);
+
+  span {
+    font-size: 0.95rem;
+  }
+}
+
+// Signups disabled state
+.jensify-signups-disabled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+
+  .jensify-disabled-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 89, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: #ff5900;
+    }
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0 0 12px;
+  }
+
+  p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+    margin: 0 0 32px;
+    max-width: 320px;
+  }
+
+  .jensify-disabled-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 280px;
+
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+  }
+}
+
+// Light mode overrides
+:host-context(html:not(.dark)) {
+  .jensify-signup-checking {
+    color: #64748b;
+  }
+
+  .jensify-signups-disabled {
+    h2 {
+      color: #1e293b;
+    }
+
+    p {
+      color: #64748b;
+    }
+  }
+}

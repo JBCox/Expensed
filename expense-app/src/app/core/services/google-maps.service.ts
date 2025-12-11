@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Observable, from, of, throwError, timer, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, from, of, throwError, firstValueFrom } from 'rxjs';
 import { map, switchMap, filter, take, timeout, catchError } from 'rxjs/operators';
 
 export interface LatLng {
@@ -16,6 +16,68 @@ export interface RouteResult {
   polyline: string;
 }
 
+// Google Maps API type definitions (minimal subset we use)
+interface GoogleMapsNamespace {
+  Geocoder: new () => GoogleGeocoder;
+  DistanceMatrixService: new () => GoogleDistanceMatrixService;
+  LatLng: new (lat: number, lng: number) => GoogleLatLng;
+  TravelMode: { DRIVING: string };
+  UnitSystem: { IMPERIAL: number };
+  geometry: {
+    spherical: {
+      computeDistanceBetween: (from: GoogleLatLng, to: GoogleLatLng) => number;
+    };
+  };
+}
+
+interface GoogleGeocoder {
+  geocode: (request: { address?: string; location?: { lat: number; lng: number } }) => Promise<GoogleGeocoderResponse>;
+}
+
+interface GoogleGeocoderResponse {
+  results: {
+    formatted_address: string;
+    geometry: {
+      location: {
+        lat: () => number;
+        lng: () => number;
+      };
+    };
+  }[];
+}
+
+interface GoogleDistanceMatrixService {
+  getDistanceMatrix: (request: GoogleDistanceMatrixRequest) => Promise<GoogleDistanceMatrixResponse>;
+}
+
+interface GoogleDistanceMatrixRequest {
+  origins: (string | GoogleLatLng)[];
+  destinations: (string | GoogleLatLng)[];
+  travelMode: string;
+  unitSystem: number;
+}
+
+interface GoogleDistanceMatrixResponse {
+  rows: {
+    elements: {
+      status: string;
+      distance?: { value: number; text: string };
+      duration?: { value: number; text: string };
+    }[];
+  }[];
+}
+
+interface GoogleLatLng {
+  lat: () => number;
+  lng: () => number;
+}
+
+interface WindowWithGoogle extends Window {
+  google?: {
+    maps?: GoogleMapsNamespace;
+  };
+}
+
 /**
  * Google Maps Service
  * Handles all Google Maps API interactions
@@ -25,7 +87,7 @@ export interface RouteResult {
 })
 export class GoogleMapsService {
   private loaderSubject = new BehaviorSubject<boolean>(false);
-  private googleMaps?: any;
+  private googleMaps?: GoogleMapsNamespace;
 
   constructor() {
     this.initLoader();
@@ -37,8 +99,9 @@ export class GoogleMapsService {
   private async initLoader(): Promise<void> {
     try {
       // Check if already loaded
-      if ((window as any).google?.maps) {
-        this.googleMaps = (window as any).google.maps;
+      const windowWithGoogle = window as unknown as WindowWithGoogle;
+      if (windowWithGoogle.google?.maps) {
+        this.googleMaps = windowWithGoogle.google.maps;
         this.loaderSubject.next(true);
         return;
       }
@@ -50,18 +113,17 @@ export class GoogleMapsService {
       script.defer = true;
 
       script.onload = () => {
-        this.googleMaps = (window as any).google?.maps;
+        const win = window as unknown as WindowWithGoogle;
+        this.googleMaps = win.google?.maps;
         this.loaderSubject.next(true);
       };
 
       script.onerror = () => {
-        console.error('Error loading Google Maps');
         this.loaderSubject.next(false);
       };
 
       document.head.appendChild(script);
-    } catch (error) {
-      console.error('Error loading Google Maps', error);
+    } catch {
       this.loaderSubject.next(false);
     }
   }
@@ -69,7 +131,7 @@ export class GoogleMapsService {
   /**
    * Wait for Google Maps to be loaded (with timeout)
    */
-  private waitForMaps(): Observable<any> {
+  private waitForMaps(): Observable<GoogleMapsNamespace> {
     return this.loaderSubject.pipe(
       filter(loaded => loaded === true),
       take(1),
@@ -80,8 +142,7 @@ export class GoogleMapsService {
         }
         return this.googleMaps;
       }),
-      catchError(err => {
-        console.error('Google Maps loading error:', err);
+      catchError(() => {
         return throwError(() => new Error('Google Maps failed to load'));
       })
     );
@@ -96,7 +157,7 @@ export class GoogleMapsService {
         const geocoder = new maps.Geocoder();
         return from(geocoder.geocode({ address }));
       }),
-      map((result: any) => {
+      map((result: GoogleGeocoderResponse) => {
         if (!result.results || result.results.length === 0) {
           throw new Error(`No results found for address: ${address}`);
         }
@@ -119,14 +180,13 @@ export class GoogleMapsService {
         return from(geocoder.geocode({ location: { lat, lng } }));
       }),
       timeout(10000), // 10 second timeout for geocoding
-      map((result: any) => {
+      map((result: GoogleGeocoderResponse) => {
         if (!result.results || result.results.length === 0) {
           throw new Error('No address found for coordinates');
         }
         return result.results[0].formatted_address;
       }),
-      catchError(err => {
-        console.error('Reverse geocode error:', err);
+      catchError(() => {
         // Return coordinates as fallback
         return of(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       })
@@ -149,7 +209,7 @@ export class GoogleMapsService {
           })
         );
       }),
-      switchMap((result: any) => {
+      switchMap((result: GoogleDistanceMatrixResponse) => {
         if (!result.rows || !result.rows[0] || !result.rows[0].elements[0]) {
           throw new Error('Unable to calculate route');
         }
@@ -170,11 +230,11 @@ export class GoogleMapsService {
             }
 
             return {
-              distance: element.distance.value / 1609.34, // meters to miles
-              duration: element.duration.value / 60, // seconds to minutes
+              distance: (element.distance?.value ?? 0) / 1609.34, // meters to miles
+              duration: (element.duration?.value ?? 0) / 60, // seconds to minutes
               origin: originCoords,
               destination: destCoords,
-              polyline: '' // TODO: Get from Directions API if needed
+              polyline: '' // Polyline not available from Distance Matrix API - use Directions API if needed
             };
           })
         );
@@ -199,13 +259,11 @@ export class GoogleMapsService {
     const latDiff = Math.abs(origin.lat - destination.lat);
     const lngDiff = Math.abs(origin.lng - destination.lng);
     if (latDiff < 0.001 && lngDiff < 0.001) {
-      console.log('[GoogleMapsService] Start/End locations are the same, returning 0 distance');
       return of({ distanceMiles: 0, durationMinutes: 0, apiSuccess: true });
     }
 
     return this.waitForMaps().pipe(
       switchMap(maps => {
-        console.log('[GoogleMapsService] Calling Distance Matrix API with coords:', origin, destination);
         const service = new maps.DistanceMatrixService();
         return from(
           service.getDistanceMatrix({
@@ -217,51 +275,34 @@ export class GoogleMapsService {
         );
       }),
       timeout(15000),
-      map((result: any) => {
-        console.log('[GoogleMapsService] Distance Matrix API response:', result);
-
+      map((result: GoogleDistanceMatrixResponse) => {
         if (!result.rows || !result.rows[0] || !result.rows[0].elements[0]) {
-          console.warn('[GoogleMapsService] Distance Matrix API returned invalid structure');
-          console.warn('[GoogleMapsService] User will need to enter distance manually');
           return { distanceMiles: 0, durationMinutes: 0, apiSuccess: false };
         }
 
         const element = result.rows[0].elements[0];
-        console.log('[GoogleMapsService] Distance Matrix element status:', element.status);
 
         // Handle various API error statuses - return 0 so user fills in manually
         if (element.status === 'ZERO_RESULTS' || element.status === 'NOT_FOUND') {
-          console.warn('[GoogleMapsService] Distance Matrix: no route found');
-          console.warn('[GoogleMapsService] User will need to enter distance manually');
           return { distanceMiles: 0, durationMinutes: 0, apiSuccess: false };
         }
         if (element.status === 'REQUEST_DENIED') {
-          console.error('[GoogleMapsService] Distance Matrix API REQUEST_DENIED!');
-          console.error('[GoogleMapsService] DIAGNOSTIC: Enable "Distance Matrix API" in Google Cloud Console');
-          console.error('[GoogleMapsService] DIAGNOSTIC: API Key may be restricted - check API restrictions');
           return { distanceMiles: 0, durationMinutes: 0, apiSuccess: false };
         }
         if (element.status === 'OVER_QUERY_LIMIT') {
-          console.error('[GoogleMapsService] Distance Matrix API OVER_QUERY_LIMIT - billing may need attention');
           return { distanceMiles: 0, durationMinutes: 0, apiSuccess: false };
         }
         if (element.status !== 'OK') {
-          console.warn(`[GoogleMapsService] Distance Matrix status: ${element.status}`);
-          console.warn('[GoogleMapsService] User will need to enter distance manually');
           return { distanceMiles: 0, durationMinutes: 0, apiSuccess: false };
         }
 
-        const distanceMiles = Math.round((element.distance.value / 1609.34) * 100) / 100;
-        const durationMinutes = Math.round(element.duration.value / 60);
-        console.log(`[GoogleMapsService] Distance Matrix SUCCESS: ${distanceMiles} miles, ${durationMinutes} min`);
+        const distanceMiles = Math.round(((element.distance?.value ?? 0) / 1609.34) * 100) / 100;
+        const durationMinutes = Math.round((element.duration?.value ?? 0) / 60);
 
         return { distanceMiles, durationMinutes, apiSuccess: true };
       }),
-      catchError(err => {
+      catchError(() => {
         // This catches network errors, timeouts, and API load failures
-        console.error('[GoogleMapsService] Distance Matrix API error:', err?.message || err);
-        console.warn('[GoogleMapsService] TIP: Check if Distance Matrix API is enabled in Google Cloud Console');
-        console.warn('[GoogleMapsService] User will need to enter distance manually');
         return of({ distanceMiles: 0, durationMinutes: 0, apiSuccess: false });
       })
     );

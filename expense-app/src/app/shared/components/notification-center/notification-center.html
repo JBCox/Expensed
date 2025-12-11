@@ -10,7 +10,7 @@
 </button>
 
 <mat-menu #notificationMenu="matMenu" class="notification-menu" xPosition="before">
-  <div class="menu-header" (click)="$event.stopPropagation()">
+  <div class="menu-header" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
     <div>
       <p class="title">Notifications</p>
       <p class="subtitle">Stay on top of receipts and approvals</p>
@@ -28,7 +28,11 @@
       *ngFor="let notification of notificationsSignal(); trackBy: trackById"
       [class.unread]="!notification.read"
       [class.clickable]="notification.action_url"
-      (click)="handleNotificationClick(notification, $event)">
+      (click)="handleNotificationClick(notification, $event)"
+      (keydown.enter)="handleNotificationClick(notification, $event)"
+      [tabindex]="notification.action_url ? 0 : -1"
+      [attr.role]="notification.action_url ? 'button' : 'listitem'"
+      [attr.aria-label]="notification.title">
       <div class="icon" [class]="notification.type">
         <mat-icon>{{ iconFor(notification.type) }}</mat-icon>
       </div>
@@ -62,7 +66,7 @@
 
   <mat-divider></mat-divider>
 
-  <div class="preferences" *ngIf="preferencesSignal() as prefs" (click)="$event.stopPropagation()">
+  <div class="preferences" *ngIf="preferencesSignal() as prefs" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
     <div class="pref-header">
       <p class="pref-title">Alert me about...</p>
       <mat-slide-toggle
@@ -97,7 +101,7 @@
     </div>
   </div>
 
-  <div class="menu-footer" *ngIf="notificationsSignal().length > 0" (click)="$event.stopPropagation()">
+  <div class="menu-footer" *ngIf="notificationsSignal().length > 0" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="presentation">
     <button mat-button color="warn" (click)="clearAll()">
       <mat-icon>delete_sweep</mat-icon>
       Clear all

@@ -15,9 +15,7 @@ import {
   YoyComparison,
   AnalyticsSummaryMetric,
   AnalyticsDashboardData,
-  AnalyticsFilters,
-  AnalyticsInterval,
-  AnalyticsDateRange
+  AnalyticsFilters
 } from '../models/analytics.model';
 
 /**

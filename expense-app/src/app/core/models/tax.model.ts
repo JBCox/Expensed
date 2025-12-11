@@ -196,7 +196,7 @@ export interface TaxSummary {
   total_tax_paid: number;
   total_recoverable: number;
   total_non_recoverable: number;
-  by_type: { [key: string]: number };
+  by_type: Record<string, number>;
 }
 
 /**

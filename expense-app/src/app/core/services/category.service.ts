@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, from, Observable, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, from, Observable, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { OrganizationService } from './organization.service';
 import { LoggerService } from './logger.service';
@@ -68,7 +68,7 @@ export class CategoryService {
         return (data || []) as GLCode[];
       }),
       tap((codes) => this.glCodesSubject.next(codes)),
-      catchError(this.handleError)
+      catchError(this.handleError),
     );
   }
 
@@ -91,7 +91,7 @@ export class CategoryService {
           ...dto,
         })
         .select()
-        .single()
+        .single(),
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
@@ -99,10 +99,9 @@ export class CategoryService {
       }),
       tap((code) => {
         this.notificationService.showSuccess(`GL Code "${code.code}" created`);
-        // Refresh cache
-        this.getGLCodes().subscribe();
       }),
-      catchError(this.handleError)
+      switchMap((code) => this.getGLCodes().pipe(map(() => code))),
+      catchError(this.handleError),
     );
   }
 
@@ -111,12 +110,7 @@ export class CategoryService {
    */
   updateGLCode(id: string, dto: UpdateGLCodeDto): Observable<GLCode> {
     return from(
-      this.supabase.client
-        .from('gl_codes')
-        .update(dto)
-        .eq('id', id)
-        .select()
-        .single()
+      this.supabase.client.from('gl_codes').update(dto).eq('id', id).select().single(),
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
@@ -124,10 +118,9 @@ export class CategoryService {
       }),
       tap((code) => {
         this.notificationService.showSuccess(`GL Code "${code.code}" updated`);
-        // Refresh cache
-        this.getGLCodes().subscribe();
       }),
-      catchError(this.handleError)
+      switchMap((code) => this.getGLCodes().pipe(map(() => code))),
+      catchError(this.handleError),
     );
   }
 
@@ -136,19 +129,17 @@ export class CategoryService {
    * Note: Categories using this GL code will have their gl_code_id set to null
    */
   deleteGLCode(id: string): Observable<void> {
-    return from(
-      this.supabase.client.from('gl_codes').delete().eq('id', id)
-    ).pipe(
+    return from(this.supabase.client.from('gl_codes').delete().eq('id', id)).pipe(
       map(({ error }) => {
         if (error) throw error;
       }),
       tap(() => {
         this.notificationService.showSuccess('GL Code deleted');
-        // Refresh caches
-        this.getGLCodes().subscribe();
-        this.getCategories().subscribe();
       }),
-      catchError(this.handleError)
+      switchMap(() =>
+        forkJoin([this.getGLCodes(), this.getCategories()]).pipe(map(() => undefined)),
+      ),
+      catchError(this.handleError),
     );
   }
 
@@ -184,7 +175,7 @@ export class CategoryService {
         return (data || []) as CustomExpenseCategory[];
       }),
       tap((categories) => this.categoriesSubject.next(categories)),
-      catchError(this.handleError)
+      catchError(this.handleError),
     );
   }
 
@@ -214,7 +205,7 @@ export class CategoryService {
           ...dto,
         })
         .select()
-        .single()
+        .single(),
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
@@ -222,10 +213,9 @@ export class CategoryService {
       }),
       tap((category) => {
         this.notificationService.showSuccess(`Category "${category.name}" created`);
-        // Refresh cache
-        this.getCategories().subscribe();
       }),
-      catchError(this.handleError)
+      switchMap((category) => this.getCategories().pipe(map(() => category))),
+      catchError(this.handleError),
     );
   }
 
@@ -234,12 +224,7 @@ export class CategoryService {
    */
   updateCategory(id: string, dto: UpdateExpenseCategoryDto): Observable<CustomExpenseCategory> {
     return from(
-      this.supabase.client
-        .from('expense_categories')
-        .update(dto)
-        .eq('id', id)
-        .select()
-        .single()
+      this.supabase.client.from('expense_categories').update(dto).eq('id', id).select().single(),
     ).pipe(
       map(({ data, error }) => {
         if (error) throw error;
@@ -247,10 +232,9 @@ export class CategoryService {
       }),
       tap((category) => {
         this.notificationService.showSuccess(`Category "${category.name}" updated`);
-        // Refresh cache
-        this.getCategories().subscribe();
       }),
-      catchError(this.handleError)
+      switchMap((category) => this.getCategories().pipe(map(() => category))),
+      catchError(this.handleError),
     );
   }
 
@@ -258,18 +242,15 @@ export class CategoryService {
    * Delete an expense category
    */
   deleteCategory(id: string): Observable<void> {
-    return from(
-      this.supabase.client.from('expense_categories').delete().eq('id', id)
-    ).pipe(
+    return from(this.supabase.client.from('expense_categories').delete().eq('id', id)).pipe(
       map(({ error }) => {
         if (error) throw error;
       }),
       tap(() => {
         this.notificationService.showSuccess('Category deleted');
-        // Refresh cache
-        this.getCategories().subscribe();
       }),
-      catchError(this.handleError)
+      switchMap(() => this.getCategories().pipe(map(() => undefined))),
+      catchError(this.handleError),
     );
   }
 
@@ -278,10 +259,7 @@ export class CategoryService {
    */
   reorderCategories(orderedIds: string[]): Observable<void> {
     const updates = orderedIds.map((id, index) =>
-      this.supabase.client
-        .from('expense_categories')
-        .update({ display_order: index })
-        .eq('id', id)
+      this.supabase.client.from('expense_categories').update({ display_order: index }).eq('id', id),
     );
 
     return from(Promise.all(updates)).pipe(
@@ -290,10 +268,8 @@ export class CategoryService {
           if (error) throw error;
         }
       }),
-      tap(() => {
-        this.getCategories().subscribe();
-      }),
-      catchError(this.handleError)
+      switchMap(() => this.getCategories().pipe(map(() => undefined))),
+      catchError(this.handleError),
     );
   }
 
@@ -325,17 +301,12 @@ export class CategoryService {
   /**
    * Refresh all data
    */
-  refreshAll(): void {
+  refreshAll(): Observable<void> {
     this.loadingSubject.next(true);
-    this.getGLCodes().subscribe({
-      complete: () => {
-        this.getCategories().subscribe({
-          complete: () => this.loadingSubject.next(false),
-          error: () => this.loadingSubject.next(false),
-        });
-      },
-      error: () => this.loadingSubject.next(false),
-    });
+    return forkJoin([this.getGLCodes(), this.getCategories()]).pipe(
+      map(() => undefined),
+      finalize(() => this.loadingSubject.next(false)),
+    );
   }
 
   // ============================================================================

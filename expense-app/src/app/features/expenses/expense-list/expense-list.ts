@@ -390,8 +390,8 @@ export class ExpenseList implements OnInit, OnDestroy {
           if (signedUrl) {
             urlMap.set(expense.id, signedUrl);
           }
-        } catch (error) {
-          console.error('Failed to get signed URL for expense', expense.id, error);
+        } catch {
+          // Failed to get signed URL - skip this receipt
         }
       }
     }
@@ -449,7 +449,7 @@ export class ExpenseList implements OnInit, OnDestroy {
   /**
    * Format currency with multi-currency support
    */
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency = 'USD'): string {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
@@ -502,8 +502,7 @@ export class ExpenseList implements OnInit, OnDestroy {
       if (signedUrl) {
         window.open(signedUrl, "_blank");
       }
-    } catch (error) {
-      console.error("Failed to get receipt URL:", error);
+    } catch {
       this.snackBar.open("Failed to load receipt.", "Close", {
         duration: 3000,
       });

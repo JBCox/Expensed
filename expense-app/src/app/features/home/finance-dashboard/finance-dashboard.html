@@ -141,7 +141,7 @@
         @if (approvals.length > 0) {
           <div class="expense-list">
             @for (expense of approvals; track expense.id) {
-              <div class="expense-row" (click)="onViewExpense(expense)">
+              <div class="expense-row" (click)="onViewExpense(expense)" (keydown.enter)="onViewExpense(expense)" tabindex="0" role="button" [attr.aria-label]="'Review expense from ' + getUserName(expense)">
                 <div class="expense-icon user-icon">
                   <mat-icon>account_circle</mat-icon>
                 </div>
@@ -180,7 +180,7 @@
         @if (expenses.length > 0) {
           <div class="expense-list">
             @for (expense of expenses; track expense.id) {
-              <div class="expense-row" (click)="onViewExpense(expense)">
+              <div class="expense-row" (click)="onViewExpense(expense)" (keydown.enter)="onViewExpense(expense)" tabindex="0" role="button" [attr.aria-label]="'View expense from ' + (expense.merchant || 'unknown merchant')">
                 <div class="expense-icon">
                   <mat-icon>receipt</mat-icon>
                 </div>

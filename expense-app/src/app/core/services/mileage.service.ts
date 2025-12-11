@@ -535,7 +535,6 @@ export class MileageService {
   }
 
   private handleError(error: any): Observable<never> {
-    console.error('MileageService Error:', error);
     return throwError(() => error);
   }
 }

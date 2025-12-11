@@ -5,6 +5,10 @@ import {
   financeGuard,
   managerGuard,
 } from "./core/guards/auth.guard";
+import { superAdminGuard, superAdminPermissionGuard } from "./core/guards/super-admin.guard";
+import { nonSuperAdminGuard } from "./core/guards/non-super-admin.guard";
+import { paidFeatureGuard } from "./core/guards/paid-feature.guard";
+import { SuperAdminLayout } from "./core/components/super-admin-layout/super-admin-layout";
 
 /**
  * Application routes configuration
@@ -19,7 +23,7 @@ export const routes: Routes = [
   },
   {
     path: "home",
-    canActivate: [authGuard], // Temporarily disabled for UI verification
+    canActivate: [authGuard, nonSuperAdminGuard], // Super admins use /super-admin instead
     loadComponent: () =>
       import("./features/home/home/home").then((m) => m.Home),
     title: "Home - Expensed",
@@ -78,6 +82,22 @@ export const routes: Routes = [
         title: "Accept Invitation - Expensed",
       },
       {
+        path: "signup",
+        loadComponent: () =>
+          import("./features/auth/signup-with-plan/signup-with-plan.component").then(
+            (m) => m.SignupWithPlanComponent
+          ),
+        title: "Sign Up - Expensed",
+      },
+      {
+        path: "select-plan",
+        loadComponent: () =>
+          import("./features/auth/plan-selection/plan-selection.component").then(
+            (m) => m.PlanSelectionComponent
+          ),
+        title: "Choose Your Plan - Expensed",
+      },
+      {
         path: "callback",
         loadComponent: () =>
           import("./features/auth/auth-callback/auth-callback").then(
@@ -93,10 +113,10 @@ export const routes: Routes = [
     ],
   },
 
-  // Admin hub route
+  // Admin hub route (organization admin, not super admin)
   {
     path: "admin",
-    canActivate: [authGuard, adminGuard],
+    canActivate: [authGuard, adminGuard, nonSuperAdminGuard],
     loadComponent: () =>
       import("./features/organization/admin-hub/admin-hub.component")
         .then((m) => m.AdminHubComponent),
@@ -104,10 +124,20 @@ export const routes: Routes = [
     data: { breadcrumb: "Admin", breadcrumbIcon: "admin_panel_settings" },
   },
 
-  // Organization routes
+  // Public pricing page
+  {
+    path: "pricing",
+    loadComponent: () =>
+      import("./features/pricing/pricing-page.component").then(
+        (m) => m.PricingPageComponent
+      ),
+    title: "Pricing - Expensed",
+  },
+
+  // Organization routes (customer organizations, not for super admins)
   {
     path: "organization",
-    canActivate: [authGuard],
+    canActivate: [authGuard, nonSuperAdminGuard],
     data: { breadcrumb: "Organization", breadcrumbIcon: "business" },
     children: [
       {
@@ -170,7 +200,7 @@ export const routes: Routes = [
       },
       {
         path: "payouts",
-        canActivate: [adminGuard],
+        canActivate: [adminGuard, paidFeatureGuard('stripe_payouts')],
         loadComponent: () =>
           import(
             "./features/organization/payout-settings/payout-settings.component"
@@ -248,13 +278,56 @@ export const routes: Routes = [
         title: "Email-to-Expense - Expensed",
         data: { breadcrumb: "Email-to-Expense" },
       },
+      {
+        path: "billing",
+        canActivate: [adminGuard],
+        data: { breadcrumb: "Billing" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/billing/billing-overview/billing-overview.component").then(
+                (m) => m.BillingOverviewComponent
+              ),
+            title: "Billing - Expensed",
+            data: { breadcrumb: "Overview" },
+          },
+          {
+            path: "plans",
+            loadComponent: () =>
+              import("./features/billing/plan-selector/plan-selector.component").then(
+                (m) => m.PlanSelectorComponent
+              ),
+            title: "Change Plan - Expensed",
+            data: { breadcrumb: "Change Plan" },
+          },
+          {
+            path: "invoices",
+            loadComponent: () =>
+              import("./features/billing/invoice-history/invoice-history.component").then(
+                (m) => m.InvoiceHistoryComponent
+              ),
+            title: "Invoices - Expensed",
+            data: { breadcrumb: "Invoices" },
+          },
+          {
+            path: "payment",
+            loadComponent: () =>
+              import("./features/billing/payment-method/payment-method.component").then(
+                (m) => m.PaymentMethodComponent
+              ),
+            title: "Payment Method - Expensed",
+            data: { breadcrumb: "Payment" },
+          },
+        ],
+      },
     ],
   },
 
-  // Protected routes - require authentication
+  // Protected routes - require authentication (not for super admins)
   {
     path: "expenses",
-    canActivate: [authGuard],
+    canActivate: [authGuard, nonSuperAdminGuard],
     data: { breadcrumb: "Expenses", breadcrumbIcon: "receipt_long" },
     children: [
       {
@@ -301,10 +374,10 @@ export const routes: Routes = [
     ],
   },
 
-  // Approvals routes - managers and above can approve, admins can configure
+  // Approvals routes - managers and above can approve (not for super admins)
   {
     path: "approvals",
-    canActivate: [authGuard, managerGuard],
+    canActivate: [authGuard, managerGuard, nonSuperAdminGuard],
     data: { breadcrumb: "Approvals", breadcrumbIcon: "task_alt" },
     children: [
       {
@@ -318,7 +391,7 @@ export const routes: Routes = [
       },
       {
         path: "settings",
-        canActivate: [adminGuard],
+        canActivate: [adminGuard, paidFeatureGuard('multi_level_approval')],
         loadComponent: () =>
           import("./features/approvals/approval-settings/approval-settings").then((m) =>
             m.ApprovalSettings
@@ -329,10 +402,10 @@ export const routes: Routes = [
     ],
   },
 
-  // Reports routes - group expenses into reports for batch submission
+  // Reports routes - group expenses into reports (not for super admins)
   {
     path: "reports",
-    canActivate: [authGuard],
+    canActivate: [authGuard, nonSuperAdminGuard],
     data: { breadcrumb: "Reports", breadcrumbIcon: "folder_open" },
     children: [
       {
@@ -358,7 +431,7 @@ export const routes: Routes = [
 
   {
     path: "receipts",
-    canActivate: [authGuard],
+    canActivate: [authGuard, nonSuperAdminGuard],
     loadComponent: () =>
       import("./features/expenses/receipt-list/receipt-list").then((m) =>
         m.ReceiptList
@@ -368,7 +441,7 @@ export const routes: Routes = [
   },
   {
     path: "mileage",
-    canActivate: [authGuard],
+    canActivate: [authGuard, nonSuperAdminGuard, paidFeatureGuard('mileage_gps')],
     data: { breadcrumb: "Mileage", breadcrumbIcon: "directions_car" },
     children: [
       {
@@ -410,10 +483,10 @@ export const routes: Routes = [
     ],
   },
 
-  // Profile routes - user settings and bank accounts
+  // Profile routes - user settings and bank accounts (not for super admins)
   {
     path: "profile",
-    canActivate: [authGuard],
+    canActivate: [authGuard, nonSuperAdminGuard],
     data: { breadcrumb: "Profile", breadcrumbIcon: "person" },
     children: [
       {
@@ -446,10 +519,10 @@ export const routes: Routes = [
     ],
   },
 
-  // Finance routes
+  // Finance routes (organization finance, not for super admins)
   {
     path: "finance",
-    canActivate: [authGuard, financeGuard],
+    canActivate: [authGuard, financeGuard, nonSuperAdminGuard],
     data: { breadcrumb: "Finance", breadcrumbIcon: "account_balance" },
     children: [
       {
@@ -470,6 +543,276 @@ export const routes: Routes = [
         path: "analytics",
         redirectTo: "dashboard",
         pathMatch: "full",
+      },
+    ],
+  },
+
+  // Super Admin routes (platform-level management)
+  // Uses separate layout shell - super admins have completely different UI
+  {
+    path: "super-admin",
+    component: SuperAdminLayout,
+    canActivate: [authGuard, superAdminGuard],
+    data: { breadcrumb: "Super Admin", breadcrumbIcon: "admin_panel_settings" },
+    children: [
+      {
+        path: "",
+        loadComponent: () =>
+          import("./features/super-admin/dashboard/super-admin-dashboard.component").then(
+            (m) => m.SuperAdminDashboardComponent
+          ),
+        title: "Super Admin - Expensed",
+        data: { breadcrumb: "Dashboard" },
+      },
+      {
+        path: "organizations",
+        canActivate: [superAdminPermissionGuard('view_organizations')],
+        data: { breadcrumb: "Organizations" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/super-admin/organizations/organization-list.component").then(
+                (m) => m.OrganizationListComponent
+              ),
+            title: "All Organizations - Expensed",
+            data: { breadcrumb: "All" },
+          },
+          {
+            path: ":id",
+            loadComponent: () =>
+              import("./features/super-admin/organizations/organization-detail.component").then(
+                (m) => m.OrganizationDetailComponent
+              ),
+            title: "Organization Details - Expensed",
+            data: { breadcrumb: "Details" },
+          },
+        ],
+      },
+      {
+        path: "coupons",
+        canActivate: [superAdminPermissionGuard('create_coupons')],
+        data: { breadcrumb: "Coupons" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/super-admin/coupons/coupon-list.component").then(
+                (m) => m.CouponListComponent
+              ),
+            title: "Coupon Codes - Expensed",
+            data: { breadcrumb: "All" },
+          },
+          {
+            path: "new",
+            loadComponent: () =>
+              import("./features/super-admin/coupons/coupon-form.component").then(
+                (m) => m.CouponFormComponent
+              ),
+            title: "Create Coupon - Expensed",
+            data: { breadcrumb: "New" },
+          },
+        ],
+      },
+      {
+        path: "analytics",
+        canActivate: [superAdminPermissionGuard('view_analytics')],
+        loadComponent: () =>
+          import("./features/super-admin/analytics/revenue-analytics.component").then(
+            (m) => m.RevenueAnalyticsComponent
+          ),
+        title: "Revenue Analytics - Expensed",
+        data: { breadcrumb: "Analytics" },
+      },
+      {
+        path: "audit-log",
+        canActivate: [superAdminPermissionGuard('view_organizations')],
+        loadComponent: () =>
+          import("./features/super-admin/audit-log/audit-log.component").then(
+            (m) => m.AuditLogComponent
+          ),
+        title: "Audit Log - Expensed",
+        data: { breadcrumb: "Audit Log" },
+      },
+      // Platform management routes
+      {
+        path: "settings",
+        loadComponent: () =>
+          import("./features/super-admin/settings/system-settings.component").then(
+            (m) => m.SystemSettingsComponent
+          ),
+        title: "System Settings - Expensed",
+        data: { breadcrumb: "Settings" },
+      },
+      {
+        path: "announcements",
+        data: { breadcrumb: "Announcements" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/super-admin/announcements/announcement-list.component").then(
+                (m) => m.AnnouncementListComponent
+              ),
+            title: "Announcements - Expensed",
+            data: { breadcrumb: "All" },
+          },
+          {
+            path: "new",
+            loadComponent: () =>
+              import("./features/super-admin/announcements/announcement-form.component").then(
+                (m) => m.AnnouncementFormComponent
+              ),
+            title: "New Announcement - Expensed",
+            data: { breadcrumb: "New" },
+          },
+          {
+            path: ":id/edit",
+            loadComponent: () =>
+              import("./features/super-admin/announcements/announcement-form.component").then(
+                (m) => m.AnnouncementFormComponent
+              ),
+            title: "Edit Announcement - Expensed",
+            data: { breadcrumb: "Edit" },
+          },
+        ],
+      },
+      {
+        path: "email-templates",
+        data: { breadcrumb: "Email Templates" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/super-admin/email-templates/email-template-list.component").then(
+                (m) => m.EmailTemplateListComponent
+              ),
+            title: "Email Templates - Expensed",
+            data: { breadcrumb: "All" },
+          },
+          {
+            path: ":name",
+            loadComponent: () =>
+              import("./features/super-admin/email-templates/email-template-editor.component").then(
+                (m) => m.EmailTemplateEditorComponent
+              ),
+            title: "Edit Template - Expensed",
+            data: { breadcrumb: "Edit" },
+          },
+        ],
+      },
+      {
+        path: "plans",
+        data: { breadcrumb: "Plans" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/super-admin/plan-management/plan-list.component").then(
+                (m) => m.PlanListComponent
+              ),
+            title: "Manage Plans - Expensed",
+            data: { breadcrumb: "All" },
+          },
+          {
+            path: ":id",
+            loadComponent: () =>
+              import("./features/super-admin/plan-management/plan-editor.component").then(
+                (m) => m.PlanEditorComponent
+              ),
+            title: "Edit Plan - Expensed",
+            data: { breadcrumb: "Edit" },
+          },
+        ],
+      },
+      // Operations routes
+      {
+        path: "impersonation",
+        data: { breadcrumb: "Impersonation" },
+        children: [
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/super-admin/impersonation/impersonation-history.component").then(
+                (m) => m.ImpersonationHistoryComponent
+              ),
+            title: "Impersonation History - Expensed",
+            data: { breadcrumb: "History" },
+          },
+          {
+            path: "start",
+            loadComponent: () =>
+              import("./features/super-admin/impersonation/user-search.component").then(
+                (m) => m.UserSearchComponent
+              ),
+            title: "Impersonate User - Expensed",
+            data: { breadcrumb: "Start" },
+          },
+        ],
+      },
+      {
+        path: "bulk-actions",
+        loadComponent: () =>
+          import("./features/super-admin/bulk-actions/bulk-operations.component").then(
+            (m) => m.BulkOperationsComponent
+          ),
+        title: "Bulk Actions - Expensed",
+        data: { breadcrumb: "Bulk Actions" },
+      },
+      {
+        path: "invoices",
+        loadComponent: () =>
+          import("./features/super-admin/invoices/invoice-management.component").then(
+            (m) => m.InvoiceManagementComponent
+          ),
+        title: "Invoice Management - Expensed",
+        data: { breadcrumb: "Invoices" },
+      },
+      {
+        path: "api-keys",
+        loadComponent: () =>
+          import("./features/super-admin/api-keys/api-key-list.component").then(
+            (m) => m.ApiKeyListComponent
+          ),
+        title: "API Keys - Expensed",
+        data: { breadcrumb: "API Keys" },
+      },
+      // System routes
+      {
+        path: "errors",
+        loadComponent: () =>
+          import("./features/super-admin/error-logs/error-log-list.component").then(
+            (m) => m.ErrorLogListComponent
+          ),
+        title: "Error Logs - Expensed",
+        data: { breadcrumb: "Error Logs" },
+      },
+      {
+        path: "integrations",
+        loadComponent: () =>
+          import("./features/super-admin/integrations/integration-health.component").then(
+            (m) => m.IntegrationHealthComponent
+          ),
+        title: "Integration Health - Expensed",
+        data: { breadcrumb: "Integrations" },
+      },
+      {
+        path: "scheduled-tasks",
+        loadComponent: () =>
+          import("./features/super-admin/scheduled-tasks/task-list.component").then(
+            (m) => m.TaskListComponent
+          ),
+        title: "Scheduled Tasks - Expensed",
+        data: { breadcrumb: "Scheduled Tasks" },
+      },
+      {
+        path: "data-export",
+        loadComponent: () =>
+          import("./features/super-admin/data-export/data-export.component").then(
+            (m) => m.DataExportComponent
+          ),
+        title: "Data Export - Expensed",
+        data: { breadcrumb: "Data Export" },
       },
     ],
   },

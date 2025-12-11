@@ -52,7 +52,10 @@ CREATE POLICY "Admins can delete organization members"
 
 -- Function to check if user is admin in an organization
 CREATE OR REPLACE FUNCTION is_organization_admin(p_organization_id UUID, p_user_id UUID)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM organization_members
@@ -62,7 +65,7 @@ BEGIN
       AND is_active = true
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to add member to organization (admin only)
 CREATE OR REPLACE FUNCTION add_organization_member(
@@ -72,7 +75,10 @@ CREATE OR REPLACE FUNCTION add_organization_member(
   p_manager_id UUID DEFAULT NULL,
   p_department TEXT DEFAULT NULL
 )
-RETURNS organization_members AS $$
+RETURNS organization_members 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_member organization_members;
 BEGIN
@@ -100,14 +106,17 @@ BEGIN
 
   RETURN v_member;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to update member role (admin only)
 CREATE OR REPLACE FUNCTION update_organization_member_role(
   p_member_id UUID,
   p_new_role TEXT
 )
-RETURNS organization_members AS $$
+RETURNS organization_members 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_member organization_members;
   v_organization_id UUID;
@@ -130,11 +139,14 @@ BEGIN
 
   RETURN v_member;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to remove member from organization (admin only)
 CREATE OR REPLACE FUNCTION remove_organization_member(p_member_id UUID)
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_organization_id UUID;
 BEGIN
@@ -155,7 +167,7 @@ BEGIN
 
   RETURN true;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- FIXED USERS TABLE POLICIES (Non-recursive)

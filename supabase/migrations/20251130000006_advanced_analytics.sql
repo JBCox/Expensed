@@ -23,7 +23,10 @@ RETURNS TABLE (
   approved_amount DECIMAL(12, 2),
   pending_amount DECIMAL(12, 2),
   rejected_amount DECIMAL(12, 2)
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   WITH date_series AS (
@@ -69,7 +72,7 @@ BEGIN
   GROUP BY ds.period_start
   ORDER BY ds.period_start;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- CATEGORY BREAKDOWN ANALYSIS
@@ -90,7 +93,10 @@ RETURNS TABLE (
   avg_expense DECIMAL(12, 2),
   max_expense DECIMAL(12, 2),
   min_expense DECIMAL(12, 2)
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_total DECIMAL(12, 2);
 BEGIN
@@ -122,7 +128,7 @@ BEGIN
   GROUP BY e.category
   ORDER BY total_amount DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- TOP SPENDERS ANALYSIS
@@ -145,7 +151,10 @@ RETURNS TABLE (
   avg_expense DECIMAL(12, 2),
   approval_rate DECIMAL(5, 2),
   policy_violation_count BIGINT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -167,7 +176,7 @@ BEGIN
   ORDER BY total_amount DESC
   LIMIT p_limit;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- MERCHANT ANALYSIS
@@ -187,7 +196,10 @@ RETURNS TABLE (
   avg_expense DECIMAL(12, 2),
   unique_users BIGINT,
   most_common_category TEXT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   WITH merchant_stats AS (
@@ -217,7 +229,7 @@ BEGIN
   ORDER BY total_amount DESC
   LIMIT p_limit;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- APPROVAL METRICS
@@ -233,7 +245,10 @@ RETURNS TABLE (
   metric_name TEXT,
   metric_value DECIMAL(12, 2),
   metric_unit TEXT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
 
@@ -300,7 +315,7 @@ BEGIN
     AND expense_date >= p_start_date
     AND expense_date <= p_end_date;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- BUDGET VS ACTUAL
@@ -320,7 +335,10 @@ RETURNS TABLE (
   remaining DECIMAL(12, 2),
   utilization_percent DECIMAL(5, 2),
   status TEXT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -363,7 +381,7 @@ BEGIN
   GROUP BY b.id, b.name, b.budget_type, b.amount
   ORDER BY utilization_percent DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- DEPARTMENT COMPARISON
@@ -382,7 +400,10 @@ RETURNS TABLE (
   employee_count BIGINT,
   per_employee_avg DECIMAL(12, 2),
   percentage_of_total DECIMAL(5, 2)
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_total DECIMAL(12, 2);
 BEGIN
@@ -413,7 +434,7 @@ BEGIN
   GROUP BY u.department
   ORDER BY total_amount DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- YEAR OVER YEAR COMPARISON
@@ -431,7 +452,10 @@ RETURNS TABLE (
   previous_year_amount DECIMAL(12, 2),
   change_amount DECIMAL(12, 2),
   change_percent DECIMAL(5, 2)
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   WITH current_year AS (
@@ -473,7 +497,7 @@ BEGIN
   LEFT JOIN previous_year py ON m.month_num = py.month
   ORDER BY m.month_num;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- DASHBOARD SUMMARY
@@ -490,7 +514,10 @@ RETURNS TABLE (
   metric_value DECIMAL(12, 2),
   previous_value DECIMAL(12, 2),
   change_percent DECIMAL(5, 2)
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_days INT;
   v_prev_start DATE;
@@ -552,7 +579,7 @@ BEGIN
     0::DECIMAL(12, 2),
     0::DECIMAL(5, 2);
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- MATERIALIZED VIEW FOR DASHBOARD PERFORMANCE (Optional)

@@ -14,7 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { PerDiemService } from '../../../core/services/per-diem.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { PerDiemRate, TRIP_STATUS_CONFIG } from '../../../core/models/per-diem.model';
+import { PerDiemRate } from '../../../core/models/per-diem.model';
 
 @Component({
   selector: 'app-per-diem-settings',
@@ -542,8 +542,7 @@ export class PerDiemSettingsComponent implements OnInit {
         this.rates.set(rates);
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Error loading rates:', err);
+      error: () => {
         this.notificationService.showError('Failed to load per diem rates');
         this.loading.set(false);
       },
@@ -576,8 +575,7 @@ export class PerDiemSettingsComponent implements OnInit {
         });
         this.loadRates();
       },
-      error: (err) => {
-        console.error('Error adding rate:', err);
+      error: () => {
         this.notificationService.showError('Failed to add per diem rate');
       },
       complete: () => this.saving.set(false),
@@ -601,8 +599,7 @@ export class PerDiemSettingsComponent implements OnInit {
         this.notificationService.showSuccess('Per diem rate deleted');
         this.loadRates();
       },
-      error: (err) => {
-        console.error('Error deleting rate:', err);
+      error: () => {
         this.notificationService.showError('Failed to delete per diem rate');
       },
     });

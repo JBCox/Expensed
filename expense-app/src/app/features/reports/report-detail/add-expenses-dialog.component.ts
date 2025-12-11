@@ -80,8 +80,7 @@ export class AddExpensesDialogComponent implements OnInit {
                     this.expenses.set(available);
                     this.loading.set(false);
                 },
-                error: (err) => {
-                    console.error("Failed to load expenses", err);
+                error: (_err) => {
                     this.loading.set(false);
                 },
             });

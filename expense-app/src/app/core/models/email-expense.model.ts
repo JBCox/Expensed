@@ -15,7 +15,7 @@ export interface EmailInboxConfig {
   id: string;
   organization_id: string;
 
-  /** Inbox email address (e.g., expenses@yourorg.jensify.com) */
+  /** Inbox email address (e.g., expenses@yourorg.expensed.app) */
   inbox_address: string;
   /** Whether email processing is enabled */
   is_enabled: boolean;

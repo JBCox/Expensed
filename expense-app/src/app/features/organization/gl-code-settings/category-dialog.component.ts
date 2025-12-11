@@ -115,7 +115,7 @@ function getCategoryColors(): string[] {
         </mat-form-field>
 
         <div class="visual-section">
-          <label class="section-label">Icon</label>
+          <span class="section-label">Icon</span>
           <div class="icon-grid">
             @for (item of categoryIcons; track item.icon) {
               <button type="button" class="icon-btn"
@@ -129,7 +129,7 @@ function getCategoryColors(): string[] {
         </div>
 
         <div class="visual-section">
-          <label class="section-label">Color</label>
+          <span class="section-label">Color</span>
           <div class="color-grid">
             @for (color of categoryColors; track color) {
               <button type="button" class="color-btn"
@@ -145,7 +145,7 @@ function getCategoryColors(): string[] {
         </div>
 
         <div class="preview-section">
-          <label class="section-label">Preview</label>
+          <span class="section-label">Preview</span>
           <div class="category-preview">
             <div class="preview-icon" [style.background]="form.get('color')?.value || categoryColors[0]">
               <mat-icon>{{ form.get('icon')?.value || 'receipt' }}</mat-icon>

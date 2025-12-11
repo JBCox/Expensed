@@ -330,8 +330,8 @@ type DialogMode = 'closed' | 'add' | 'edit' | 'view';
 
       <!-- Add/Edit Vendor Dialog -->
       @if (dialogMode() !== 'closed') {
-        <div class="dialog-overlay" (click)="closeDialog()">
-          <div class="dialog-container dialog-large" (click)="$event.stopPropagation()">
+        <div class="dialog-overlay" (click)="closeDialog()" (keydown.escape)="closeDialog()" tabindex="-1" role="dialog" aria-modal="true">
+          <div class="dialog-container dialog-large" (click)="$event.stopPropagation()" (keydown.escape)="closeDialog()" role="document">
             <div class="dialog-header">
               <h2>
                 @switch (dialogMode()) {

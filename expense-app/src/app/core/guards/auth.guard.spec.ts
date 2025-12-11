@@ -5,7 +5,7 @@ import { authGuard, financeGuard, adminGuard, managerGuard } from './auth.guard'
 import { AuthService } from '../services/auth.service';
 import { OrganizationService } from '../services/organization.service';
 import { SupabaseService } from '../services/supabase.service';
-import { User } from '../models';
+import { User, OrganizationMember } from '../models';
 import { UserRole } from '../models/enums';
 
 describe('Auth Guards', () => {
@@ -16,11 +16,24 @@ describe('Auth Guards', () => {
   let userProfileSubject: BehaviorSubject<User | null>;
   let sessionInitializedSubject: BehaviorSubject<boolean>;
   let organizationInitializedSubject: BehaviorSubject<boolean>;
+  let currentMembershipSubject: BehaviorSubject<OrganizationMember | null>;
+
+  const mockMembership: OrganizationMember = {
+    id: 'member-1',
+    organization_id: 'org-123',
+    user_id: 'user-1',
+    role: UserRole.EMPLOYEE,
+    is_active: true,
+    joined_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
   beforeEach(() => {
     userProfileSubject = new BehaviorSubject<User | null>(null);
     sessionInitializedSubject = new BehaviorSubject<boolean>(true);
     organizationInitializedSubject = new BehaviorSubject<boolean>(true);
+    currentMembershipSubject = new BehaviorSubject<OrganizationMember | null>(mockMembership);
 
     mockRouter = jasmine.createSpyObj('Router', ['navigate', 'parseUrl']);
     mockRouter.parseUrl.and.callFake((url: string) => ({ toString: () => url } as any));
@@ -35,6 +48,7 @@ describe('Auth Guards', () => {
     mockOrganizationService = {
       get currentOrganizationId() { return 'org-123'; },
       organizationInitialized$: organizationInitializedSubject.asObservable(),
+      currentMembership$: currentMembershipSubject.asObservable(),
       isCurrentUserFinanceOrAdmin: jasmine.createSpy('isCurrentUserFinanceOrAdmin').and.returnValue(false),
       isCurrentUserAdmin: jasmine.createSpy('isCurrentUserAdmin').and.returnValue(false),
       isCurrentUserManagerOrAbove: jasmine.createSpy('isCurrentUserManagerOrAbove').and.returnValue(false)

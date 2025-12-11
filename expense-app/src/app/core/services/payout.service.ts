@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { environment } from '../../../environments/environment';
 import {
@@ -45,6 +45,7 @@ import {
   providedIn: 'root'
 })
 export class PayoutService {
+  private readonly supabase = inject(SupabaseService);
   private readonly edgeFunctionUrl = `${environment.supabase.url}/functions/v1/stripe-connect`;
 
   /** Current payout settings for the organization */
@@ -54,8 +55,6 @@ export class PayoutService {
   /** Current user's bank accounts */
   private bankAccountsSubject = new BehaviorSubject<EmployeeBankAccount[]>([]);
   public bankAccounts$ = this.bankAccountsSubject.asObservable();
-
-  constructor(private supabase: SupabaseService) {}
 
   // ============================================================================
   // STRIPE CONNECT (Admin Operations)
@@ -80,7 +79,7 @@ export class PayoutService {
         }
       }),
       catchError(error => {
-        console.error('Failed to get Stripe account status:', error);
+        console.error('[PayoutService] Failed to get payout settings:', error);
         return of({ connected: false, has_key: false, payout_method: 'manual' as PayoutMethod });
       })
     );
@@ -235,7 +234,7 @@ export class PayoutService {
         return data || [];
       }),
       catchError(error => {
-        console.error('Failed to fetch bank accounts:', error);
+        console.error('[PayoutService] Failed to get bank accounts:', error);
         return of([]);
       })
     );
@@ -258,11 +257,14 @@ export class PayoutService {
       organization_id: organizationId,
       bank_account_token: bankAccountToken
     })).pipe(
-      tap(result => {
+      switchMap(result => {
         if (result.success) {
-          // Refresh bank accounts list
-          this.getMyBankAccounts(organizationId).subscribe();
+          // Refresh bank accounts list and return original result
+          return this.getMyBankAccounts(organizationId).pipe(
+            map(() => result)
+          );
         }
+        return of(result);
       })
     );
   }
@@ -273,14 +275,17 @@ export class PayoutService {
    * After adding a bank account, Stripe sends two small deposits.
    * User enters these amounts to verify ownership.
    *
+   * @param organizationId - Organization ID (needed to retrieve Stripe key)
    * @param bankAccountId - Our database bank account ID
    * @param amounts - Two micro-deposit amounts in cents [32, 45]
    */
   verifyBankAccount(
+    organizationId: string,
     bankAccountId: string,
     amounts: [number, number]
   ): Observable<{ success: boolean; verified?: boolean; error?: string }> {
     return from(this.callEdgeFunction<{ success: boolean; verified?: boolean; error?: string }>('verify_bank_account', {
+      organization_id: organizationId,
       bank_account_id: bankAccountId,
       amounts
     }));
@@ -297,9 +302,10 @@ export class PayoutService {
     ).pipe(
       map(({ error }) => {
         if (error) throw error;
-        // Refresh bank accounts
-        this.getMyBankAccounts(organizationId).subscribe();
-      })
+      }),
+      // Chain the refresh after successful RPC call
+      switchMap(() => this.getMyBankAccounts(organizationId)),
+      map(() => undefined)
     );
   }
 
@@ -315,9 +321,10 @@ export class PayoutService {
     ).pipe(
       map(({ error }) => {
         if (error) throw error;
-        // Refresh bank accounts
-        this.getMyBankAccounts(organizationId).subscribe();
-      })
+      }),
+      // Chain the refresh after successful deletion
+      switchMap(() => this.getMyBankAccounts(organizationId)),
+      map(() => undefined)
     );
   }
 
@@ -336,12 +343,15 @@ export class PayoutService {
     ).pipe(
       map(({ data, error }) => {
         if (error) {
-          console.error('Failed to get pending payouts:', error);
+          console.error('[PayoutService] Failed to get pending payouts summary:', error);
           return [];
         }
         return data || [];
       }),
-      catchError(() => of([]))
+      catchError(error => {
+        console.error('[PayoutService] Failed to get pending payouts summary:', error);
+        return of([]);
+      })
     );
   }
 
@@ -392,7 +402,7 @@ export class PayoutService {
         return Array.from(userMap.values());
       }),
       catchError(error => {
-        console.error('Failed to get approved expenses:', error);
+        console.error('[PayoutService] Failed to get approved expenses for payout:', error);
         return of([]);
       })
     );
@@ -477,7 +487,7 @@ export class PayoutService {
     return from(this.callEdgeFunction<Payout>('get_payout_status', { payout_id: payoutId })).pipe(
       map(data => data as Payout | null),
       catchError(error => {
-        console.error('Failed to get payout status:', error);
+        console.error('[PayoutService] Failed to get payout status:', error);
         return of(null);
       })
     );
@@ -499,7 +509,10 @@ export class PayoutService {
         if (error) throw error;
         return data || [];
       }),
-      catchError(() => of([]))
+      catchError(error => {
+        console.error('[PayoutService] Failed to get payout history:', error);
+        return of([]);
+      })
     );
   }
 
@@ -522,7 +535,10 @@ export class PayoutService {
         if (error) throw error;
         return data || [];
       }),
-      catchError(() => of([]))
+      catchError(error => {
+        console.error('[PayoutService] Failed to get my payout history:', error);
+        return of([]);
+      })
     );
   }
 
@@ -549,6 +565,21 @@ export class PayoutService {
    */
   exportPayoutsToCSV(data: PayoutExportData[]): void {
     const headers = ['Employee Name', 'Email', 'Amount ($)', 'Expense Count', 'Expense IDs', 'Export Date'];
+    
+    // Helper to sanitize CSV fields to prevent formula injection
+    const sanitize = (field: string | number | boolean | null | undefined): string => {
+      const stringField = String(field ?? '');
+      // Escape double quotes by doubling them
+      const escapedField = stringField.replace(/"/g, '""');
+      
+      // Prevent formula injection if field starts with =, +, -, or @
+      if (/^[=+\-@]/.test(escapedField)) {
+        return `"'${escapedField}"`;
+      }
+      
+      return `"${escapedField}"`;
+    };
+
     const rows = data.map(d => [
       d.employee_name,
       d.employee_email,
@@ -560,7 +591,7 @@ export class PayoutService {
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(r => r.map(cell => `"${cell}"`).join(','))
+      ...rows.map(r => r.map(cell => sanitize(cell)).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

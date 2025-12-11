@@ -8,7 +8,6 @@ import {
   EmailInboxConfig,
   UserEmailAlias,
   InboundEmail,
-  EmailAttachment,
   EmailProcessingStats,
   UpdateInboxConfigDto,
   AddEmailAliasDto,
@@ -195,7 +194,11 @@ export class EmailExpenseService {
         this.logger.info('Email alias added', 'EmailExpenseService', { email: alias.email });
         return data as UserEmailAlias;
       }),
-      tap(() => this.getEmailAliases().subscribe()),
+      tap((newAlias) => {
+        // Update signal by adding the new alias to the existing list
+        const currentAliases = this._emailAliases();
+        this._emailAliases.set([newAlias, ...currentAliases]);
+      }),
       catchError(this.handleError)
     );
   }
@@ -222,7 +225,14 @@ export class EmailExpenseService {
         this.logger.info('Email alias verified', 'EmailExpenseService', { aliasId });
         return data as UserEmailAlias;
       }),
-      tap(() => this.getEmailAliases().subscribe()),
+      tap((verifiedAlias) => {
+        // Update signal by replacing the updated alias in the list
+        const currentAliases = this._emailAliases();
+        const updatedAliases = currentAliases.map(alias =>
+          alias.id === verifiedAlias.id ? verifiedAlias : alias
+        );
+        this._emailAliases.set(updatedAliases);
+      }),
       catchError(this.handleError)
     );
   }
@@ -241,7 +251,12 @@ export class EmailExpenseService {
         if (error) throw error;
         this.logger.info('Email alias removed', 'EmailExpenseService', { aliasId });
       }),
-      tap(() => this.getEmailAliases().subscribe()),
+      tap(() => {
+        // Update signal by filtering out the removed alias
+        const currentAliases = this._emailAliases();
+        const updatedAliases = currentAliases.filter(alias => alias.id !== aliasId);
+        this._emailAliases.set(updatedAliases);
+      }),
       catchError(this.handleError)
     );
   }

@@ -7,12 +7,18 @@ import { of, throwError } from 'rxjs';
 import { ExpenseStatus, ExpenseCategory } from '../models/enums';
 import { Expense, CreateExpenseDto } from '../models/expense.model';
 import { Receipt, ReceiptUploadResponse } from '../models/receipt.model';
+import { ReceiptService } from './receipt.service';
+import { ExpenseReceiptService } from './expense-receipt.service';
+import { ReportService } from './report.service';
 
 describe('ExpenseService', () => {
   let service: ExpenseService;
   let supabaseServiceSpy: jasmine.SpyObj<SupabaseService>;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
   let organizationServiceSpy: jasmine.SpyObj<OrganizationService>;
+  let receiptServiceSpy: jasmine.SpyObj<ReceiptService>;
+  let expenseReceiptServiceSpy: jasmine.SpyObj<ExpenseReceiptService>;
+  let reportServiceSpy: jasmine.SpyObj<ReportService>;
 
   const mockUserId = 'test-user-id';
   const mockOrgId = 'test-org-id';
@@ -77,12 +83,19 @@ describe('ExpenseService', () => {
       { currentOrganizationId: mockOrgId }
     );
 
+    const receiptSpy = jasmine.createSpyObj('ReceiptService', ['uploadReceipt', 'validateReceiptFile', 'getReceiptById', 'getMyReceipts', 'deleteReceipt', 'getReceiptUrl', 'getReceiptSignedUrl', 'validateReceiptFileAsync']);
+    const expenseReceiptSpy = jasmine.createSpyObj('ExpenseReceiptService', ['getExpenseReceipts', 'attachReceipt', 'detachReceipt', 'reorderReceipts', 'setPrimaryReceipt']);
+    const reportSpy = jasmine.createSpyObj('ReportService', ['autoAttachExpenseToMonthlyReport']);
+
     TestBed.configureTestingModule({
       providers: [
         ExpenseService,
         { provide: SupabaseService, useValue: supabaseSpy },
         { provide: NotificationService, useValue: notificationSpy },
-        { provide: OrganizationService, useValue: organizationSpy }
+        { provide: OrganizationService, useValue: organizationSpy },
+        { provide: ReceiptService, useValue: receiptSpy },
+        { provide: ExpenseReceiptService, useValue: expenseReceiptSpy },
+        { provide: ReportService, useValue: reportSpy }
       ]
     });
 
@@ -90,6 +103,9 @@ describe('ExpenseService', () => {
     supabaseServiceSpy = TestBed.inject(SupabaseService) as jasmine.SpyObj<SupabaseService>;
     notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
     organizationServiceSpy = TestBed.inject(OrganizationService) as jasmine.SpyObj<OrganizationService>;
+    receiptServiceSpy = TestBed.inject(ReceiptService) as jasmine.SpyObj<ReceiptService>;
+    expenseReceiptServiceSpy = TestBed.inject(ExpenseReceiptService) as jasmine.SpyObj<ExpenseReceiptService>;
+    reportServiceSpy = TestBed.inject(ReportService) as jasmine.SpyObj<ReportService>;
   });
 
   it('should be created', () => {
@@ -115,6 +131,8 @@ describe('ExpenseService', () => {
       supabaseServiceSpy.client.from = jasmine.createSpy('from').and.returnValue({
         insert: insertSpy
       }) as any;
+
+      reportServiceSpy.autoAttachExpenseToMonthlyReport.and.returnValue(Promise.resolve());
 
       service.createExpense(dto).subscribe({
         next: (expense) => {
@@ -220,14 +238,14 @@ describe('ExpenseService', () => {
         public_url: mockPublicUrl
       };
 
-      // Replace the service method with a spy that returns the mock response
-      spyOn(service, 'uploadReceipt').and.returnValue(of(mockResponse));
+      // Mock the ReceiptService.uploadReceipt method
+      receiptServiceSpy.uploadReceipt.and.returnValue(of(mockResponse));
 
       service.uploadReceipt(mockFile).subscribe({
         next: (response: ReceiptUploadResponse) => {
           expect(response.receipt).toEqual(mockReceipt);
           expect(response.public_url).toBe(mockPublicUrl);
-          expect(service.uploadReceipt).toHaveBeenCalledWith(mockFile);
+          expect(receiptServiceSpy.uploadReceipt).toHaveBeenCalledWith(mockFile);
           done();
         },
         error: done.fail
@@ -236,6 +254,7 @@ describe('ExpenseService', () => {
 
     it('should reject invalid file type', (done) => {
       const mockFile = new File(['test'], 'document.txt', { type: 'text/plain' });
+      receiptServiceSpy.uploadReceipt.and.returnValue(throwError(() => new Error('Invalid file type')));
 
       service.uploadReceipt(mockFile).subscribe({
         next: () => done.fail('Should have thrown error'),
@@ -249,6 +268,7 @@ describe('ExpenseService', () => {
     it('should reject file exceeding size limit', (done) => {
       const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
       const mockFile = new File([largeContent], 'large.jpg', { type: 'image/jpeg' });
+      receiptServiceSpy.uploadReceipt.and.returnValue(throwError(() => new Error('File size exceeds')));
 
       service.uploadReceipt(mockFile).subscribe({
         next: () => done.fail('Should have thrown error'),
@@ -263,24 +283,29 @@ describe('ExpenseService', () => {
   describe('validateReceiptFile', () => {
     it('should accept valid JPEG file', () => {
       const mockFile = new File(['test'], 'receipt.jpg', { type: 'image/jpeg' });
+      receiptServiceSpy.validateReceiptFile.and.returnValue(null);
       const result = service.validateReceiptFile(mockFile);
       expect(result).toBeNull();
+      expect(receiptServiceSpy.validateReceiptFile).toHaveBeenCalledWith(mockFile);
     });
 
     it('should accept valid PNG file', () => {
       const mockFile = new File(['test'], 'receipt.png', { type: 'image/png' });
+      receiptServiceSpy.validateReceiptFile.and.returnValue(null);
       const result = service.validateReceiptFile(mockFile);
       expect(result).toBeNull();
     });
 
     it('should accept valid PDF file', () => {
       const mockFile = new File(['test'], 'receipt.pdf', { type: 'application/pdf' });
+      receiptServiceSpy.validateReceiptFile.and.returnValue(null);
       const result = service.validateReceiptFile(mockFile);
       expect(result).toBeNull();
     });
 
     it('should reject invalid file type', () => {
       const mockFile = new File(['test'], 'document.txt', { type: 'text/plain' });
+      receiptServiceSpy.validateReceiptFile.and.returnValue('Invalid file type');
       const result = service.validateReceiptFile(mockFile);
       expect(result).toContain('Invalid file type');
     });
@@ -288,6 +313,7 @@ describe('ExpenseService', () => {
     it('should reject file exceeding size limit', () => {
       const largeContent = new Array(11 * 1024 * 1024).fill('a').join('');
       const mockFile = new File([largeContent], 'large.jpg', { type: 'image/jpeg' });
+      receiptServiceSpy.validateReceiptFile.and.returnValue('File size exceeds');
       const result = service.validateReceiptFile(mockFile);
       expect(result).toContain('File size exceeds');
     });
@@ -433,34 +459,12 @@ describe('ExpenseService', () => {
   });
 
   describe('deleteReceipt', () => {
-    it('should delete receipt and file', (done) => {
-      const mockFetchResponse = { data: { file_path: 'test/path.jpg' }, error: null };
-      const mockDeleteFileResponse = { error: null };
-      const mockDeleteRecordResponse = { error: null };
-
-      const singleSpy = jasmine.createSpy('single').and.resolveTo(mockFetchResponse);
-      const eqSpy1 = jasmine.createSpy('eq').and.returnValue({ single: singleSpy });
-      const selectSpy = jasmine.createSpy('select').and.returnValue({ eq: eqSpy1 });
-
-      const eqSpy2 = jasmine.createSpy('eq').and.resolveTo(mockDeleteRecordResponse);
-      const deleteSpy = jasmine.createSpy('delete').and.returnValue({ eq: eqSpy2 });
-
-      let callCount = 0;
-      supabaseServiceSpy.client.from = jasmine.createSpy('from').and.callFake(() => {
-        callCount++;
-        if (callCount === 1) {
-          return { select: selectSpy } as any;
-        } else {
-          return { delete: deleteSpy } as any;
-        }
-      });
-
-      supabaseServiceSpy.deleteFile.and.resolveTo(mockDeleteFileResponse);
+    it('should delete receipt', (done) => {
+      receiptServiceSpy.deleteReceipt.and.returnValue(of(void 0));
 
       service.deleteReceipt('receipt-1').subscribe({
         next: () => {
-          expect(supabaseServiceSpy.deleteFile).toHaveBeenCalled();
-          expect(deleteSpy).toHaveBeenCalled();
+          expect(receiptServiceSpy.deleteReceipt).toHaveBeenCalledWith('receipt-1');
           done();
         },
         error: done.fail

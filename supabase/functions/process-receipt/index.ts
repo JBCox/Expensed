@@ -56,13 +56,11 @@ const CURRENCY_KEYWORDS: Record<string, string> = {
   "POUND": "GBP",
 };
 
-// Allowed origins (production and development)
+// Production origins only - localhost removed for security
 const ALLOWED_ORIGINS = [
-  "https://bfudcugrarerqvvyfpoz.supabase.co", // Supabase project URL
-  "https://yourapp.com",           // Production domain (when deployed)
-  "https://www.yourapp.com",       // Production www domain (when deployed)
-  "http://localhost:4200",         // Angular dev server
-  "http://localhost:3000",         // Alternative dev port
+  "https://expensed.app",
+  "https://www.expensed.app",
+  "https://bfudcugrarerqvvyfpoz.supabase.co"
 ];
 
 /**
@@ -96,7 +94,7 @@ serve(async (req: Request) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -120,7 +118,7 @@ serve(async (req: Request) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json" } },
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -130,7 +128,7 @@ serve(async (req: Request) => {
     if (!image_base64) {
       return new Response(
         JSON.stringify({ error: "Missing image_base64 parameter" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -140,7 +138,7 @@ serve(async (req: Request) => {
       console.error("GOOGLE_VISION_API_KEY not configured");
       return new Response(
         JSON.stringify({ error: "OCR service not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json" } },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -172,7 +170,7 @@ serve(async (req: Request) => {
       console.error("Vision API error:", errorText);
       return new Response(
         JSON.stringify({ error: "OCR processing failed", details: errorText }),
-        { status: 500, headers: { "Content-Type": "application/json" } },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -228,7 +226,7 @@ serve(async (req: Request) => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   }

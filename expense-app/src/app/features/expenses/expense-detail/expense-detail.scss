@@ -379,3 +379,13 @@
     }
   }
 }
+
+// Inline icon for tip messages
+.inline-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: var(--jensify-spacing-xs);
+  color: var(--jensify-primary);
+}

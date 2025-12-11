@@ -102,8 +102,8 @@ export class ReceiptGalleryComponent implements OnInit, OnChanges {
           3600 // 1 hour expiry
         );
         urlMap.set(expenseReceipt.receipt.id, signedUrl);
-      } catch (error) {
-        console.error('Failed to load receipt URL:', error);
+      } catch {
+        // Failed to load receipt URL
       }
     }
 

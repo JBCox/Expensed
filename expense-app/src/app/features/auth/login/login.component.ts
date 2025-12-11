@@ -23,6 +23,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { Subject } from "rxjs";
 import { takeUntil } from "rxjs/operators";
 import { AuthService } from "../../../core/services/auth.service";
+import { SuperAdminService } from "../../../core/services/super-admin.service";
 
 /**
  * Login Component
@@ -50,6 +51,7 @@ import { AuthService } from "../../../core/services/auth.service";
 export class LoginComponent implements OnInit, OnDestroy {
   private formBuilder = inject(FormBuilder);
   private authService = inject(AuthService);
+  private superAdminService = inject(SuperAdminService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
@@ -67,9 +69,10 @@ export class LoginComponent implements OnInit, OnDestroy {
     // Capture return URL if provided, unless it's one of the legacy default routes
     const incomingReturnUrl = this.route.snapshot.queryParams["returnUrl"] ||
       null;
-    this.returnUrl = this.authService.shouldUseDefaultRoute(incomingReturnUrl)
-      ? null
-      : incomingReturnUrl;
+    // SECURITY: Validate return URL to prevent open redirect attacks
+    this.returnUrl = this.isValidReturnUrl(incomingReturnUrl)
+      ? incomingReturnUrl
+      : null;
 
     // Initialize the login form with validation
     this.loginForm = this.formBuilder.group({
@@ -94,16 +97,11 @@ export class LoginComponent implements OnInit, OnDestroy {
    * Handle form submission
    */
   async onSubmit(): Promise<void> {
-    console.log("Login form submitted");
-    console.log("Form valid:", this.loginForm.valid);
-    console.log("Form value:", this.loginForm.value);
-
     // Reset error message
     this.errorMessage = "";
 
     // Validate form
     if (this.loginForm.invalid) {
-      console.log("Form is invalid, marking touched");
       Object.keys(this.loginForm.controls).forEach((key) => {
         this.loginForm.controls[key].markAsTouched();
       });
@@ -118,19 +116,18 @@ export class LoginComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: async (result) => {
-          console.log("Auth service result:", result);
           if (result.success) {
             this.authService.suppressNextDefaultRedirect();
             await this.authService.refreshUserProfile();
+            // Wait for super admin check to complete before determining route
+            await this.superAdminService.waitForAdminCheck();
             const destination =
               this.returnUrl &&
                 !this.authService.shouldUseDefaultRoute(this.returnUrl)
                 ? this.returnUrl
                 : this.authService.getDefaultRoute();
-            console.log("Navigating to:", destination);
             await this.router.navigateByUrl(destination);
           } else {
-            console.error("Login failed with result error:", result.error);
             this.errorMessage = this.getErrorMessage(
               result.error || "Login failed",
             );
@@ -140,7 +137,6 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (error) => {
-          console.error("Auth service subscription error:", error);
           // Handle authentication errors
           if (error instanceof Error) {
             this.errorMessage = this.getErrorMessage(error.message);
@@ -175,5 +171,34 @@ export class LoginComponent implements OnInit, OnDestroy {
    */
   togglePasswordVisibility(): void {
     this.hidePassword = !this.hidePassword;
+  }
+
+  /**
+   * SECURITY: Validate return URL to prevent open redirect attacks
+   * Only allow internal paths starting with /
+   * Block external URLs, javascript:, data:, and protocol-relative URLs
+   */
+  private isValidReturnUrl(url: string | null): boolean {
+    if (!url) return false;
+
+    // Must start with / (internal path)
+    if (!url.startsWith('/')) return false;
+
+    // Block protocol-relative URLs (//evil.com)
+    if (url.startsWith('//')) return false;
+
+    // Block dangerous protocols that could be used for XSS
+    const dangerousPatterns = [
+      /^javascript:/i,
+      /^data:/i,
+      /^vbscript:/i,
+      /^file:/i,
+    ];
+    if (dangerousPatterns.some(pattern => pattern.test(url))) return false;
+
+    // Don't use legacy default routes
+    if (this.authService.shouldUseDefaultRoute(url)) return false;
+
+    return true;
   }
 }

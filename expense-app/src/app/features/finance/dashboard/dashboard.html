@@ -98,7 +98,7 @@
             <mat-card class="jensify-card">
               <div class="jensify-report-list">
                 @for (report of approvedReports(); track trackByReportId($index, report)) {
-                  <div class="jensify-report-row" (click)="toggleSelection(report.id)">
+                  <div class="jensify-report-row" (click)="toggleSelection(report.id)" (keydown.enter)="toggleSelection(report.id)" tabindex="0" role="button" [attr.aria-label]="'Select report ' + report.name">
                     <mat-checkbox
                       [checked]="isSelected(report.id)"
                       (click)="$event.stopPropagation()"

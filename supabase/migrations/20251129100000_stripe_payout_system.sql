@@ -409,7 +409,10 @@ CREATE OR REPLACE FUNCTION log_payout_action(
   p_action TEXT DEFAULT NULL,
   p_details JSONB DEFAULT '{}'::jsonb
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_log_id UUID;
 BEGIN
@@ -433,7 +436,7 @@ BEGIN
 
   RETURN v_log_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION log_payout_action IS 'Logs payout-related actions to the audit log';
 
@@ -442,7 +445,10 @@ CREATE OR REPLACE FUNCTION get_pending_payout_amount(
   p_user_id UUID,
   p_organization_id UUID
 )
-RETURNS INTEGER AS $$
+RETURNS INTEGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_amount INTEGER;
 BEGIN
@@ -460,7 +466,7 @@ BEGIN
 
   RETURN v_amount;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_pending_payout_amount IS 'Gets total amount pending payout for a user (in cents)';
 
@@ -468,7 +474,10 @@ COMMENT ON FUNCTION get_pending_payout_amount IS 'Gets total amount pending payo
 CREATE OR REPLACE FUNCTION set_default_bank_account(
   p_bank_account_id UUID
 )
-RETURNS void AS $$
+RETURNS void 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_user_id UUID;
   v_org_id UUID;
@@ -505,7 +514,7 @@ BEGIN
     jsonb_build_object('previous_default', 'unset')
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION set_default_bank_account IS 'Sets a bank account as the default for payout';
 
@@ -521,7 +530,10 @@ CREATE TRIGGER update_employee_bank_accounts_updated_at
 
 -- Auto-log bank account additions
 CREATE OR REPLACE FUNCTION log_bank_account_change()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     PERFORM log_payout_action(
@@ -552,7 +564,7 @@ BEGIN
 
   RETURN COALESCE(NEW, OLD);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER log_bank_account_changes
   AFTER INSERT OR DELETE ON employee_bank_accounts
@@ -561,7 +573,10 @@ CREATE TRIGGER log_bank_account_changes
 
 -- Auto-log payout status changes
 CREATE OR REPLACE FUNCTION log_payout_status_change()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   IF OLD.status IS DISTINCT FROM NEW.status THEN
     PERFORM log_payout_action(
@@ -581,7 +596,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER log_payout_status_changes
   AFTER UPDATE ON payouts

@@ -329,8 +329,7 @@ export class FinanceDashboardComponent implements OnInit, OnDestroy {
           this.pendingPayouts.set(payouts);
           this.loadingPayouts.set(false);
         },
-        error: (err) => {
-          console.error('Failed to load payout data:', err);
+        error: (_err) => {
           this.loadingPayouts.set(false);
         }
       });
@@ -438,8 +437,7 @@ export class FinanceDashboardComponent implements OnInit, OnDestroy {
           this.analyticsData.set(data);
           this.loadingAnalytics.set(false);
         },
-        error: (err) => {
-          console.error('Error loading analytics:', err);
+        error: (_err) => {
           this.showError('Failed to load analytics data');
           this.loadingAnalytics.set(false);
         },

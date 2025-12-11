@@ -22,7 +22,10 @@ CREATE OR REPLACE FUNCTION create_organization_with_admin(
   p_settings JSONB DEFAULT NULL,
   p_admin_user_id UUID DEFAULT auth.uid()
 )
-RETURNS organizations AS $$
+RETURNS organizations 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_organization organizations;
   v_default_settings JSONB := '{
@@ -61,7 +64,7 @@ BEGIN
 
   RETURN v_organization;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION create_organization_with_admin IS 'Creates organization and adds creator as admin';
 
@@ -87,7 +90,10 @@ RETURNS TABLE (
   member_count BIGINT,
   active_member_count BIGINT,
   pending_invitation_count BIGINT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -103,7 +109,7 @@ BEGIN
   FROM organizations o
   WHERE o.id = p_organization_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_organization_stats IS 'Returns organization with member and invitation counts';
 
@@ -126,7 +132,10 @@ RETURNS TABLE (
   current_membership JSONB,
   organizations JSONB,
   memberships JSONB
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_current_org_id UUID;
   v_current_org JSONB;
@@ -181,7 +190,7 @@ BEGIN
     COALESCE(v_organizations, '[]'::jsonb),
     COALESCE(v_memberships, '[]'::jsonb);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_user_organization_context IS 'Returns complete organization context for a user';
 

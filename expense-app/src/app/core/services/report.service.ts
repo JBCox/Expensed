@@ -524,6 +524,7 @@ export class ReportService {
   /**
    * Submit a report for approval
    * Changes status from draft to submitted
+   * Pre-checks for manager assignment if workflow requires it
    *
    * @param reportId Report ID
    * @returns Observable of updated report
@@ -531,6 +532,12 @@ export class ReportService {
   submitReport(reportId: string): Observable<ExpenseReport> {
     return from(
       (async () => {
+        // Pre-check: Verify user has a manager assigned (required for most approval workflows)
+        const hasManager = await this.checkManagerAssignment();
+        if (!hasManager) {
+          throw new Error('Cannot submit for approval: You do not have a manager assigned. Please contact your organization administrator to assign a manager to your account.');
+        }
+
         // Load report with expenses/receipts for validation
         const detail = await firstValueFrom(this.getReportById(reportId));
         if (!detail) {
@@ -565,7 +572,14 @@ export class ReportService {
         });
 
         if (approvalError) {
-          throw approvalError;
+          // Provide user-friendly error messages for common issues
+          let errorMessage = approvalError.message || 'Failed to submit report for approval';
+          if (errorMessage.includes('no active manager')) {
+            errorMessage = 'Cannot submit for approval: You do not have a manager assigned. Please contact your organization administrator to assign a manager to your account.';
+          } else if (errorMessage.includes('No eligible user found with role')) {
+            errorMessage = 'Cannot submit for approval: No approver is available for the required role. Please contact your organization administrator.';
+          }
+          throw new Error(errorMessage);
         }
 
         // Fetch updated report with approval details
@@ -584,6 +598,97 @@ export class ReportService {
     );
   }
 
+  /**
+   * Check if current user has a manager assigned in the current organization
+   * Returns true if manager is assigned and active, false otherwise
+   */
+  private async checkManagerAssignment(): Promise<boolean> {
+    const userId = this.supabase.userId;
+    const organizationId = this.orgService.currentOrganizationId;
+
+    if (!userId || !organizationId) {
+      return false;
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('organization_members')
+      .select('manager_id')
+      .eq('user_id', userId)
+      .eq('organization_id', organizationId)
+      .eq('status', 'active')
+      .single();
+
+    if (error || !data) {
+      return false;
+    }
+
+    // If no manager_id is set, user doesn't have a manager
+    if (!data.manager_id) {
+      return false;
+    }
+
+    // Verify the manager is also an active member of the organization
+    const { data: managerData, error: managerError } = await this.supabase.client
+      .from('organization_members')
+      .select('id')
+      .eq('user_id', data.manager_id)
+      .eq('organization_id', organizationId)
+      .eq('status', 'active')
+      .single();
+
+    return !managerError && !!managerData;
+  }
+
+
+  /**
+   * Resubmit a rejected report for approval
+   * Resets the existing approval chain instead of creating a new one
+   *
+   * @param reportId Report ID
+   * @returns Observable of updated report
+   */
+  resubmitReport(reportId: string): Observable<ExpenseReport> {
+    return from(
+      (async () => {
+        // Load report to validate it's in rejected status
+        const detail = await firstValueFrom(this.getReportById(reportId));
+        if (!detail) {
+          throw new Error('Report not found');
+        }
+        if (detail.status !== ReportStatus.REJECTED) {
+          throw new Error('Only rejected reports can be resubmitted');
+        }
+
+        // Get current user ID
+        const userId = (await this.supabase.client.auth.getUser()).data.user?.id;
+        if (!userId) {
+          throw new Error('User not authenticated');
+        }
+
+        // Call the resubmit_report RPC function
+        const { error: resubmitError } = await this.supabase.client.rpc('resubmit_report', {
+          p_report_id: reportId,
+          p_submitter_id: userId
+        });
+
+        if (resubmitError) {
+          throw resubmitError;
+        }
+
+        // Fetch updated report
+        const updatedReport = await firstValueFrom(this.getReportById(reportId));
+        if (!updatedReport) {
+          throw new Error('Failed to fetch updated report');
+        }
+
+        return updatedReport;
+      })()
+    ).pipe(
+      catchError(err => {
+        return throwError(() => new Error(err?.message || 'Failed to resubmit report'));
+      })
+    );
+  }
   /**
    * Approve a report (Manager action)
    * Changes status from submitted to approved

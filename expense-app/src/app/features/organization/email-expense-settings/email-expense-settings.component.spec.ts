@@ -25,7 +25,7 @@ describe('EmailExpenseSettingsComponent', () => {
   const mockInboxConfig: EmailInboxConfig = {
     id: 'inbox-1',
     organization_id: 'org-123',
-    inbox_address: 'expenses@jensify.com',
+    inbox_address: 'expenses@expensed.app',
     is_enabled: true,
     auto_create_expense: true,
     require_attachment: true,
@@ -53,7 +53,7 @@ describe('EmailExpenseSettingsComponent', () => {
     organization_id: 'org-123',
     message_id: 'msg-123',
     from_address: 'user@example.com',
-    to_address: 'expenses@jensify.com',
+    to_address: 'expenses@expensed.app',
     subject: 'Receipt for lunch',
     body_text: 'Receipt attached',
     body_html: '<p>Receipt attached</p>',
@@ -153,7 +153,7 @@ describe('EmailExpenseSettingsComponent', () => {
   });
 
   it('should copy text to clipboard', () => {
-    const testText = 'expenses@jensify.com';
+    const testText = 'expenses@expensed.app';
     component.copyToClipboard(testText);
     expect(clipboardMock.copy).toHaveBeenCalledWith(testText);
     expect(notificationServiceMock.showSuccess).toHaveBeenCalledWith('Copied to clipboard');

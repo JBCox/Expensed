@@ -157,7 +157,10 @@ CREATE INDEX IF NOT EXISTS idx_users_organization_id ON users(organization_id);
 
 -- Function to update updated_at timestamp on organization tables
 CREATE OR REPLACE FUNCTION update_organization_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
    NEW.updated_at = NOW();
    RETURN NEW;
@@ -224,7 +227,7 @@ BEGIN
 
   RETURN v_member;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION accept_invitation(UUID, UUID) IS 'Accepts an invitation and creates organization membership';
 

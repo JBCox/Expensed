@@ -29,7 +29,7 @@
         <mat-card-content>
           <app-bank-account-form
             (tokenCreated)="onTokenCreated($event)"
-            (error)="onFormError($event)"
+            (formError)="onFormError($event)"
             (cancelled)="onFormCancel()">
           </app-bank-account-form>
         </mat-card-content>

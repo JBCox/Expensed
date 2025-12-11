@@ -93,8 +93,6 @@ export class SupabaseService {
       const { data: { session } } = await this.supabase.auth.getSession();
       this.sessionSubject.next(session);
       this.currentUserSubject.next(session?.user || null);
-    } catch (error) {
-      console.error('Error initializing session:', error);
     } finally {
       // Mark session as initialized regardless of success/failure
       this.sessionInitializedSubject.next(true);
@@ -187,7 +185,6 @@ export class SupabaseService {
 
       return { data, error: null };
     } catch (error: unknown) {
-      console.error('Sign up error:', error);
       return { data: null, error };
     }
   }
@@ -206,7 +203,6 @@ export class SupabaseService {
 
       return { data, error: null };
     } catch (error: unknown) {
-      console.error('Sign in error:', error);
       return { data: null, error };
     }
   }
@@ -224,7 +220,6 @@ export class SupabaseService {
 
       return { error: null };
     } catch (error: unknown) {
-      console.error('Sign out error:', error);
       return { error };
     }
   }
@@ -242,7 +237,6 @@ export class SupabaseService {
 
       return { error: null };
     } catch (error: unknown) {
-      console.error('Reset password error:', error);
       return { error };
     }
   }
@@ -260,7 +254,6 @@ export class SupabaseService {
 
       return { error: null };
     } catch (error: unknown) {
-      console.error('Update password error:', error);
       return { error };
     }
   }
@@ -287,7 +280,6 @@ export class SupabaseService {
 
       return { data, error: null };
     } catch (error: unknown) {
-      console.error('Upload file error:', error);
       return { data: null, error };
     }
   }
@@ -316,7 +308,6 @@ export class SupabaseService {
 
       return { signedUrl: data.signedUrl as string, error: null };
     } catch (error: unknown) {
-      console.error('Create signed URL error:', error);
       return { signedUrl: '', error };
     }
   }
@@ -334,7 +325,6 @@ export class SupabaseService {
 
       return { data, error: null };
     } catch (error: unknown) {
-      console.error('Download file error:', error);
       return { data: null, error };
     }
   }
@@ -352,8 +342,30 @@ export class SupabaseService {
 
       return { error: null };
     } catch (error: unknown) {
-      console.error('Delete file error:', error);
       return { error };
+    }
+  }
+
+  /**
+   * Check if new user signups are enabled
+   * Calls the public database function that checks platform_settings
+   *
+   * @returns true if signups are enabled, false if disabled
+   */
+  async areSignupsEnabled(): Promise<boolean> {
+    try {
+      const { data, error } = await this.supabase.rpc('are_signups_enabled');
+
+      if (error) {
+        console.error('Error checking signup status:', error);
+        // Default to enabled if we can't check (fail open for better UX)
+        return true;
+      }
+
+      return data === true;
+    } catch (error) {
+      console.error('Error checking signup status:', error);
+      return true; // Default to enabled on error
     }
   }
 }

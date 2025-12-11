@@ -83,8 +83,7 @@ export class OrganizationSetupComponent implements OnInit, OnDestroy {
         next: (invitations) => {
           this.pendingInvitations.set(invitations);
         },
-        error: (error) => {
-          console.error('Error loading invitations:', error);
+        error: (_error) => {
           // It's okay if this fails - user might just not have invitations
         }
       });

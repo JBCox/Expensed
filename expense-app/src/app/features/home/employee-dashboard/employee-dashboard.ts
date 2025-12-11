@@ -220,7 +220,7 @@ export class EmployeeDashboard implements OnInit {
   }
 
   onSubmitExpense(): void {
-    this.router.navigate(['/expenses/form']);
+    this.router.navigate(['/expenses/new']);
   }
 
   onViewExpense(expense: Expense): void {

@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -242,15 +242,9 @@ export interface DuplicateWarningDialogResult {
   `]
 })
 export class DuplicateWarningDialog {
-  duplicateService = Inject(DuplicateDetectionService);
-
-  constructor(
-    public dialogRef: MatDialogRef<DuplicateWarningDialog, DuplicateWarningDialogResult>,
-    @Inject(MAT_DIALOG_DATA) public data: DuplicateWarningDialogData,
-    public duplicateDetectionService: DuplicateDetectionService
-  ) {
-    this.duplicateService = duplicateDetectionService;
-  }
+  readonly dialogRef = inject(MatDialogRef<DuplicateWarningDialog, DuplicateWarningDialogResult>);
+  readonly data = inject<DuplicateWarningDialogData>(MAT_DIALOG_DATA);
+  readonly duplicateService = inject(DuplicateDetectionService);
 
   getSimilarityClass(score: number): string {
     if (score >= 80) return 'danger';

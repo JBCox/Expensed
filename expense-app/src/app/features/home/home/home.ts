@@ -12,7 +12,7 @@ import { ManagerDashboard } from "../manager-dashboard/manager-dashboard";
 import { FinanceDashboard } from "../finance-dashboard/finance-dashboard";
 import { AdminDashboard } from "../admin-dashboard/admin-dashboard";
 import { Observable } from "rxjs";
-import { map, tap } from "rxjs/operators";
+import { map } from "rxjs/operators";
 
 @Component({
   selector: "app-home",
@@ -36,10 +36,8 @@ export class Home implements OnInit {
   ngOnInit(): void {
     // Get user's role from organization membership
     this.userRole$ = this.organizationService.currentMembership$.pipe(
-      tap((membership) => console.log("Home: Current membership:", membership)),
       map((membership) => {
         const role = (membership?.role as UserRole) || UserRole.EMPLOYEE;
-        console.log("Home: Resolved role:", role);
         return role;
       }),
     );

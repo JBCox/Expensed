@@ -26,6 +26,9 @@ import { BudgetService } from '../../../core/services/budget.service';
 import { BudgetCheckResult } from '../../../core/models/budget.model';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Subject, interval, takeUntil, switchMap, takeWhile, tap, of, firstValueFrom } from 'rxjs';
+import { FeatureGateService } from '../../../core/services/feature-gate.service';
+import { UsageLimitBannerComponent } from '../../../shared/components/usage-limit-banner/usage-limit-banner.component';
+import { UpgradePromptComponent, UpgradePromptData } from '../../../shared/components/upgrade-prompt/upgrade-prompt.component';
 
 @Component({
   selector: 'app-expense-form',
@@ -42,7 +45,8 @@ import { Subject, interval, takeUntil, switchMap, takeWhile, tap, of, firstValue
     MatIconModule,
     MatChipsModule,
     MatTooltipModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    UsageLimitBannerComponent
   ],
   templateUrl: './expense-form.html',
   styleUrl: './expense-form.scss'
@@ -64,6 +68,16 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   suggestSplit = signal(false);
   splitSuggestionDismissed = signal(false);
   budgetWarnings = signal<BudgetCheckResult[]>([]);
+
+  // Usage limit state
+  receiptUsage = signal<{ used: number; limit: number | null; remaining: number | null }>({
+    used: 0,
+    limit: null,
+    remaining: null
+  });
+  isAtReceiptLimit = signal(false);
+  isInGracePeriod = signal(false);
+  gracePeriodRemaining = signal(0);
 
   // Categories signal - populated from database via CategoryService
   categories = signal<CustomExpenseCategory[]>([]);
@@ -119,6 +133,10 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   private budgetService = inject(BudgetService);
+  private featureGateService = inject(FeatureGateService);
+
+  // Grace period config: allow 2 extra receipts beyond limit
+  private readonly GRACE_PERIOD_RECEIPTS = 2;
 
   ngOnInit(): void {
     // Initialize form with null category (will be set after categories load)
@@ -136,6 +154,9 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
 
     // Load available currencies
     this.loadCurrencies();
+
+    // Load receipt usage limits
+    this.loadReceiptUsage();
 
     this.receiptId = this.route.snapshot.queryParamMap.get('receiptId');
     if (this.receiptId) {
@@ -231,6 +252,108 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Load receipt usage limits from FeatureGateService
+   */
+  private loadReceiptUsage(): void {
+    this.featureGateService.getReceiptUsage()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (usage) => {
+          this.receiptUsage.set({
+            used: usage.used,
+            limit: usage.limit,
+            remaining: usage.remaining
+          });
+
+          // Determine limit status with grace period
+          if (usage.limit !== null) {
+            const overLimit = usage.used - usage.limit;
+            if (overLimit >= this.GRACE_PERIOD_RECEIPTS) {
+              // Hard limit - no more grace
+              this.isAtReceiptLimit.set(true);
+              this.isInGracePeriod.set(false);
+              this.gracePeriodRemaining.set(0);
+            } else if (overLimit > 0) {
+              // In grace period
+              this.isAtReceiptLimit.set(false);
+              this.isInGracePeriod.set(true);
+              this.gracePeriodRemaining.set(this.GRACE_PERIOD_RECEIPTS - overLimit);
+            } else if (overLimit === 0) {
+              // At limit but not over - allow one more as first grace
+              this.isAtReceiptLimit.set(false);
+              this.isInGracePeriod.set(true);
+              this.gracePeriodRemaining.set(this.GRACE_PERIOD_RECEIPTS);
+            } else {
+              // Under limit
+              this.isAtReceiptLimit.set(false);
+              this.isInGracePeriod.set(false);
+              this.gracePeriodRemaining.set(0);
+            }
+          }
+        }
+      });
+  }
+
+  /**
+   * Check if user can create expense based on receipt limits
+   * Returns true if allowed, false if blocked
+   */
+  private async checkReceiptLimit(): Promise<boolean> {
+    const usage = this.receiptUsage();
+
+    // No limit (paid plan) - always allow
+    if (usage.limit === null) {
+      return true;
+    }
+
+    const overLimit = usage.used - usage.limit;
+
+    // Hard block - exceeded grace period
+    if (overLimit >= this.GRACE_PERIOD_RECEIPTS) {
+      this.showUpgradeRequiredDialog();
+      return false;
+    }
+
+    // In grace period - show warning but allow
+    if (overLimit >= 0) {
+      const remaining = this.GRACE_PERIOD_RECEIPTS - overLimit;
+      this.snackBar.open(
+        `You've exceeded your monthly limit. ${remaining} grace receipt(s) remaining.`,
+        'Upgrade',
+        { duration: 6000 }
+      ).onAction().subscribe(() => {
+        this.router.navigate(['/organization/billing/plans']);
+      });
+    }
+
+    return true;
+  }
+
+  /**
+   * Show upgrade required dialog when hard limit is reached
+   */
+  private showUpgradeRequiredDialog(): void {
+    const data: UpgradePromptData = {
+      feature: 'Monthly Receipt Limit Reached',
+      description: `You've used all ${this.receiptUsage().limit} receipts plus ${this.GRACE_PERIOD_RECEIPTS} grace receipts this month. Upgrade to continue tracking expenses.`,
+      icon: 'receipt_long',
+      requiredPlan: 'starter',
+      benefits: [
+        'Unlimited receipt uploads',
+        'Advanced OCR processing',
+        'GPS mileage tracking',
+        'Multi-level approvals'
+      ]
+    };
+
+    this.dialog.open(UpgradePromptComponent, {
+      data,
+      width: '420px',
+      maxWidth: '95vw'
+    });
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -281,6 +404,12 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
     this.successMessage = '';
     if (this.form.invalid) { Object.values(this.form.controls).forEach(c => c.markAsTouched()); return; }
 
+    // Check receipt limits before proceeding
+    const canCreate = await this.checkReceiptLimit();
+    if (!canCreate) {
+      return;
+    }
+
     this.loading = true;
 
     // Check for duplicates first
@@ -304,9 +433,8 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         }
         this.loading = true;
       }
-    } catch (err) {
+    } catch {
       // If duplicate check fails, continue with submission (non-blocking)
-      console.warn('Duplicate check failed, continuing with submission:', err);
     }
 
     // Convert category ID to category name for submission
@@ -468,8 +596,7 @@ export class ExpenseFormComponent implements OnInit, OnDestroy {
         next: (receipt) => {
           this.afterReceiptAttachment(receipt);
         },
-        error: (error) => {
-          console.error('OCR polling error:', error);
+        error: (_error) => {
           this.stopPolling$.next();
         }
       });

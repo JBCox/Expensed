@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -535,7 +535,7 @@ export class DelegationSettingsComponent implements OnInit {
       // Load delegations
       this.delegationService.getAllDelegations().subscribe({
         next: (delegations) => this.delegations.set(delegations),
-        error: (err) => console.error('Error loading delegations:', err),
+        error: () => { /* error handled by service */ },
       });
 
       // Load organization members
@@ -561,8 +561,7 @@ export class DelegationSettingsComponent implements OnInit {
           this.members.set(members);
         }
       }
-    } catch (error) {
-      console.error('Error loading data:', error);
+    } catch {
       this.notificationService.showError('Failed to load delegation data');
     } finally {
       this.loading.set(false);
@@ -594,8 +593,7 @@ export class DelegationSettingsComponent implements OnInit {
         this.delegationForm.reset({ scope: 'all' });
         this.loadData();
       },
-      error: (err) => {
-        console.error('Error creating delegation:', err);
+      error: (_err) => {
         this.notificationService.showError('Failed to create delegation');
       },
       complete: () => this.saving.set(false),
@@ -615,8 +613,7 @@ export class DelegationSettingsComponent implements OnInit {
         this.notificationService.showSuccess('Delegation revoked');
         this.loadData();
       },
-      error: (err) => {
-        console.error('Error revoking delegation:', err);
+      error: (_err) => {
         this.notificationService.showError('Failed to revoke delegation');
       },
     });
@@ -630,8 +627,7 @@ export class DelegationSettingsComponent implements OnInit {
         this.notificationService.showSuccess('Delegation deleted');
         this.loadData();
       },
-      error: (err) => {
-        console.error('Error deleting delegation:', err);
+      error: (_err) => {
         this.notificationService.showError('Failed to delete delegation');
       },
     });

@@ -20,6 +20,7 @@ import { ShortcutsHelpDialog } from './shared/components/shortcuts-help-dialog/s
 import { Breadcrumbs } from './shared/components/breadcrumbs/breadcrumbs';
 import { InstallPrompt } from './shared/components/install-prompt/install-prompt';
 import { OfflineIndicator } from './shared/components/offline-indicator/offline-indicator';
+import { BrandLogoComponent } from './shared/components/brand-logo/brand-logo';
 
 interface ShellViewModel {
   profile: User | null;
@@ -56,7 +57,8 @@ const DEFAULT_VM: ShellViewModel = {
     NotificationCenterComponent,
     Breadcrumbs,
     InstallPrompt,
-    OfflineIndicator
+    OfflineIndicator,
+    BrandLogoComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -76,10 +78,12 @@ export class App implements OnInit, OnDestroy {
   vm$: Observable<ShellViewModel>;
   isSidebarOpen = false;
   isAuthRoute = false;
+  isSuperAdminRoute = false;
   isSidebarCollapsed = false;
 
   constructor() {
     this.isAuthRoute = this.router.url.startsWith('/auth');
+    this.isSuperAdminRoute = this.router.url.startsWith('/super-admin');
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -87,6 +91,7 @@ export class App implements OnInit, OnDestroy {
       )
       .subscribe((event) => {
         this.isAuthRoute = event.urlAfterRedirects.startsWith('/auth');
+        this.isSuperAdminRoute = event.urlAfterRedirects.startsWith('/super-admin');
       });
 
     // Use startWith to emit immediately with default value - prevents click-blocking on initial load

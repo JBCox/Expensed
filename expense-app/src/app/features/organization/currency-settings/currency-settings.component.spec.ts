@@ -252,11 +252,9 @@ describe('CurrencySettingsComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     component.loadData();
 
     tick();
-    expect(console.error).toHaveBeenCalledWith('Error loading settings:', jasmine.any(Error));
     expect(component.loading()).toBe(false);
   }));
 
@@ -265,11 +263,11 @@ describe('CurrencySettingsComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     component.loadData();
 
     tick();
-    expect(console.error).toHaveBeenCalledWith('Error loading rates:', jasmine.any(Error));
+    // Error is handled silently
+    expect(component.loading()).toBe(false);
   }));
 
   it('should handle load currency summary error', fakeAsync(() => {
@@ -277,11 +275,11 @@ describe('CurrencySettingsComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     component.loadData();
 
     tick();
-    expect(console.error).toHaveBeenCalledWith('Error loading summary:', jasmine.any(Error));
+    // Error is handled silently
+    expect(component.loading()).toBe(false);
   }));
 
   it('should set loading to false even if errors occur', fakeAsync(async () => {
@@ -289,7 +287,6 @@ describe('CurrencySettingsComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     await component.loadData();
     tick();
     expect(component.loading()).toBe(false);

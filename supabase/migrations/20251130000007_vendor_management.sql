@@ -169,7 +169,10 @@ CREATE OR REPLACE FUNCTION match_vendor_for_merchant(
   p_organization_id UUID,
   p_merchant_name TEXT
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_vendor_id UUID;
   v_normalized TEXT;
@@ -216,7 +219,7 @@ BEGIN
 
   RETURN v_vendor_id;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Get vendor statistics
 CREATE OR REPLACE FUNCTION get_vendor_stats(
@@ -233,7 +236,10 @@ RETURNS TABLE (
   last_expense_date DATE,
   unique_users BIGINT,
   top_category TEXT
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   WITH vendor_expenses AS (
@@ -266,7 +272,7 @@ BEGIN
   GROUP BY ve.vid, ve.vname
   ORDER BY total_spent DESC NULLS LAST;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Get vendors needing W-9
 CREATE OR REPLACE FUNCTION get_vendors_needing_w9(
@@ -278,7 +284,10 @@ RETURNS TABLE (
   vendor_name TEXT,
   total_paid DECIMAL(12, 2),
   has_w9 BOOLEAN
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -296,7 +305,7 @@ BEGIN
   HAVING COALESCE(SUM(e.amount), 0) >= p_threshold
   ORDER BY total_paid DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Auto-create vendor from expense
 CREATE OR REPLACE FUNCTION auto_create_vendor_from_expense()

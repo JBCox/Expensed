@@ -140,7 +140,10 @@ ON CONFLICT (name) DO NOTHING;
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION check_expense_policies_v2()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   violations JSONB := '[]'::jsonb;
   v_policy RECORD;
@@ -388,7 +391,7 @@ BEGIN
 
   RETURN v_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION apply_policy_preset IS 'Applies a preset policy template to an organization';
 
@@ -408,7 +411,10 @@ RETURNS TABLE (
   allow_weekends BOOLEAN,
   auto_approve_under NUMERIC,
   policy_sources JSONB
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_member RECORD;
   v_result RECORD;
@@ -487,7 +493,7 @@ BEGIN
 
   RETURN NEXT;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_effective_policy IS 'Returns the effective policy limits for a user/category combination';
 

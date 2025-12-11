@@ -134,7 +134,10 @@ USING (
 
 -- Function to update expense is_split flag when items change
 CREATE OR REPLACE FUNCTION update_expense_is_split()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   item_count INTEGER;
 BEGIN
@@ -161,7 +164,7 @@ BEGIN
 
   RETURN COALESCE(NEW, OLD);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Trigger to auto-update is_split flag
 DROP TRIGGER IF EXISTS trg_update_expense_is_split ON expense_items;
@@ -172,7 +175,10 @@ EXECUTE FUNCTION update_expense_is_split();
 
 -- Function to validate split amounts match expense total
 CREATE OR REPLACE FUNCTION validate_expense_split_total()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   expense_total DECIMAL(10, 2);
   items_total DECIMAL(10, 2);
@@ -306,11 +312,14 @@ BEGIN
 
   RETURN;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to unsplit an expense (remove all items)
 CREATE OR REPLACE FUNCTION unsplit_expense(p_expense_id UUID)
-RETURNS VOID AS $$
+RETURNS VOID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   expense_record RECORD;
 BEGIN
@@ -331,7 +340,7 @@ BEGIN
   -- Delete all items
   DELETE FROM expense_items WHERE expense_id = p_expense_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION split_expense(UUID, JSONB) TO authenticated;

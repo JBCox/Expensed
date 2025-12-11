@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, from, of, forkJoin, throwError } from 'rxjs';
+import { Observable, of, forkJoin, throwError } from 'rxjs';
 import { map, switchMap, catchError, timeout } from 'rxjs/operators';
 import { GeolocationService } from './geolocation.service';
 import { GoogleMapsService } from './google-maps.service';
@@ -146,11 +146,6 @@ export class StartStopTrackingService {
         }).pipe(
           timeout(20000), // 20 second timeout for the forkJoin
           map(({ endAddress, route }) => {
-            if (!route.apiSuccess) {
-              console.log('[StartStopTracking] Distance Matrix API failed - user must enter distance manually');
-            } else {
-              console.log('[StartStopTracking] Distance calculated:', route.distanceMiles, 'miles');
-            }
             return {
               position,
               endAddress: endAddress || `${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`,
@@ -161,7 +156,6 @@ export class StartStopTrackingService {
           catchError(() => {
             // If forkJoin times out, return 0 distance - user must fill in manually
             // But preserve the GPS position we got!
-            console.log('[StartStopTracking] forkJoin timeout - user must enter distance manually');
             return of({
               position,
               endAddress: `${position.latitude.toFixed(6)}, ${position.longitude.toFixed(6)}`,
@@ -196,8 +190,7 @@ export class StartStopTrackingService {
         return result;
       }),
       timeout(30000), // 30 second master timeout for entire operation
-      catchError(err => {
-        console.error('Stop trip error:', err);
+      catchError(() => {
         // GPS failed completely - try to use start location as fallback
         // This ensures the form is still usable even if GPS fails
         const endDate = new Date(endTime);
@@ -273,8 +266,7 @@ export class StartStopTrackingService {
           this.updateSignals();
           this.startElapsedTimer();
         }
-      } catch (error) {
-        console.error('Failed to restore start/stop tracking state:', error);
+      } catch {
         this.clearState();
       }
     }

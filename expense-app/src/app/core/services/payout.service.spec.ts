@@ -349,7 +349,7 @@ describe('PayoutService', () => {
         json: () => Promise.resolve(mockResponse)
       } as Response));
 
-      service.verifyBankAccount(mockBankAccountId, [32, 45]).subscribe({
+      service.verifyBankAccount(mockOrgId, mockBankAccountId, [32, 45]).subscribe({
         next: (result) => {
           expect(result.success).toBe(true);
           expect(result.verified).toBe(true);

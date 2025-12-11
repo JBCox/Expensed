@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 // Stripe.js is loaded dynamically from https://js.stripe.com/v3/
@@ -65,7 +65,7 @@ export class BankAccountFormComponent implements OnInit, OnDestroy {
   tokenCreated = output<string>();
 
   /** Emitted when an error occurs */
-  error = output<string>();
+  formError = output<string>();
 
   /** Emitted when form is cancelled */
   cancelled = output<void>();
@@ -127,7 +127,7 @@ export class BankAccountFormComponent implements OnInit, OnDestroy {
   /**
    * Custom validator to ensure account numbers match
    */
-  private accountNumberMatchValidator(group: FormGroup): { [key: string]: boolean } | null {
+  private accountNumberMatchValidator(group: FormGroup): Record<string, boolean> | null {
     const accountNumber = group.get('accountNumber')?.value;
     const confirmNumber = group.get('accountNumberConfirm')?.value;
 
@@ -173,8 +173,7 @@ export class BankAccountFormComponent implements OnInit, OnDestroy {
 
       this.stripe = Stripe(publishableKey);
       this.stripeLoaded.set(true);
-    } catch (err) {
-      console.error('Failed to initialize Stripe:', err);
+    } catch {
       this.errorMessage.set('Failed to initialize payment processor.');
     }
   }
@@ -228,8 +227,7 @@ export class BankAccountFormComponent implements OnInit, OnDestroy {
         // Emit the token ID - this is safe to send to our server
         this.tokenCreated.emit(result.token.id);
       }
-    } catch (err) {
-      console.error('Token creation failed:', err);
+    } catch {
       this.errorMessage.set('An unexpected error occurred. Please try again.');
     } finally {
       this.isLoading.set(false);
@@ -257,7 +255,7 @@ export class BankAccountFormComponent implements OnInit, OnDestroy {
         this.errorMessage.set(error.message || 'An error occurred processing your bank account.');
     }
 
-    this.error.emit(this.errorMessage() || 'Unknown error');
+    this.formError.emit(this.errorMessage() || 'Unknown error');
   }
 
   /**

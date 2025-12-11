@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS email_inbox_config (
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 
   -- Inbox settings
-  inbox_address TEXT NOT NULL, -- e.g., expenses@yourorg.jensify.com
+  inbox_address TEXT NOT NULL, -- e.g., expenses@yourorg.expensed.app
   is_enabled BOOLEAN DEFAULT true,
 
   -- Processing settings
@@ -129,7 +129,13 @@ CREATE OR REPLACE FUNCTION match_email_to_user(
   p_email TEXT,
   p_organization_id UUID DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_user_id UUID;
 BEGIN
@@ -154,7 +160,7 @@ BEGIN
 
   RETURN v_user_id;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Get inbox config for organization
 CREATE OR REPLACE FUNCTION get_inbox_config(p_inbox_address TEXT)
@@ -165,7 +171,10 @@ RETURNS TABLE (
   require_attachment BOOLEAN,
   allowed_sender_domains TEXT[],
   require_verified_sender BOOLEAN
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -179,7 +188,7 @@ BEGIN
   WHERE LOWER(eic.inbox_address) = LOWER(p_inbox_address)
     AND eic.is_enabled = true;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Process inbound email (called by Edge Function)
 CREATE OR REPLACE FUNCTION process_inbound_email(
@@ -188,7 +197,10 @@ CREATE OR REPLACE FUNCTION process_inbound_email(
   p_organization_id UUID,
   p_expense_data JSONB DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_expense_id UUID;
   v_receipt_id UUID;
@@ -236,14 +248,17 @@ BEGIN
 
   RETURN v_expense_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Mark email as failed
 CREATE OR REPLACE FUNCTION mark_email_failed(
   p_email_id UUID,
   p_error TEXT
 )
-RETURNS void AS $$
+RETURNS void 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   UPDATE inbound_emails
   SET
@@ -252,7 +267,7 @@ BEGIN
     processed_at = now()
   WHERE id = p_email_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Get user's unique submission email
 CREATE OR REPLACE FUNCTION get_user_submission_email(
@@ -283,7 +298,7 @@ BEGIN
   -- Format: expenses+userid@domain.com
   RETURN REPLACE(v_inbox, '@', '+' || v_user_code || '@');
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- EMAIL PROCESSING STATS VIEW

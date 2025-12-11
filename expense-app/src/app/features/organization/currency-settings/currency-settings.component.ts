@@ -15,7 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { CurrencyService } from '../../../core/services/currency.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { SupportedCurrency, ExchangeRate, COMMON_CURRENCIES, OrganizationCurrencySettings } from '../../../core/models/currency.model';
+import { CurrencySummary, ExchangeRate, COMMON_CURRENCIES, OrganizationCurrencySettings } from '../../../core/models/currency.model';
 
 @Component({
   selector: 'app-currency-settings',
@@ -484,7 +484,7 @@ export class CurrencySettingsComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   exchangeRates = signal<ExchangeRate[]>([]);
-  currencySummary = signal<any[]>([]);
+  currencySummary = signal<CurrencySummary[]>([]);
   showRateForm = false;
 
   commonCurrencies = COMMON_CURRENCIES;
@@ -516,19 +516,19 @@ export class CurrencySettingsComponent implements OnInit {
             auto_convert_currency: settings.auto_convert_currency,
           });
         },
-        error: (err) => console.error('Error loading settings:', err),
+        error: () => { /* error handled by service */ },
       });
 
       // Load exchange rates
       this.currencyService.getExchangeRates().subscribe({
         next: (rates) => this.exchangeRates.set(rates),
-        error: (err) => console.error('Error loading rates:', err),
+        error: () => { /* error handled by service */ },
       });
 
       // Load currency summary
       this.currencyService.getCurrencySummary().subscribe({
         next: (summary) => this.currencySummary.set(summary),
-        error: (err) => console.error('Error loading summary:', err),
+        error: () => { /* error handled by service */ },
       });
     } finally {
       this.loading.set(false);
@@ -546,8 +546,7 @@ export class CurrencySettingsComponent implements OnInit {
         this.notificationService.showSuccess('Currency settings saved');
         this.saving.set(false);
       },
-      error: (err) => {
-        console.error('Error saving settings:', err);
+      error: () => {
         this.notificationService.showError('Failed to save settings');
         this.saving.set(false);
       },
@@ -571,8 +570,7 @@ export class CurrencySettingsComponent implements OnInit {
         this.rateForm.reset();
         this.loadData();
       },
-      error: (err) => {
-        console.error('Error adding rate:', err);
+      error: () => {
         this.notificationService.showError('Failed to add exchange rate');
       },
     });

@@ -8,7 +8,6 @@ import {
   Vendor,
   VendorAlias,
   VendorContact,
-  VendorDocument,
   VendorSpendingSummary,
   VendorStats,
   VendorNeedingW9,
@@ -145,7 +144,10 @@ export class VendorService {
         this.logger.info('Vendor created', 'VendorService', { vendorId: data.id });
         return data as Vendor;
       }),
-      tap(() => this.getVendors().subscribe()),
+      tap((vendor) => {
+        // Add the new vendor to the signal to keep local state in sync
+        this._vendors.update(vendors => [...vendors, vendor]);
+      }),
       catchError(this.handleError)
     );
   }
@@ -172,7 +174,12 @@ export class VendorService {
         this.logger.info('Vendor updated', 'VendorService', { vendorId: id });
         return data as Vendor;
       }),
-      tap(() => this.getVendors().subscribe()),
+      tap((updatedVendor) => {
+        // Update the vendor in the signal to keep local state in sync
+        this._vendors.update(vendors =>
+          vendors.map(v => v.id === updatedVendor.id ? updatedVendor : v)
+        );
+      }),
       catchError(this.handleError)
     );
   }
@@ -191,7 +198,10 @@ export class VendorService {
         if (error) throw error;
         this.logger.info('Vendor deleted', 'VendorService', { vendorId });
       }),
-      tap(() => this.getVendors().subscribe()),
+      tap(() => {
+        // Remove the deleted vendor from the signal to keep local state in sync
+        this._vendors.update(vendors => vendors.filter(v => v.id !== vendorId));
+      }),
       catchError(this.handleError)
     );
   }

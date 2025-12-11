@@ -76,7 +76,7 @@ export class PerDiemService {
   /**
    * Look up per diem rate for a specific location
    */
-  lookupRate(location: string, countryCode: string = 'US'): Observable<PerDiemLookupResult | null> {
+  lookupRate(location: string, countryCode = 'US'): Observable<PerDiemLookupResult | null> {
     const organizationId = this.organizationService.currentOrganizationId;
 
     if (!organizationId) {
@@ -395,7 +395,7 @@ export class PerDiemService {
     const { id, ...updates } = day;
 
     // Calculate adjusted M&IE if meal flags changed
-    let adjustedMie: number | undefined;
+    let _adjustedMie: number | undefined;
 
     return from(
       this.supabase.client

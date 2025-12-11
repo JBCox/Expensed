@@ -1,6 +1,6 @@
 import { Injectable, inject } from "@angular/core";
-import { BehaviorSubject, from, Observable, throwError } from "rxjs";
-import { catchError, map, tap } from "rxjs/operators";
+import { BehaviorSubject, from, Observable, of, throwError } from "rxjs";
+import { catchError, map, switchMap, tap } from "rxjs/operators";
 import { SupabaseService } from "./supabase.service";
 import { LoggerService } from "./logger.service";
 import {
@@ -46,6 +46,18 @@ export class OrganizationService {
   private organizationInitializedSubject = new BehaviorSubject<boolean>(false);
   public readonly organizationInitialized$ = this.organizationInitializedSubject
     .asObservable();
+
+  constructor() {
+    // Initialize from localStorage immediately to prevent race conditions
+    // This allows guards to proceed with cached data while async load completes
+    const cachedOrgId = localStorage.getItem('current_organization_id');
+    if (cachedOrgId) {
+      // Mark as initialized immediately with cached data
+      // The auth service will refresh this with full data from database
+      this.organizationInitializedSubject.next(true);
+      this.logger.info('Organization context initialized from localStorage', 'OrganizationService', { orgId: cachedOrgId });
+    }
+  }
 
   // ============================================================================
   // ORGANIZATION CRUD
@@ -180,20 +192,25 @@ export class OrganizationService {
         .from('organization-logos')
         .list(organizationId)
     ).pipe(
-      map(({ data: files, error }) => {
+      switchMap(({ data: files, error }) => {
         if (error) throw error;
-        return files || [];
-      }),
-      map(async (files) => {
-        if (files.length > 0) {
-          const filesToRemove = files.map(f => `${organizationId}/${f.name}`);
-          const { error } = await this.supabase.client.storage
-            .from('organization-logos')
-            .remove(filesToRemove);
-          if (error) throw error;
+        if (!files || files.length === 0) {
+          return of(undefined);
         }
+
+        const filesToRemove = files.map(f => `${organizationId}/${f.name}`);
+
+        return from(
+          this.supabase.client.storage
+            .from('organization-logos')
+            .remove(filesToRemove)
+        ).pipe(
+          map(({ error: removeError }) => {
+            if (removeError) throw removeError;
+            return undefined;
+          })
+        );
       }),
-      map(() => undefined),
       catchError(this.handleError),
     );
   }
@@ -408,11 +425,6 @@ export class OrganizationService {
     organization: Organization,
     membership: OrganizationMember,
   ): void {
-    console.log('[OrganizationService] setCurrentOrganization called');
-    console.log('[OrganizationService] Organization:', organization.name, organization.id);
-    console.log('[OrganizationService] Membership role:', membership.role);
-    console.log('[OrganizationService] Membership data:', membership);
-
     this.currentOrganizationSubject.next(organization);
     this.currentMembershipSubject.next(membership);
 
@@ -421,7 +433,6 @@ export class OrganizationService {
 
     // Mark organization as initialized
     this.organizationInitializedSubject.next(true);
-    console.log('[OrganizationService] Organization context set, initialized=true');
   }
 
   /**
@@ -441,16 +452,32 @@ export class OrganizationService {
 
   /**
    * Check if current user has a specific role or higher
+   *
+   * IMPORTANT: Finance and Manager are PEER roles with different domains:
+   * - Finance: Handles reimbursements and financial reporting
+   * - Manager: Approves expenses from their team
+   *
+   * Only Admin is truly hierarchical (has all permissions).
+   * For cross-cutting permissions, use the explicit methods:
+   * - isCurrentUserFinanceOrAdmin() for finance access
+   * - isCurrentUserManagerOrAbove() for approval access
    */
   hasRole(requiredRole: "employee" | "finance" | "manager" | "admin"): boolean {
     const role = this.currentUserRole;
     if (!role) return false;
 
-    const roleHierarchy = ["employee", "finance", "manager", "admin"];
-    const userRoleLevel = roleHierarchy.indexOf(role);
-    const requiredRoleLevel = roleHierarchy.indexOf(requiredRole);
+    // Exact role match
+    if (role === requiredRole) return true;
 
-    return userRoleLevel >= requiredRoleLevel;
+    // Admin has all permissions
+    if (role === "admin") return true;
+
+    // Employee is the base role - everyone has employee access
+    if (requiredRole === "employee") return true;
+
+    // Finance and Manager are peer roles - no implicit cross-access
+    // Use isCurrentUserFinanceOrAdmin() or isCurrentUserManagerOrAbove() for cross-role checks
+    return false;
   }
 
   /**
@@ -592,6 +619,18 @@ export class OrganizationService {
       .filter(([, mapping]) => mapping.is_active)
       .map(([category]) => category)
       .sort();
+  }
+
+  // ============================================================================
+  // DEPARTMENT HELPERS
+  // ============================================================================
+
+  /**
+   * Get the current user's department
+   * Returns null if not set
+   */
+  getCurrentUserDepartment(): string | null {
+    return this.currentMembershipSubject.value?.department || null;
   }
 
   // ============================================================================

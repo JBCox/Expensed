@@ -125,8 +125,7 @@ export class TripDetailComponent implements OnInit, OnDestroy {
           this.coordinates.set(coords);
           this.loading.set(false);
         },
-        error: (err: Error) => {
-          console.error('Failed to load GPS coordinates:', err);
+        error: () => {
           // Still show trip even if coordinates fail to load
           this.loading.set(false);
         }

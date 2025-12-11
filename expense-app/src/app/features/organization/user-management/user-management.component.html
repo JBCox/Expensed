@@ -4,12 +4,26 @@
 </app-pull-to-refresh>
 
 <div class="user-mgmt-container">
+  <!-- User Limit Banner -->
+  @if (userUsage().limit !== null) {
+    <app-usage-limit-banner
+      resource="users"
+      [used]="userUsage().current"
+      [limit]="userUsage().limit!"
+      [dismissible]="!isAtUserLimit()"
+    ></app-usage-limit-banner>
+  }
+
   <!-- Clean Header (expense-list style) -->
   <div class="page-header">
     <h1>User Management</h1>
-    <button mat-flat-button color="primary" (click)="selectedTabIndex = 0">
+    <button mat-flat-button color="primary" (click)="selectedTabIndex = 0" [disabled]="isAtUserLimit()">
       <mat-icon>person_add</mat-icon>
-      Invite User
+      @if (isAtUserLimit()) {
+        Limit Reached
+      } @else {
+        Invite User
+      }
     </button>
   </div>
 
@@ -58,13 +72,18 @@
                 <mat-form-field appearance="outline" class="form-field-md">
                   <mat-label>Manager</mat-label>
                   <mat-select formControlName="manager_id">
-                    <mat-option [value]="''">None</mat-option>
+                    @if (inviteForm.get('role')?.value !== 'employee') {
+                      <mat-option [value]="''">None</mat-option>
+                    }
                     @for (manager of managers(); track manager.id) {
                       <mat-option [value]="manager.id">
                         {{ manager.user?.full_name }} ({{ manager.role }})
                       </mat-option>
                     }
                   </mat-select>
+                  @if (getFieldError('manager_id')) {
+                    <mat-error>{{ getFieldError('manager_id') }}</mat-error>
+                  }
                 </mat-form-field>
 
                 <button

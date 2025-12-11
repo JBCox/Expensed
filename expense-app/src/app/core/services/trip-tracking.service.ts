@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { GeolocationService, GeolocationPosition } from './geolocation.service';
 import { SupabaseService } from './supabase.service';
@@ -48,10 +48,10 @@ export class TripTrackingService {
   duration = signal(0);
   currentLocation = signal<string | null>(null);
 
-  constructor(
-    private geolocation: GeolocationService,
-    private supabase: SupabaseService
-  ) {
+  private readonly geolocation = inject(GeolocationService);
+  private readonly supabase = inject(SupabaseService);
+
+  constructor() {
     this.restoreTrackingState();
   }
 
@@ -310,8 +310,7 @@ export class TripTrackingService {
             }
           });
         }
-      } catch (error) {
-        console.error('Failed to restore tracking state:', error);
+      } catch {
         this.clearTrackingState();
       }
     }

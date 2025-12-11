@@ -71,7 +71,10 @@ RETURNS TABLE (
   expense_count BIGINT,
   total_original_amount NUMERIC,
   total_converted_amount NUMERIC
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -87,7 +90,7 @@ BEGIN
   GROUP BY e.original_currency, sc.name, sc.symbol
   ORDER BY expense_count DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Add table comment
 COMMENT ON TABLE currencies IS 'Supported currencies with their symbols and formatting - updated';

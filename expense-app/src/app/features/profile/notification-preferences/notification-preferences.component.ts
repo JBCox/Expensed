@@ -389,8 +389,7 @@ export class NotificationPreferencesComponent implements OnInit {
         this.preferences.set(defaults);
         await this.savePreferences(defaults);
       }
-    } catch (error) {
-      console.error('Error loading preferences:', error);
+    } catch {
       this.notificationService.showError('Failed to load notification preferences');
     } finally {
       this.loading.set(false);
@@ -466,8 +465,7 @@ export class NotificationPreferencesComponent implements OnInit {
         );
 
       if (error) throw error;
-    } catch (error) {
-      console.error('Error saving preferences:', error);
+    } catch {
       this.notificationService.showError('Failed to save preferences');
     } finally {
       this.saving.set(false);

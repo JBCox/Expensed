@@ -180,7 +180,13 @@ CREATE TABLE IF NOT EXISTS transaction_rules (
 CREATE OR REPLACE FUNCTION match_transaction_to_expense(
   p_transaction_id UUID
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_tx RECORD;
   v_expense_id UUID;
@@ -219,7 +225,7 @@ BEGIN
 
   RETURN v_expense_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Apply transaction rules
 CREATE OR REPLACE FUNCTION apply_transaction_rules(
@@ -232,7 +238,10 @@ RETURNS TABLE (
   is_reimbursable BOOLEAN,
   auto_create BOOLEAN,
   mark_ignored BOOLEAN
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_tx RECORD;
 BEGIN
@@ -274,7 +283,7 @@ BEGIN
   ORDER BY r.priority ASC
   LIMIT 1;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Convert transaction to expense
 CREATE OR REPLACE FUNCTION convert_transaction_to_expense(
@@ -282,7 +291,10 @@ CREATE OR REPLACE FUNCTION convert_transaction_to_expense(
   p_category TEXT DEFAULT NULL,
   p_notes TEXT DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_tx RECORD;
   v_expense_id UUID;
@@ -336,7 +348,7 @@ BEGIN
 
   RETURN v_expense_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Get import statistics
 CREATE OR REPLACE FUNCTION get_import_stats(
@@ -368,7 +380,7 @@ BEGIN
     AND (p_start_date IS NULL OR transaction_date >= p_start_date)
     AND (p_end_date IS NULL OR transaction_date <= p_end_date);
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- =============================================================================
 -- RLS POLICIES

@@ -261,7 +261,7 @@ export class FinanceDashboard implements OnInit {
     return statusMap[status.toLowerCase()] || status;
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency = 'USD'): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency

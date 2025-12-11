@@ -23,7 +23,7 @@ describe('EmailExpenseService', () => {
   const mockInboxConfig: EmailInboxConfig = {
     id: 'config-1',
     organization_id: mockOrgId,
-    inbox_address: 'expenses@test.jensify.com',
+    inbox_address: 'expenses@test.expensed.app',
     is_enabled: true,
     auto_create_expense: true,
     require_attachment: true,
@@ -48,7 +48,7 @@ describe('EmailExpenseService', () => {
     organization_id: mockOrgId,
     message_id: 'msg-12345',
     from_address: 'user@company.com',
-    to_address: 'expenses@test.jensify.com',
+    to_address: 'expenses@test.expensed.app',
     subject: 'Lunch receipt',
     body_text: 'Please process this expense',
     status: 'processed',
@@ -177,7 +177,7 @@ describe('EmailExpenseService', () => {
         insert: insertSpy
       }) as unknown as typeof supabaseServiceSpy.client.from;
 
-      service.createInboxConfig('expenses@test.jensify.com').subscribe({
+      service.createInboxConfig('expenses@test.expensed.app').subscribe({
         next: (config) => {
           expect(config).toEqual(mockInboxConfig);
           expect(loggerServiceSpy.info).toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe('EmailExpenseService', () => {
         configurable: true
       });
 
-      service.createInboxConfig('expenses@test.jensify.com').subscribe({
+      service.createInboxConfig('expenses@test.expensed.app').subscribe({
         next: () => done.fail('Should have thrown error'),
         error: (error) => {
           expect(error.message).toBe('No organization selected');
@@ -606,7 +606,7 @@ describe('EmailExpenseService', () => {
 
   describe('getSubmissionInfo', () => {
     it('should return submission info', (done) => {
-      const mockSubmissionEmail = 'user123@submit.jensify.com';
+      const mockSubmissionEmail = 'user123@submit.expensed.app';
       const mockResponse = { data: mockSubmissionEmail, error: null };
 
       (supabaseServiceSpy.client.rpc as jasmine.Spy).and.resolveTo(mockResponse);

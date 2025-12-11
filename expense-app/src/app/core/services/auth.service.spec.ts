@@ -75,7 +75,14 @@ describe('AuthService', () => {
     mockRouter = jasmine.createSpyObj('Router', ['navigate'], {
       url: '/home'
     });
-    mockLoggerService = jasmine.createSpyObj('LoggerService', ['debug', 'info', 'warn', 'error']);
+    mockLoggerService = jasmine.createSpyObj('LoggerService', ['debug', 'info', 'warn', 'error', 'getErrorMessage']);
+    // Implement getErrorMessage to extract message from error
+    mockLoggerService.getErrorMessage.and.callFake((error: unknown, defaultMsg = 'An error occurred') => {
+      if (error instanceof Error) return error.message;
+      if (typeof error === 'string') return error;
+      if (typeof error === 'object' && error !== null && 'message' in error) return String((error as { message: unknown }).message);
+      return defaultMsg;
+    });
     mockNotificationService = jasmine.createSpyObj('NotificationService', ['success', 'error', 'warn', 'info']);
 
     TestBed.configureTestingModule({

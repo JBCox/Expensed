@@ -21,8 +21,6 @@ import {
   DateRangePreset,
   DATE_RANGE_PRESETS,
   getDateRangeForPreset,
-  formatCurrency,
-  formatPercent,
   formatChange
 } from '../../../core/models/analytics.model';
 
@@ -651,8 +649,7 @@ export class AnalyticsComponent implements OnInit {
         this.data.set(data);
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Error loading analytics:', err);
+      error: (_err) => {
         this.notificationService.showError('Failed to load analytics data');
         this.loading.set(false);
       },

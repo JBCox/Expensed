@@ -127,7 +127,6 @@ export class TaxService {
         this.logger.info('Tax rate created', 'TaxService', { name: rate.name });
         return data as TaxRate;
       }),
-      tap(() => this.getTaxRates().subscribe()),
       catchError(this.handleError)
     );
   }
@@ -154,7 +153,6 @@ export class TaxService {
         this.logger.info('Tax rate updated', 'TaxService', { id });
         return data as TaxRate;
       }),
-      tap(() => this.getTaxRates().subscribe()),
       catchError(this.handleError)
     );
   }
@@ -173,7 +171,6 @@ export class TaxService {
         if (error) throw error;
         this.logger.info('Tax rate deleted', 'TaxService', { id: rateId });
       }),
-      tap(() => this.getTaxRates().subscribe()),
       catchError(this.handleError)
     );
   }
@@ -269,7 +266,6 @@ export class TaxService {
         this.logger.info('Tax category created', 'TaxService', { name: category.name });
         return data as TaxCategory;
       }),
-      tap(() => this.getTaxCategories().subscribe()),
       catchError(this.handleError)
     );
   }
@@ -296,7 +292,6 @@ export class TaxService {
         this.logger.info('Tax category updated', 'TaxService', { id });
         return data as TaxCategory;
       }),
-      tap(() => this.getTaxCategories().subscribe()),
       catchError(this.handleError)
     );
   }
@@ -315,7 +310,6 @@ export class TaxService {
         if (error) throw error;
         this.logger.info('Tax category deleted', 'TaxService', { id: categoryId });
       }),
-      tap(() => this.getTaxCategories().subscribe()),
       catchError(this.handleError)
     );
   }
@@ -401,10 +395,6 @@ export class TaxService {
       map(({ error }) => {
         if (error) throw error;
         this.logger.info('Default tax rates seeded', 'TaxService');
-      }),
-      tap(() => {
-        this.getTaxRates().subscribe();
-        this.getTaxCategories().subscribe();
       }),
       catchError(this.handleError)
     );

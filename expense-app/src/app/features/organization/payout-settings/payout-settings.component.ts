@@ -205,8 +205,10 @@ import { PayoutMethod } from '../../../core/models/payout.model';
                     @if (testing()) {
                       <mat-spinner diameter="20"></mat-spinner>
                     } @else {
-                      <mat-icon>science</mat-icon>
-                      Test Key
+                      <ng-container>
+                        <mat-icon>science</mat-icon>
+                        Test Key
+                      </ng-container>
                     }
                   </button>
 
@@ -219,8 +221,10 @@ import { PayoutMethod } from '../../../core/models/payout.model';
                     @if (saving()) {
                       <mat-spinner diameter="20"></mat-spinner>
                     } @else {
-                      <mat-icon>save</mat-icon>
-                      Save Key
+                      <ng-container>
+                        <mat-icon>save</mat-icon>
+                        Save Key
+                      </ng-container>
                     }
                   </button>
                 </div>
@@ -261,8 +265,10 @@ import { PayoutMethod } from '../../../core/models/payout.model';
                   @if (removing()) {
                     <mat-spinner diameter="20"></mat-spinner>
                   } @else {
-                    <mat-icon>delete</mat-icon>
-                    Remove API Key
+                    <ng-container>
+                      <mat-icon>delete</mat-icon>
+                      Remove API Key
+                    </ng-container>
                   }
                 </button>
                 <p class="action-hint warn">
@@ -794,8 +800,7 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
           this.keySetAt.set(status.key_set_at || null);
           this.loading.set(false);
         },
-        error: (error) => {
-          console.error('Failed to load Stripe status:', error);
+        error: (_error) => {
           this.loading.set(false);
         }
       });
@@ -832,7 +837,6 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: (error) => {
-          console.error('Failed to update payout method:', error);
           this.snackBar.open(error.message || 'Failed to update payout method', 'Close', { duration: 3000 });
           this.loading.set(false);
         }
@@ -881,7 +885,6 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
           this.saving.set(false);
         },
         error: (error) => {
-          console.error('Failed to save Stripe key:', error);
           this.snackBar.open(error.message || 'Failed to save Stripe key', 'Close', { duration: 3000 });
           this.saving.set(false);
         }
@@ -909,7 +912,6 @@ export class PayoutSettingsComponent implements OnInit, OnDestroy {
           this.removing.set(false);
         },
         error: (error) => {
-          console.error('Failed to remove Stripe key:', error);
           this.snackBar.open(error.message || 'Failed to remove Stripe key', 'Close', { duration: 3000 });
           this.removing.set(false);
         }

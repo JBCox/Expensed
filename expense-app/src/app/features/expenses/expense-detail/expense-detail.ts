@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { ApprovalService } from '../../../core/services/approval.service';
+import { LoggerService } from '../../../core/services/logger.service';
 import { Expense, ExpenseItem, ExpenseReceipt } from '../../../core/models/expense.model';
 import { ExpenseStatus } from '../../../core/models/enums';
 import { ApprovalWithDetails } from '../../../core/models/approval.model';
@@ -25,6 +26,7 @@ import {
 } from '../split-expense-dialog/split-expense-dialog';
 import { ApproveDialog, ApproveDialogData, ApproveDialogResult } from '../../approvals/approve-dialog/approve-dialog';
 import { RejectDialog, RejectDialogData, RejectDialogResult } from '../../approvals/reject-dialog/reject-dialog';
+import { AddToReportDialogComponent } from '../add-to-report-dialog/add-to-report-dialog';
 
 @Component({
   selector: 'app-expense-detail',
@@ -58,6 +60,7 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
   private approvalService = inject(ApprovalService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private logger = inject(LoggerService);
 
   expense = signal<Expense | null>(null);
   expenseItems = signal<ExpenseItem[]>([]);
@@ -203,8 +206,12 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
           this.expenseItems.set(items);
         },
         error: (err) => {
-          console.error('Failed to load expense items:', err);
+          this.logger.error('Failed to load expense items', err);
           this.expenseItems.set([]);
+          this.snackBar.open('Failed to load expense items', 'Dismiss', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
         }
       });
   }
@@ -260,6 +267,31 @@ export class ExpenseDetailComponent implements OnInit, OnDestroy {
           this.snackBar.open(err?.message || 'Failed to submit expense.', 'Close', { duration: 4000 });
         }
       });
+  }
+
+  /**
+   * Open dialog to add this expense to a report
+   */
+  addToReport(): void {
+    const exp = this.expense();
+    if (!exp) return;
+
+    const dialogRef = this.dialog.open(AddToReportDialogComponent, {
+      width: '500px',
+      data: { expenseIds: [exp.id] }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.reportId) {
+        this.snackBar.open('Expense added to report', 'View', { duration: 4000 })
+          .onAction()
+          .subscribe(() => {
+            this.router.navigate(['/reports', result.reportId]);
+          });
+        // Reload to reflect any status changes
+        this.loadExpense();
+      }
+    });
   }
 
   viewReceipt(): void {

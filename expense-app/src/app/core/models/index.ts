@@ -5,3 +5,4 @@ export * from './expense.model';
 export * from './receipt.model';
 export * from './mileage.model';
 export * from './report.model';
+export * from './subscription.model';

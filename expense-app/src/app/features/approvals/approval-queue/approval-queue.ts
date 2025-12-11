@@ -146,8 +146,7 @@ export class ApprovalQueue implements OnInit {
         this.loading = false;
         return approvals;
       }),
-      catchError((error) => {
-        console.error('Error loading approvals:', error);
+      catchError((_error) => {
         this.loading = false;
         this.error = 'Failed to load approvals';
         return of([]);
@@ -244,8 +243,7 @@ export class ApprovalQueue implements OnInit {
                 // ✅ FIX: Use proper refresh mechanism
                 this.refreshApprovals();
               },
-              error: (error) => {
-                console.error('Error approving:', error);
+              error: (_error) => {
                 this.snackBar.open(
                   'Failed to approve. Please try again.',
                   'Close',
@@ -283,8 +281,7 @@ export class ApprovalQueue implements OnInit {
                 // ✅ FIX: Use proper refresh mechanism
                 this.refreshApprovals();
               },
-              error: (error) => {
-                console.error('Error rejecting:', error);
+              error: (_error) => {
                 this.snackBar.open(
                   'Failed to reject. Please try again.',
                   'Close',
@@ -314,7 +311,7 @@ export class ApprovalQueue implements OnInit {
     this.filterForm.reset();
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
+  formatCurrency(amount: number, currency = 'USD'): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,

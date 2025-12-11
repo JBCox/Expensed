@@ -328,7 +328,7 @@ export class BudgetService {
 
   /**
    * Get budgets relevant to a specific user
-   * Includes org-wide, department, and user-specific budgets
+   * Includes org-wide, department (matching user's department), and user-specific budgets
    */
   getMyBudgets(): Observable<BudgetWithTracking[]> {
     const userId = this.supabase.userId;
@@ -336,11 +336,14 @@ export class BudgetService {
       return throwError(() => new Error('User not authenticated'));
     }
 
+    // Get user's department from their current organization membership
+    const userDepartment = this.organizationService.getCurrentUserDepartment();
+
     return this.getBudgets({ include_inactive: false }).pipe(
       map(budgets =>
         budgets.filter(b =>
           b.budget_type === 'organization' ||
-          b.budget_type === 'department' || // TODO: Filter by user's department
+          (b.budget_type === 'department' && (!b.department || b.department === userDepartment)) ||
           (b.budget_type === 'user' && b.user_id === userId)
         )
       )

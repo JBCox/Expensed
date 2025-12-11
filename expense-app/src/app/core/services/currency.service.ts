@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, from, throwError, of } from 'rxjs';
-import { map, catchError, tap, shareReplay } from 'rxjs/operators';
+import { map, catchError, shareReplay } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { OrganizationService } from './organization.service';
 import { LoggerService } from './logger.service';

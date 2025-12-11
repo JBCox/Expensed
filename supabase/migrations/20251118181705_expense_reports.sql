@@ -115,7 +115,10 @@ COMMENT ON COLUMN report_expenses.display_order IS 'Order of expenses within the
 -- 3. Trigger: Update report total_amount
 -- =====================================================
 CREATE OR REPLACE FUNCTION update_report_total()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_report_id UUID;
   v_new_total DECIMAL(10, 2);
@@ -315,7 +318,7 @@ BEGIN
   JOIN expenses e ON e.id = re.expense_id
   WHERE re.report_id = p_report_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION get_report_stats(UUID) IS 'Get statistics for a specific report (expense count, total, categories)';
 
@@ -324,7 +327,10 @@ CREATE OR REPLACE FUNCTION add_expense_to_report(
   p_report_id UUID,
   p_expense_id UUID
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_next_order INTEGER;
   v_junction_id UUID;
@@ -342,7 +348,7 @@ BEGIN
 
   RETURN v_junction_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION add_expense_to_report(UUID, UUID) IS 'Add an expense to a report with automatic ordering';
 

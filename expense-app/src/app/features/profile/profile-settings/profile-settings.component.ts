@@ -14,13 +14,6 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeService } from '../../../core/services/theme.service';
 
-interface UserProfile {
-  id: string;
-  email: string;
-  full_name: string;
-  department: string | null;
-}
-
 @Component({
   selector: 'app-profile-settings',
   standalone: true,
@@ -352,8 +345,7 @@ export class ProfileSettingsComponent implements OnInit {
         });
         this.profileForm.markAsPristine();
       }
-    } catch (error) {
-      console.error('Error loading profile:', error);
+    } catch {
       this.notificationService.showError('Failed to load profile');
     } finally {
       this.loading.set(false);
@@ -380,8 +372,7 @@ export class ProfileSettingsComponent implements OnInit {
 
       this.notificationService.showSuccess('Profile updated successfully');
       this.profileForm.markAsPristine();
-    } catch (error) {
-      console.error('Error saving profile:', error);
+    } catch {
       this.notificationService.showError('Failed to save profile');
     } finally {
       this.saving.set(false);

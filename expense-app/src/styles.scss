@@ -616,6 +616,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   position: relative;
   overflow: hidden;
   border-radius: var(--jensify-radius-lg);
@@ -682,6 +684,7 @@ body {
   .jensify-brand-header {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--jensify-spacing-md);
     margin-bottom: var(--jensify-spacing-2xl);
     position: relative;
@@ -708,22 +711,24 @@ body {
     }
 
     .auth-brand-logo {
-      height: 80px;
-      width: auto;
+      max-width: 280px;
+      width: 100%;
+      height: auto;
       object-fit: contain;
       filter: drop-shadow(0 0 10px color-mix(in srgb, var(--jensify-primary) 30%, transparent));
     }
   }
 
   h3 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.2;
     margin-bottom: var(--jensify-spacing-2xl);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     position: relative;
     z-index: 1;
     color: var(--jensify-text-strong);
+    text-align: center;
 
     @at-root .dark & {
       background: linear-gradient(to right, #ffffff, #d0d0d0);
@@ -740,9 +745,10 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--jensify-spacing-lg);
+  gap: var(--jensify-spacing-md);
   position: relative;
   z-index: 1;
+  text-align: left;
 
   li {
     display: flex;
@@ -796,6 +802,22 @@ body {
   max-height: 100%; // Ensure it doesn't overflow parent
   overflow-y: auto; // Allow scrolling if absolutely necessary on small screens
 
+  // Fix mat-card-header centering
+  .mat-mdc-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 !important;
+
+    .mat-mdc-card-header-text {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 !important;
+      width: 100%;
+    }
+  }
+
   @media (max-width: 960px) {
     padding: var(--jensify-spacing-lg) !important;
   }
@@ -822,6 +844,42 @@ body {
   color: var(--jensify-text-muted);
   margin-bottom: var(--jensify-spacing-xl);
   font-weight: 500;
+}
+
+// Auth-specific title (solid color, no gradient)
+.jensify-auth-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--jensify-text-strong);
+  margin-bottom: var(--jensify-spacing-xs);
+  letter-spacing: -0.03em;
+}
+
+// Forgot password link - tight spacing
+.auth-forgot-password {
+  text-align: center;
+  margin: 4px 0 0 0;
+
+  a {
+    font-size: 0.875rem;
+  }
+}
+
+// Mobile-only logo for auth pages
+.auth-mobile-logo {
+  display: none;
+  text-align: center;
+  margin-bottom: var(--jensify-spacing-lg);
+
+  img {
+    max-width: 200px;
+    height: auto;
+  }
+
+  // Show on mobile (when benefits panel is hidden)
+  @media (max-width: 1023px) {
+    display: block;
+  }
 }
 
 // Animations
@@ -1311,6 +1369,16 @@ mat-card, .mat-mdc-card {
       white-space: nowrap;
       overflow: hidden;
     }
+
+    // Override browser autofill styling - LIGHT MODE
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus,
+    &:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px rgba(74, 44, 26, 0.04) inset !important;
+      -webkit-text-fill-color: var(--jensify-text-strong) !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
   }
 
   // Float label - LIGHT MODE
@@ -1352,6 +1420,17 @@ mat-card, .mat-mdc-card {
 
       &::placeholder {
         color: rgba(255, 255, 255, 0.6) !important;
+      }
+
+      // Override browser autofill styling - DARK MODE
+      &:-webkit-autofill,
+      &:-webkit-autofill:hover,
+      &:-webkit-autofill:focus,
+      &:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px rgba(30, 30, 35, 0.95) inset !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+        transition: background-color 5000s ease-in-out 0s;
+        caret-color: rgba(255, 255, 255, 0.95);
       }
     }
 

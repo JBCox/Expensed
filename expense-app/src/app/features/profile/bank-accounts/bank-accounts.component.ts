@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,6 +52,7 @@ export class BankAccountsComponent implements OnInit {
   private readonly orgService = inject(OrganizationService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Loading state */
   isLoading = signal(true);
@@ -73,7 +75,7 @@ export class BankAccountsComponent implements OnInit {
 
   /** Check if organization has Stripe enabled */
   stripeEnabled = computed(() => {
-    const settings = this.payoutService.payoutSettings$;
+    const _settings = this.payoutService.payoutSettings$;
     return true; // Will be computed from settings
   });
 
@@ -89,13 +91,14 @@ export class BankAccountsComponent implements OnInit {
     }
 
     this.isLoading.set(true);
-    this.payoutService.getMyBankAccounts(this.organizationId).subscribe({
+    this.payoutService.getMyBankAccounts(this.organizationId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (accounts) => {
         this.bankAccounts.set(accounts);
         this.isLoading.set(false);
       },
-      error: (err) => {
-        console.error('Failed to load bank accounts:', err);
+      error: () => {
         this.isLoading.set(false);
         this.snackBar.open('Failed to load bank accounts', 'Dismiss', { duration: 5000 });
       }
@@ -106,9 +109,21 @@ export class BankAccountsComponent implements OnInit {
    * Handle token created from bank account form
    */
   onTokenCreated(token: string): void {
-    if (!this.organizationId) return;
+    // Always get the current organization ID at the time of token creation
+    // This handles the case where org was not loaded when component initialized
+    const orgId = this.organizationId || this.orgService.currentOrganizationId;
 
-    this.payoutService.addBankAccount(this.organizationId, token).subscribe({
+    if (!orgId) {
+      this.snackBar.open('No organization selected. Please refresh and try again.', 'Dismiss', { duration: 5000 });
+      return;
+    }
+
+    // Update the stored ID for consistency
+    this.organizationId = orgId;
+
+    this.payoutService.addBankAccount(orgId, token).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (response) => {
         if (response.success) {
           this.snackBar.open('Bank account added successfully', 'Dismiss', { duration: 3000 });
@@ -118,8 +133,7 @@ export class BankAccountsComponent implements OnInit {
           this.snackBar.open(response.error || 'Failed to add bank account', 'Dismiss', { duration: 5000 });
         }
       },
-      error: (err) => {
-        console.error('Failed to add bank account:', err);
+      error: () => {
         this.snackBar.open('Failed to add bank account', 'Dismiss', { duration: 5000 });
       }
     });
@@ -145,13 +159,14 @@ export class BankAccountsComponent implements OnInit {
   setAsDefault(account: EmployeeBankAccount): void {
     if (!this.organizationId) return;
 
-    this.payoutService.setDefaultBankAccount(account.id, this.organizationId).subscribe({
+    this.payoutService.setDefaultBankAccount(account.id, this.organizationId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.snackBar.open('Default account updated', 'Dismiss', { duration: 3000 });
         this.loadBankAccounts();
       },
-      error: (err) => {
-        console.error('Failed to set default account:', err);
+      error: () => {
         this.snackBar.open('Failed to update default account', 'Dismiss', { duration: 5000 });
       }
     });
@@ -179,6 +194,11 @@ export class BankAccountsComponent implements OnInit {
    * Submit verification amounts
    */
   submitVerification(account: EmployeeBankAccount): void {
+    if (!this.organizationId) {
+      this.snackBar.open('Organization not found', 'Dismiss', { duration: 3000 });
+      return;
+    }
+
     const amount1 = parseInt(this.verifyAmount1(), 10);
     const amount2 = parseInt(this.verifyAmount2(), 10);
 
@@ -187,7 +207,9 @@ export class BankAccountsComponent implements OnInit {
       return;
     }
 
-    this.payoutService.verifyBankAccount(account.id, [amount1, amount2]).subscribe({
+    this.payoutService.verifyBankAccount(this.organizationId, account.id, [amount1, amount2]).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (response) => {
         if (response.success && response.verified) {
           this.snackBar.open('Bank account verified successfully', 'Dismiss', { duration: 3000 });
@@ -197,8 +219,7 @@ export class BankAccountsComponent implements OnInit {
           this.snackBar.open(response.error || 'Verification failed. Please check the amounts.', 'Dismiss', { duration: 5000 });
         }
       },
-      error: (err) => {
-        console.error('Verification failed:', err);
+      error: () => {
         this.snackBar.open('Verification failed', 'Dismiss', { duration: 5000 });
       }
     });
@@ -214,13 +235,14 @@ export class BankAccountsComponent implements OnInit {
       return;
     }
 
-    this.payoutService.deleteBankAccount(account.id, this.organizationId).subscribe({
+    this.payoutService.deleteBankAccount(account.id, this.organizationId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.snackBar.open('Bank account removed', 'Dismiss', { duration: 3000 });
         this.loadBankAccounts();
       },
-      error: (err) => {
-        console.error('Failed to delete account:', err);
+      error: () => {
         this.snackBar.open('Failed to remove bank account', 'Dismiss', { duration: 5000 });
       }
     });

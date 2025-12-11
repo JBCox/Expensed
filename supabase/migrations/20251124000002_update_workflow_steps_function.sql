@@ -21,7 +21,10 @@
 CREATE OR REPLACE FUNCTION update_workflow_steps(
   p_workflow_id UUID,
   p_steps JSONB
-) RETURNS VOID AS $$
+) RETURNS VOID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_step JSONB;
   v_organization_id UUID;
@@ -77,7 +80,7 @@ BEGIN
   RAISE NOTICE 'Successfully updated % steps for workflow %',
     jsonb_array_length(p_steps), p_workflow_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Add comment for documentation
 COMMENT ON FUNCTION update_workflow_steps(UUID, JSONB) IS

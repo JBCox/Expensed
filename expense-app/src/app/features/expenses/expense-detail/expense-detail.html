@@ -70,20 +70,38 @@
                 Unsplit
               </button>
             }
+            <!-- Primary action: Add to Report (recommended workflow) -->
+            @if (canSubmit()) {
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="addToReport()"
+                class="jensify-button"
+                matTooltip="Group with other expenses for batch approval">
+                <mat-icon>folder_open</mat-icon>
+                Add to Report
+              </button>
+            }
+            <!-- Secondary action: Direct submit (de-emphasized) -->
             <button
-              mat-raised-button
-              color="primary"
+              mat-stroked-button
               [disabled]="!canSubmit() || submitting()"
               (click)="submitForApproval()"
-              class="jensify-button">
+              class="jensify-button"
+              matTooltip="Submit this single expense directly for approval">
               <mat-icon>send</mat-icon>
-              Submit for Approval
+              Submit Directly
             </button>
           </div>
 
           @if (!canSubmit()) {
             <p class="jensify-subtext jensify-mb-0">
               Expenses must be Draft and free of violations before submitting.
+            </p>
+          } @else {
+            <p class="jensify-subtext jensify-mb-0">
+              <mat-icon class="inline-icon">lightbulb</mat-icon>
+              <strong>Tip:</strong> Add expenses to a report for easier tracking and batch approval.
             </p>
           }
         </div>

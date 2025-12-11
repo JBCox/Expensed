@@ -88,7 +88,13 @@ CREATE OR REPLACE FUNCTION can_act_on_behalf_of(
   p_delegator_id UUID,
   p_action TEXT DEFAULT 'all'
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public
+
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_has_delegation BOOLEAN;
 BEGIN
@@ -111,7 +117,7 @@ BEGIN
 
   RETURN v_has_delegation;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Function to get users I can submit expenses for
 CREATE OR REPLACE FUNCTION get_delegators_for_user(p_user_id UUID)
@@ -121,7 +127,10 @@ RETURNS TABLE (
   delegator_email TEXT,
   scope TEXT,
   valid_until TIMESTAMP WITH TIME ZONE
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -138,7 +147,7 @@ BEGIN
     AND (d.valid_until IS NULL OR d.valid_until >= now())
   ORDER BY u.full_name;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Function to get my delegates (people who can submit for me)
 CREATE OR REPLACE FUNCTION get_delegates_for_user(p_user_id UUID)
@@ -148,7 +157,10 @@ RETURNS TABLE (
   delegate_email TEXT,
   scope TEXT,
   valid_until TIMESTAMP WITH TIME ZONE
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -165,7 +177,7 @@ BEGIN
     AND (d.valid_until IS NULL OR d.valid_until >= now())
   ORDER BY u.full_name;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Function to create or update a delegation
 CREATE OR REPLACE FUNCTION create_delegation(
@@ -228,14 +240,17 @@ BEGIN
 
   RETURN v_delegation_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- Function to revoke a delegation
 CREATE OR REPLACE FUNCTION revoke_delegation(
   p_delegation_id UUID,
   p_revoked_by UUID DEFAULT NULL
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   UPDATE expense_delegations
   SET is_active = false,
@@ -248,7 +263,7 @@ BEGIN
 
   RETURN FOUND;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- =============================================================================
 -- TRIGGER: LOG DELEGATION USAGE

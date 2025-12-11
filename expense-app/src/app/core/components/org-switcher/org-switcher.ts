@@ -316,8 +316,8 @@ export class OrgSwitcher implements OnInit, OnDestroy {
           // Since getUserOrganizations returns just orgs, we'll fetch memberships
           this.fetchMemberships(orgs);
         },
-        error: (err) => {
-          console.error('Failed to load organizations', err);
+        error: (_err) => {
+          // Error loading organizations
         }
       });
   }

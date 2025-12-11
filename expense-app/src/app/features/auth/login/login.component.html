@@ -3,34 +3,38 @@
     <!-- Product Benefits Panel -->
     <div class="jensify-auth-benefits jensify-animate-slide-down">
       <div class="jensify-brand-header">
-        <img src="assets/images/stacked-256.png" alt="Expensed" class="auth-brand-logo" />
+        <img src="assets/images/logo-horizontal-h64.png" alt="Expensed" class="auth-brand-logo" />
       </div>
-      <h3>Expense Management Made Simple</h3>
+      <h3>Expenses Made Simple</h3>
       <ul class="jensify-benefits-list">
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>SmartScan OCR extracts receipt details instantly</span>
+          <span>Snap a receipt, skip the data entry</span>
         </li>
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Track mileage with IRS-compliant reimbursement</span>
+          <span>Track mileage with one tap</span>
         </li>
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Multi-level approval workflows</span>
+          <span>Get reimbursed faster</span>
         </li>
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Real-time expense analytics and reporting</span>
+          <span>Access your expenses anywhere</span>
         </li>
       </ul>
     </div>
 
     <!-- Login Form -->
     <mat-card class="jensify-auth-card jensify-animate-fade">
+      <!-- Mobile-only logo -->
+      <div class="auth-mobile-logo">
+        <img src="assets/images/logo-horizontal-h64.png" alt="Expensed" />
+      </div>
       <mat-card-header class="jensify-text-center jensify-mb-lg">
         <mat-card-title>
-          <h1 class="jensify-page-title jensify-mb-xs">Welcome Back</h1>
+          <h1 class="jensify-auth-title jensify-mb-xs">Welcome Back</h1>
         </mat-card-title>
         <mat-card-subtitle class="jensify-page-subtitle jensify-mb-0">Sign in to manage your expenses</mat-card-subtitle>
       </mat-card-header>
@@ -95,7 +99,7 @@
         </mat-form-field>
 
         <!-- Forgot Password Link -->
-        <div class="jensify-text-right jensify-mt-sm jensify-mb-md">
+        <div class="auth-forgot-password">
           <a routerLink="/auth/forgot-password" class="jensify-link">Forgot password?</a>
         </div>
 
@@ -116,6 +120,11 @@
           Don't have an account?
           <a routerLink="/auth/register" class="jensify-link">Sign up</a>
         </div>
+
+        <!-- Pricing Link -->
+        <p class="jensify-text-center jensify-text-muted jensify-mt-md">
+          <a routerLink="/pricing" class="jensify-link">View pricing plans</a>
+        </p>
       </form>
     </mat-card-content>
   </mat-card>

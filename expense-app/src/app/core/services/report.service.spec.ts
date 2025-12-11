@@ -52,7 +52,9 @@ describe('ReportService', () => {
   };
 
   beforeEach(() => {
-    const supabaseSpy = jasmine.createSpyObj('SupabaseService', ['client']);
+    const supabaseSpy = jasmine.createSpyObj('SupabaseService', ['client'], {
+      userId: 'user-123'  // Add userId property for checkManagerAssignment
+    });
     const orgSpy = jasmine.createSpyObj('OrganizationService', [], {
       currentOrganizationId: 'org-123'
     });
@@ -458,6 +460,35 @@ describe('ReportService', () => {
   // ============================================================================
 
   describe('submitReport', () => {
+    // Helper to create a chainable mock for organization_members queries (checkManagerAssignment)
+    function createManagerCheckMock(hasManager: boolean) {
+      // Create the chainable mock for organization_members queries
+      const singleMock = jasmine.createSpy('single');
+      const eqMock3 = jasmine.createSpy('eq').and.returnValue({ single: singleMock });
+      const eqMock2 = jasmine.createSpy('eq').and.returnValue({ eq: eqMock3 });
+      const eqMock1 = jasmine.createSpy('eq').and.returnValue({ eq: eqMock2 });
+      const selectMock = jasmine.createSpy('select').and.returnValue({ eq: eqMock1 });
+
+      if (hasManager) {
+        // First query returns manager_id, second query verifies manager is active
+        let queryCount = 0;
+        singleMock.and.callFake(() => {
+          queryCount++;
+          if (queryCount === 1) {
+            return Promise.resolve({ data: { manager_id: 'manager-123' }, error: null });
+          } else {
+            return Promise.resolve({ data: { id: 'member-123' }, error: null });
+          }
+        });
+      } else {
+        singleMock.and.returnValue(
+          Promise.resolve({ data: { manager_id: null }, error: null })
+        );
+      }
+
+      return { select: selectMock };
+    }
+
     it('should transition from draft to submitted via approval chain', (done) => {
       const reportWithExpenses = {
         ...mockReport,
@@ -483,6 +514,11 @@ describe('ReportService', () => {
       };
 
       const submittedReport = { ...reportWithExpenses, status: ReportStatus.SUBMITTED };
+
+      // Mock organization_members queries for checkManagerAssignment (has manager)
+      (supabaseServiceMock.client.from as jasmine.Spy).and.returnValue(
+        createManagerCheckMock(true)
+      );
 
       // Mock rpc call for create_approval_chain
       (supabaseServiceMock.client.rpc as jasmine.Spy).and.returnValue(
@@ -520,6 +556,11 @@ describe('ReportService', () => {
         report_expenses: []
       };
 
+      // Mock organization_members queries for checkManagerAssignment (has manager)
+      (supabaseServiceMock.client.from as jasmine.Spy).and.returnValue(
+        createManagerCheckMock(true)
+      );
+
       spyOn(service, 'getReportById').and.returnValue(of(emptyReport));
 
       service.submitReport('report-123').subscribe({
@@ -546,6 +587,11 @@ describe('ReportService', () => {
           }
         }]
       };
+
+      // Mock organization_members queries for checkManagerAssignment (has manager)
+      (supabaseServiceMock.client.from as jasmine.Spy).and.returnValue(
+        createManagerCheckMock(true)
+      );
 
       spyOn(service, 'getReportById').and.returnValue(of(reportWithoutReceipts));
 
@@ -582,6 +628,11 @@ describe('ReportService', () => {
           }
         }]
       };
+
+      // Mock organization_members queries for checkManagerAssignment (has manager)
+      (supabaseServiceMock.client.from as jasmine.Spy).and.returnValue(
+        createManagerCheckMock(true)
+      );
 
       spyOn(service, 'getReportById').and.returnValue(of(reportWithInvalidExpense));
 

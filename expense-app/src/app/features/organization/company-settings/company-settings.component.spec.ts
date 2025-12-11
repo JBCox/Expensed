@@ -121,12 +121,16 @@ describe('CompanySettingsComponent', () => {
   });
 
   describe('logo upload', () => {
-    it('should process valid image file', () => {
-      const file = new File(['test'], 'logo.png', { type: 'image/png' });
+    it('should process valid image file', async () => {
+      // Create a proper PNG file with magic number header
+      const pngHeader = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+      const file = new File([pngHeader], 'logo.png', { type: 'image/png' });
       const event = { target: { files: [file] } } as any;
 
-      spyOn(FileReader.prototype, 'readAsDataURL');
       component.onLogoSelected(event);
+
+      // Wait for async file processing
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(component['logoFile']).toBe(file);
     });
@@ -151,9 +155,9 @@ describe('CompanySettingsComponent', () => {
       component.onLogoSelected(event);
 
       expect(mockSnackBar.open).toHaveBeenCalledWith(
-        'Logo must be PNG, JPG, or SVG format',
+        'Logo must be PNG format (SVG disabled for security)',
         'Close',
-        { duration: 3000 }
+        { duration: 4000 }
       );
     });
 

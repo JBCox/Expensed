@@ -1,9 +1,10 @@
-import { Injectable, OnDestroy, inject } from "@angular/core";
+import { Injectable, OnDestroy, inject, Injector } from "@angular/core";
 import { Router } from "@angular/router";
 import { SupabaseService } from "./supabase.service";
 import { OrganizationService } from "./organization.service";
 import { LoggerService } from "./logger.service";
 import { NotificationService } from "./notification.service";
+import { SuperAdminService } from "./super-admin.service";
 import { LoginCredentials, RegisterCredentials, User } from "../models";
 import { UserRole } from "../models/enums";
 import {
@@ -18,6 +19,7 @@ import {
   merge,
   Observable,
   of,
+  skip,
   Subject,
   switchMap,
   take,
@@ -35,6 +37,16 @@ export class AuthService implements OnDestroy {
   private organizationService = inject(OrganizationService);
   private logger = inject(LoggerService);
   private notification = inject(NotificationService);
+  private injector = inject(Injector);
+
+  // Lazy-loaded to avoid circular dependency
+  private _superAdminService: SuperAdminService | null = null;
+  private get superAdminService(): SuperAdminService {
+    if (!this._superAdminService) {
+      this._superAdminService = this.injector.get(SuperAdminService);
+    }
+    return this._superAdminService;
+  }
 
   private userProfileSubject = new BehaviorSubject<User | null>(null);
   public userProfile$: Observable<User | null> = this.userProfileSubject
@@ -53,6 +65,10 @@ export class AuthService implements OnDestroy {
   private lastActivityTimestamp = Date.now();
   private sessionWarningShown = false;
 
+  // Session timeout lifecycle management
+  private sessionTimeoutDestroy$ = new Subject<void>();
+  private sessionTimeoutInitialized = false;
+
   constructor() {
     // Subscribe to auth changes and load user profile
     // Wait for session to be initialized before reacting to user changes
@@ -62,6 +78,7 @@ export class AuthService implements OnDestroy {
         filter(initialized => initialized === true),
         take(1),
         switchMap(() => this.supabase.currentUser$),
+        take(1), // Only handle the initial user state, future changes handled by onAuthStateChange
         takeUntil(this.destroy$)
       )
       .subscribe(async (user) => {
@@ -78,7 +95,29 @@ export class AuthService implements OnDestroy {
         }
       });
 
-    // Initialize session timeout tracking
+    // Subscribe to ALL auth state changes (login, logout, token refresh)
+    // This handles subsequent user changes after initial load
+    this.supabase.currentUser$
+      .pipe(
+        skip(1), // Skip the initial emission (already handled above)
+        takeUntil(this.destroy$)
+      )
+      .subscribe(async (user) => {
+        if (user) {
+          this.userProfileSubject.next(this.createProvisionalProfile(user));
+          await this.loadUserProfile(user.id);
+          // Initialize session timeout when user logs in
+          this.initializeSessionTimeout();
+        } else {
+          this.userProfileSubject.next(null);
+          this.hasRedirectedToDefault = false;
+          this.organizationService.clearCurrentOrganization();
+          // Cleanup session timeout when user logs out
+          this.cleanupSessionTimeout();
+        }
+      });
+
+    // Initialize session timeout tracking (for users already authenticated at construction)
     this.initializeSessionTimeout();
   }
 
@@ -86,6 +125,7 @@ export class AuthService implements OnDestroy {
    * Clean up subscriptions when service is destroyed
    */
   ngOnDestroy(): void {
+    this.cleanupSessionTimeout();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -136,6 +176,12 @@ export class AuthService implements OnDestroy {
    * Determine the default landing route for current user
    */
   getDefaultRoute(): string {
+    // Check if user is a super admin - they go to super admin dashboard
+    // Super admins don't need an organization, they manage the platform
+    if (this.superAdminService.isSuperAdmin) {
+      return "/super-admin";
+    }
+
     // Check if user needs organization setup
     if (!this.organizationService.currentOrganizationId) {
       return "/organization/setup";
@@ -167,14 +213,14 @@ export class AuthService implements OnDestroy {
     ).pipe(
       map(({ data: _data, error }) => {
         if (error) {
-          return { success: false, error: this.getErrorMessage(error) };
+          return { success: false, error: this.logger.getErrorMessage(error) };
         }
         return { success: true };
       }),
       catchError((error) => {
         return of({
           success: false,
-          error: this.getErrorMessage(error, "Registration failed"),
+          error: this.logger.getErrorMessage(error, "Registration failed"),
         });
       }),
     );
@@ -191,14 +237,14 @@ export class AuthService implements OnDestroy {
     ).pipe(
       map(({ data: _data, error }) => {
         if (error) {
-          return { success: false, error: this.getErrorMessage(error) };
+          return { success: false, error: this.logger.getErrorMessage(error) };
         }
         return { success: true };
       }),
       catchError((error) => {
         return of({
           success: false,
-          error: this.getErrorMessage(error, "Login failed"),
+          error: this.logger.getErrorMessage(error, "Login failed"),
         });
       }),
     );
@@ -206,6 +252,7 @@ export class AuthService implements OnDestroy {
 
   /**
    * Sign out
+   * SECURITY: Clear all sensitive data from localStorage on logout
    */
   async signOut(): Promise<void> {
     await this.supabase.signOut();
@@ -214,6 +261,11 @@ export class AuthService implements OnDestroy {
 
     // Clear organization context
     this.organizationService.clearCurrentOrganization();
+
+    // SECURITY: Clear app-specific localStorage items
+    // Note: Supabase SDK's signOut() already clears its own auth tokens from storage
+    localStorage.removeItem('current_organization_id');
+    localStorage.removeItem('impersonation_session');
 
     this.router.navigate(["/auth/login"]);
   }
@@ -227,14 +279,14 @@ export class AuthService implements OnDestroy {
     return from(this.supabase.resetPassword(email)).pipe(
       map(({ error }) => {
         if (error) {
-          return { success: false, error: this.getErrorMessage(error) };
+          return { success: false, error: this.logger.getErrorMessage(error) };
         }
         return { success: true };
       }),
       catchError((error) => {
         return of({
           success: false,
-          error: this.getErrorMessage(error, "Password reset failed"),
+          error: this.logger.getErrorMessage(error, "Password reset failed"),
         });
       }),
     );
@@ -249,14 +301,14 @@ export class AuthService implements OnDestroy {
     return from(this.supabase.updatePassword(newPassword)).pipe(
       map(({ error }) => {
         if (error) {
-          return { success: false, error: this.getErrorMessage(error) };
+          return { success: false, error: this.logger.getErrorMessage(error) };
         }
         return { success: true };
       }),
       catchError((error) => {
         return of({
           success: false,
-          error: this.getErrorMessage(error, "Password update failed"),
+          error: this.logger.getErrorMessage(error, "Password update failed"),
         });
       }),
     );
@@ -294,22 +346,19 @@ export class AuthService implements OnDestroy {
   /**
    * Load organization context for user
    * Sets the current organization and membership
+   * IMPORTANT: Always marks organization as initialized, even on error
+   * This prevents auth guards from hanging indefinitely
    */
   private async loadOrganizationContext(_userId: string): Promise<void> {
     try {
-      console.log('[AuthService] Loading organization context for user:', _userId);
       // Get user's organization context - wait for it to complete
       const context = await firstValueFrom(
         this.organizationService.getUserOrganizationContext(),
       );
 
-      console.log('[AuthService] Organization context received:', context);
-
       if (
         context && context.current_organization && context.current_membership
       ) {
-        console.log('[AuthService] Setting organization:', context.current_organization.name);
-        console.log('[AuthService] User role:', context.current_membership.role);
         // Set current organization - types are validated by UserOrganizationContext interface
         this.organizationService.setCurrentOrganization(
           context.current_organization,
@@ -317,19 +366,18 @@ export class AuthService implements OnDestroy {
         );
       } else {
         // User has no organization - may need to create one or accept an invitation
-        console.warn('[AuthService] User has no organization membership');
         this.logger.info("User has no organization membership", "AuthService");
-        // Clear any stale organization data
+        // Clear any stale organization data and mark as initialized
         this.organizationService.clearCurrentOrganization();
       }
     } catch (error) {
-      console.error('[AuthService] Error loading organization context:', error);
       this.logger.error(
         "Error loading organization context",
         error,
         "AuthService",
       );
-      // Clear stale data on error
+      // Clear stale data on error and mark as initialized
+      // This ensures auth guards don't hang forever waiting for org context
       this.organizationService.clearCurrentOrganization();
     }
   }
@@ -408,12 +456,19 @@ export class AuthService implements OnDestroy {
       return;
     }
 
+    // Prevent duplicate initialization
+    if (this.sessionTimeoutInitialized) {
+      return;
+    }
+
+    this.sessionTimeoutInitialized = true;
+
     // Track user activity events
     const activityEvents = ['click', 'keypress', 'scroll', 'mousemove'];
     merge(...activityEvents.map(event => fromEvent(document, event)))
       .pipe(
         throttleTime(1000), // Throttle to max once per second to reduce overhead
-        takeUntil(this.destroy$)
+        takeUntil(this.sessionTimeoutDestroy$)
       )
       .subscribe(() => {
         this.lastActivityTimestamp = Date.now();
@@ -422,7 +477,7 @@ export class AuthService implements OnDestroy {
 
     // Check for inactivity periodically
     interval(this.INACTIVITY_CHECK_INTERVAL_MS)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntil(this.sessionTimeoutDestroy$))
       .subscribe(() => {
         if (!this.isAuthenticated) {
           return; // Skip if user already logged out
@@ -452,6 +507,27 @@ export class AuthService implements OnDestroy {
   }
 
   /**
+   * Cleanup session timeout tracking on logout or service destruction
+   */
+  private cleanupSessionTimeout(): void {
+    if (!this.sessionTimeoutInitialized) {
+      return;
+    }
+
+    // Complete the session timeout subscriptions
+    this.sessionTimeoutDestroy$.next();
+    this.sessionTimeoutDestroy$.complete();
+
+    // Reset state for potential re-login
+    this.sessionTimeoutDestroy$ = new Subject<void>();
+    this.sessionTimeoutInitialized = false;
+    this.lastActivityTimestamp = Date.now();
+    this.sessionWarningShown = false;
+
+    this.logger.info('Session timeout tracking cleaned up', 'AuthService');
+  }
+
+  /**
    * Handle session timeout - sign out user and show notification
    */
   private handleSessionTimeout(): void {
@@ -464,24 +540,5 @@ export class AuthService implements OnDestroy {
 
     // Sign out user
     this.signOut();
-  }
-
-  /**
-   * Extract error message from unknown error type
-   */
-  private getErrorMessage(
-    error: unknown,
-    defaultMessage = "An error occurred",
-  ): string {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (typeof error === "string") {
-      return error;
-    }
-    if (typeof error === "object" && error !== null && "message" in error) {
-      return String(error.message);
-    }
-    return defaultMessage;
   }
 }

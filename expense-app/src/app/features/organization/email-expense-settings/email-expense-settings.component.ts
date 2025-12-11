@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +20,6 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import {
   EmailInboxConfig,
   UserEmailAlias,
-  InboundEmail,
   EmailProcessingStats,
   EMAIL_STATUS_CONFIG,
   EMAIL_SUBMISSION_INSTRUCTIONS,
@@ -1009,7 +1008,7 @@ export class EmailExpenseSettingsComponent implements OnInit {
   private loadStats(): void {
     this.emailService.getProcessingStats().subscribe({
       next: (stats) => this.stats.set(stats),
-      error: () => {} // Silent fail for stats
+      error: () => { /* Silent fail for stats */ }
     });
   }
 
@@ -1061,7 +1060,7 @@ export class EmailExpenseSettingsComponent implements OnInit {
     });
   }
 
-  resendVerification(alias: UserEmailAlias): void {
+  resendVerification(_alias: UserEmailAlias): void {
     this.notificationService.showWarning('Verification email would be sent (feature pending)');
   }
 

@@ -23,7 +23,10 @@
 -- Determines which workflow applies to a given expense based on amount and conditions
 
 CREATE OR REPLACE FUNCTION get_approval_workflow_for_expense(p_expense_id UUID)
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_expense_record RECORD;
   v_workflow_id UUID;
@@ -68,7 +71,7 @@ BEGIN
 
   RETURN v_workflow_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 2. GET_APPROVAL_WORKFLOW_FOR_REPORT
@@ -76,7 +79,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Determines which workflow applies to a report (uses total_amount)
 
 CREATE OR REPLACE FUNCTION get_approval_workflow_for_report(p_report_id UUID)
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_report_record RECORD;
   v_workflow_id UUID;
@@ -110,7 +116,7 @@ BEGIN
 
   RETURN v_workflow_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 3. GET_APPROVER_FOR_STEP
@@ -123,7 +129,10 @@ CREATE OR REPLACE FUNCTION get_approver_for_step(
   p_expense_id UUID DEFAULT NULL,
   p_report_id UUID DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_step RECORD;
   v_submitter_id UUID;
@@ -201,7 +210,7 @@ BEGIN
 
   RETURN v_approver_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 4. CREATE_APPROVAL_CHAIN
@@ -212,7 +221,10 @@ CREATE OR REPLACE FUNCTION create_approval_chain(
   p_expense_id UUID DEFAULT NULL,
   p_report_id UUID DEFAULT NULL
 )
-RETURNS UUID AS $$
+RETURNS UUID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_workflow_id UUID;
   v_approval_id UUID;
@@ -309,7 +321,7 @@ BEGIN
 
   RETURN v_approval_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 5. APPROVE_EXPENSE
@@ -321,7 +333,10 @@ CREATE OR REPLACE FUNCTION approve_expense(
   p_approver_id UUID,
   p_comment TEXT DEFAULT NULL
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_approval RECORD;
   v_next_approver UUID;
@@ -409,7 +424,7 @@ BEGIN
     END IF;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 6. REJECT_EXPENSE
@@ -422,7 +437,10 @@ CREATE OR REPLACE FUNCTION reject_expense(
   p_rejection_reason TEXT,
   p_comment TEXT DEFAULT NULL
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_approval RECORD;
   v_approver_role TEXT;
@@ -495,7 +513,7 @@ BEGIN
     WHERE id = v_approval.report_id;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 7. GET_APPROVAL_STATS
@@ -511,7 +529,10 @@ RETURNS TABLE (
   approved_count BIGINT,
   rejected_count BIGINT,
   avg_approval_time_hours NUMERIC
-) AS $$
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   RETURN QUERY
   SELECT
@@ -528,7 +549,7 @@ BEGIN
   LEFT JOIN approval_actions aa ON aa.expense_approval_id = ea.id
   WHERE ea.organization_id = p_organization_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 8. COMMENTS

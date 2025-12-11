@@ -124,7 +124,9 @@ export class ApprovalSettings implements OnInit {
         this.members.set(members);
         this.managersAndAbove.set(members.filter((m) => ["manager", "finance", "admin"].includes(m.role)));
       },
-      error: (error) => console.error("Failed to load organization members:", error),
+      error: (_error) => {
+        // Error loading organization members
+      },
     });
   }
 

@@ -16,11 +16,11 @@
 // This prevents "Acquiring an exclusive Navigator LockManager lock immediately failed" errors
 if (typeof navigator !== 'undefined') {
   const mockLocks = {
-    request: async (name: string, options: any, callback?: any) => {
+    request: async (name: string, options: unknown, callback?: unknown) => {
       // If callback is the second argument (no options)
       const cb = typeof options === 'function' ? options : callback;
-      if (cb) {
-        return await cb({ name, mode: 'exclusive' });
+      if (typeof cb === 'function') {
+        return await (cb as (lock: { name: string; mode: string }) => Promise<unknown>)({ name, mode: 'exclusive' });
       }
       return undefined;
     },
@@ -53,7 +53,7 @@ function safeAppendChild<T extends Node>(node: T): T {
       return originalAppendChild(node);
     }
     return node;
-  } catch (error) {
+  } catch {
     // In headless Chrome afterAll, this can fail - return the node anyway
     return node;
   }
@@ -68,7 +68,7 @@ function safeRemoveChild<T extends Node>(node: T): T {
       return originalRemoveChild(node);
     }
     return node;
-  } catch (error) {
+  } catch {
     return node;
   }
 }
@@ -96,7 +96,7 @@ window.getComputedStyle = function(element: Element, pseudoElt?: string | null):
       return originalGetComputedStyle(element, pseudoElt);
     }
     throw new Error('getComputedStyle not available');
-  } catch (error) {
+  } catch {
     // Return a minimal CSSStyleDeclaration-like object for detached elements
     return {
       getPropertyValue: () => '',
@@ -110,7 +110,7 @@ const originalElementAppendChild = Element.prototype.appendChild;
 Element.prototype.appendChild = function<T extends Node>(this: Element, node: T): T {
   try {
     return originalElementAppendChild.call(this, node) as T;
-  } catch (error) {
+  } catch {
     // Swallow errors during cleanup phase
     return node;
   }
@@ -120,7 +120,7 @@ const originalElementRemoveChild = Element.prototype.removeChild;
 Element.prototype.removeChild = function<T extends Node>(this: Element, node: T): T {
   try {
     return originalElementRemoveChild.call(this, node) as T;
-  } catch (error) {
+  } catch {
     return node;
   }
 };

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -38,6 +38,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class ForgotPasswordComponent implements OnInit, OnDestroy {
   private formBuilder = inject(FormBuilder);
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Cleanup
   private destroy$ = new Subject<void>();
@@ -94,6 +95,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
             this.errorMessage = this.getErrorMessage(result.error || 'Unable to process password reset. Please try again.');
           }
           this.loading = false;
+          this.cdr.markForCheck();
         },
         error: (error: unknown) => {
           if (error instanceof Error) {
@@ -102,6 +104,7 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
             this.errorMessage = 'An unexpected error occurred. Please try again.';
           }
           this.loading = false;
+          this.cdr.markForCheck();
         }
       });
   }

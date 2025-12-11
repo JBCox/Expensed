@@ -294,6 +294,7 @@ CREATE OR REPLACE FUNCTION mark_all_notifications_read()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
     UPDATE notifications

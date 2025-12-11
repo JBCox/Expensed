@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { Observable, from, throwError } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { Observable, from, of, throwError } from 'rxjs';
+import { map, catchError, tap, switchMap } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { OrganizationService } from './organization.service';
 import { LoggerService } from './logger.service';
@@ -107,7 +107,7 @@ export class DelegationService {
         if (error) throw error;
         return data as boolean;
       }),
-      catchError(() => from([false]))
+      catchError(() => of(false))
     );
   }
 
@@ -250,10 +250,11 @@ export class DelegationService {
         this.logger.info('Delegation revoked', 'DelegationService', { delegationId });
         return data as boolean;
       }),
-      tap(() => {
-        // Refresh delegators list
-        this.getMyDelegators().subscribe();
-      }),
+      switchMap(result =>
+        this.getMyDelegators().pipe(
+          map(() => result)
+        )
+      ),
       catchError(this.handleError)
     );
   }
@@ -328,7 +329,7 @@ export class DelegationService {
     }
 
     // Find the delegation ID
-    const delegation = this._delegators().find(d => d.delegator_id === actingFor.delegator_id);
+    const _delegation = this._delegators().find(d => d.delegator_id === actingFor.delegator_id);
 
     return {
       submitted_by: userId,

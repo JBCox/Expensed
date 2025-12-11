@@ -16,7 +16,10 @@ CREATE OR REPLACE FUNCTION reject_expense(
   p_rejection_reason TEXT,
   p_comment TEXT DEFAULT NULL
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_approval RECORD;
   v_approver_role TEXT;
@@ -93,6 +96,6 @@ BEGIN
     WHERE id = v_approval.report_id;
   END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION reject_expense IS 'Handles rejection action with full rejection details for both expenses and reports';

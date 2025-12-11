@@ -242,11 +242,9 @@ describe('PerDiemSettingsComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     component.loadRates();
 
     tick();
-    expect(console.error).toHaveBeenCalledWith('Error loading rates:', jasmine.any(Error));
     expect(notificationServiceMock.showError).toHaveBeenCalledWith('Failed to load per diem rates');
     expect(component.loading()).toBe(false);
   }));

@@ -1,6 +1,6 @@
 <ng-container *ngIf="vm$ | async as vm">
-<!-- Top Bar - Show only when user is authenticated -->
-<mat-toolbar *ngIf="vm.isAuthenticated && !isAuthRoute" class="app-toolbar">
+<!-- Top Bar - Show only for regular authenticated users (not auth routes or super-admin routes) -->
+<mat-toolbar *ngIf="vm.isAuthenticated && !isAuthRoute && !isSuperAdminRoute" class="app-toolbar">
   <div class="toolbar-content">
     <!-- Left Section: Hamburger + Logo -->
     <div class="toolbar-left">
@@ -8,7 +8,7 @@
         <mat-icon>menu</mat-icon>
       </button>
       <div class="logo-section">
-        <img src="assets/images/logo-horizontal-h64.png" alt="Expensed" class="app-logo" />
+        <app-brand-logo [size]="56" [showOrgLogoInput]="true"></app-brand-logo>
       </div>
     </div>
 
@@ -46,9 +46,9 @@
   </div>
 </mat-toolbar>
 
-<!-- Sidebar Navigation -->
+<!-- Sidebar Navigation - Hide for super-admin routes (they have their own sidebar) -->
 <app-sidebar-nav
-  *ngIf="vm.isAuthenticated && !isAuthRoute"
+  *ngIf="vm.isAuthenticated && !isAuthRoute && !isSuperAdminRoute"
   [isOpen]="isSidebarOpen"
   (closeSidebar)="closeSidebar()"
   (collapsedChange)="onSidebarCollapsedChange($event)">
@@ -56,12 +56,14 @@
 
 <!-- Main Content Area -->
 <div
-  class="app-content jensify-premium-mesh-bg"
-  [class.with-toolbar]="vm.isAuthenticated && !isAuthRoute"
-  [class.with-sidebar]="vm.isAuthenticated && !isAuthRoute"
-  [class.sidebar-collapsed]="isSidebarCollapsed">
-  <!-- Breadcrumbs -->
-  <app-breadcrumbs *ngIf="vm.isAuthenticated && !isAuthRoute"></app-breadcrumbs>
+  class="app-content"
+  [class.jensify-premium-mesh-bg]="!isSuperAdminRoute"
+  [class.with-toolbar]="vm.isAuthenticated && !isAuthRoute && !isSuperAdminRoute"
+  [class.with-sidebar]="vm.isAuthenticated && !isAuthRoute && !isSuperAdminRoute"
+  [class.sidebar-collapsed]="isSidebarCollapsed && !isSuperAdminRoute"
+  [class.super-admin-mode]="isSuperAdminRoute">
+  <!-- Breadcrumbs - Hide for super-admin routes -->
+  <app-breadcrumbs *ngIf="vm.isAuthenticated && !isAuthRoute && !isSuperAdminRoute"></app-breadcrumbs>
 
   <router-outlet />
 </div>

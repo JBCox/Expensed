@@ -160,7 +160,10 @@ CREATE OR REPLACE FUNCTION get_exchange_rate(
   p_to_currency TEXT,
   p_date DATE DEFAULT CURRENT_DATE
 )
-RETURNS NUMERIC AS $$
+RETURNS NUMERIC 
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_rate NUMERIC;
 BEGIN
@@ -382,4 +385,4 @@ BEGIN
   GROUP BY e.original_currency, sc.name, sc.symbol
   ORDER BY expense_count DESC;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$ LANGUAGE plpgsql STABLE;

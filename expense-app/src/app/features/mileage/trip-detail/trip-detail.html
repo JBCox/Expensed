@@ -1,6 +1,6 @@
 <div class="jensify-container">
   <!-- Back Link -->
-  <div class="jensify-back-link" (click)="goBack()">
+  <div class="jensify-back-link" (click)="goBack()" (keydown.enter)="goBack()" tabindex="0" role="button" aria-label="Go back to trips">
     <mat-icon>arrow_back</mat-icon>
     <span>Back to Trips</span>
   </div>

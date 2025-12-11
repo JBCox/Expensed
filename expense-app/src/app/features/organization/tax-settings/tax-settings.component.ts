@@ -334,8 +334,8 @@ type DialogMode = 'closed' | 'add-rate' | 'edit-rate' | 'add-category' | 'edit-c
 
       <!-- Rate Dialog -->
       @if (dialogMode() === 'add-rate' || dialogMode() === 'edit-rate') {
-        <div class="dialog-overlay" (click)="closeDialog()">
-          <div class="dialog-container" (click)="$event.stopPropagation()">
+        <div class="dialog-overlay" (click)="closeDialog()" (keydown.escape)="closeDialog()" tabindex="-1" role="dialog" aria-modal="true">
+          <div class="dialog-container" (click)="$event.stopPropagation()" (keydown.escape)="closeDialog()" role="document">
             <div class="dialog-header">
               <h2>{{ dialogMode() === 'add-rate' ? 'Add Tax Rate' : 'Edit Tax Rate' }}</h2>
               <button mat-icon-button (click)="closeDialog()">
@@ -428,8 +428,8 @@ type DialogMode = 'closed' | 'add-rate' | 'edit-rate' | 'add-category' | 'edit-c
 
       <!-- Category Dialog -->
       @if (dialogMode() === 'add-category' || dialogMode() === 'edit-category') {
-        <div class="dialog-overlay" (click)="closeDialog()">
-          <div class="dialog-container" (click)="$event.stopPropagation()">
+        <div class="dialog-overlay" (click)="closeDialog()" (keydown.escape)="closeDialog()" tabindex="-1" role="dialog" aria-modal="true">
+          <div class="dialog-container" (click)="$event.stopPropagation()" (keydown.escape)="closeDialog()" role="document">
             <div class="dialog-header">
               <h2>{{ dialogMode() === 'add-category' ? 'Add Tax Category' : 'Edit Tax Category' }}</h2>
               <button mat-icon-button (click)="closeDialog()">
@@ -1033,13 +1033,13 @@ export class TaxSettingsComponent implements OnInit {
       next: () => {
         this.taxService.getTaxCategories().subscribe({
           next: () => this.loading.set(false),
-          error: (err) => {
+          error: (_err) => {
             this.notificationService.showError('Failed to load tax categories');
             this.loading.set(false);
           }
         });
       },
-      error: (err) => {
+      error: (_err) => {
         this.notificationService.showError('Failed to load tax rates');
         this.loading.set(false);
       }
@@ -1107,7 +1107,7 @@ export class TaxSettingsComponent implements OnInit {
           this.closeDialog();
           this.saving.set(false);
         },
-        error: (err) => {
+        error: (_err) => {
           this.notificationService.showError('Failed to create tax rate');
           this.saving.set(false);
         }
@@ -1130,7 +1130,7 @@ export class TaxSettingsComponent implements OnInit {
           this.closeDialog();
           this.saving.set(false);
         },
-        error: (err) => {
+        error: (_err) => {
           this.notificationService.showError('Failed to update tax rate');
           this.saving.set(false);
         }
@@ -1192,7 +1192,7 @@ export class TaxSettingsComponent implements OnInit {
           this.closeDialog();
           this.saving.set(false);
         },
-        error: (err) => {
+        error: (_err) => {
           this.notificationService.showError('Failed to create tax category');
           this.saving.set(false);
         }
@@ -1216,7 +1216,7 @@ export class TaxSettingsComponent implements OnInit {
           this.closeDialog();
           this.saving.set(false);
         },
-        error: (err) => {
+        error: (_err) => {
           this.notificationService.showError('Failed to update tax category');
           this.saving.set(false);
         }

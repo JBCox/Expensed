@@ -4,13 +4,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Allowed origins (production and development)
+// Production origins only - localhost removed for security
 const ALLOWED_ORIGINS = [
-  "https://bfudcugrarerqvvyfpoz.supabase.co", // Supabase project URL
-  "https://yourapp.com",           // Production domain (when deployed)
-  "https://www.yourapp.com",       // Production www domain (when deployed)
-  "http://localhost:4200",         // Angular dev server
-  "http://localhost:3000",         // Alternative dev port
+  "https://expensed.app",
+  "https://www.expensed.app",
+  "https://bfudcugrarerqvvyfpoz.supabase.co"
 ];
 
 /**
@@ -158,11 +156,11 @@ serve(async (req: Request) => {
 
     // Build invitation link
     const appUrl = Deno.env.get("APP_URL") || "http://localhost:4200";
-    const invitationLink = `${appUrl}/auth/accept-invitation?token=${token}`;
+    const invitationLink = `${appUrl}/auth/accept-invitation?token=${invitationToken}`;
 
     // Prepare email content
     const emailSubject =
-      `You're invited to join ${invitation.organization.name} on Jensify`;
+      `You're invited to join ${invitation.organization.name} on Expensed`;
     const emailHtml = generateEmailHtml(invitation, invitationLink);
     const emailText = generateEmailText(invitation, invitationLink);
 
@@ -197,7 +195,7 @@ serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Jensify Expenses <invitations@kanknot.com>",
+        from: "Expensed <noreply@expensed.app>",
         to: [email],
         subject: emailSubject,
         html: emailHtml,
@@ -276,7 +274,7 @@ function generateEmailHtml(
                 Hi there,
               </p>
               <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.5; color: #333333;">
-                ${inviterName} has invited you to join <strong>${organizationName}</strong> on Jensify,
+                ${inviterName} has invited you to join <strong>${organizationName}</strong> on Expensed,
                 our expense management platform.
               </p>
 
@@ -315,7 +313,7 @@ function generateEmailHtml(
                 This invitation will expire on ${expiresAt}. If you didn't expect this invitation, you can safely ignore this email.
               </p>
               <p style="margin: 10px 0 0; font-size: 12px; color: #999999; text-align: center;">
-                © 2025 Jensify. All rights reserved.
+                © 2025 Expensed. All rights reserved.
               </p>
             </td>
           </tr>
@@ -343,7 +341,7 @@ function generateEmailText(
   return `
 You're Invited to Join ${organizationName}!
 
-${inviterName} has invited you to join ${organizationName} on Jensify, our expense management platform.
+${inviterName} has invited you to join ${organizationName} on Expensed, our expense management platform.
 
 Your Role: ${role}
 ${
@@ -357,6 +355,6 @@ ${invitationLink}
 
 This invitation will expire on ${expiresAt}. If you didn't expect this invitation, you can safely ignore this email.
 
-© 2025 Jensify. All rights reserved.
+© 2025 Expensed. All rights reserved.
   `.trim();
 }

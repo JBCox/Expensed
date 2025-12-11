@@ -1,7 +1,6 @@
 import { Injectable, inject, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { map, catchError, tap, switchMap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
 import { SupabaseService } from './supabase.service';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -178,9 +177,8 @@ export class NotificationService {
       await this.loadNotifications();
       await this.loadPreferences();
       this.setupRealtimeSubscription();
-      console.log('[NotificationService] Initialized');
-    } catch (err) {
-      console.warn('[NotificationService] Initialization error:', err);
+    } catch {
+      // Silent failure - service will work in degraded mode
     }
   }
 
@@ -214,8 +212,7 @@ export class NotificationService {
 
       if (error) throw error;
       this.notificationsSubject.next(data || []);
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
+    } catch {
       // Fall back to empty array
       this.notificationsSubject.next([]);
     }
@@ -246,8 +243,8 @@ export class NotificationService {
         // Create default preferences for user
         await this.createDefaultPreferences(user.data.user.id);
       }
-    } catch (error) {
-      console.error('Failed to load preferences:', error);
+    } catch {
+      // Silent failure - will use default preferences
     }
   }
 
@@ -266,8 +263,8 @@ export class NotificationService {
       if (data) {
         this.preferencesSubject.next(data);
       }
-    } catch (error) {
-      console.error('Failed to create default preferences:', error);
+    } catch {
+      // Silent failure - will use default preferences
     }
   }
 
@@ -325,18 +322,13 @@ export class NotificationService {
             });
           }
         )
-        .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[NotificationService] Realtime subscription active');
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[NotificationService] Realtime subscription failed:', status, err);
+        .subscribe((status, _err) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             // Don't rethrow - gracefully degrade to polling-only mode
-          } else if (err) {
-            console.warn('[NotificationService] Realtime subscription error:', err);
           }
         });
-    }).catch((err) => {
-      console.warn('[NotificationService] Failed to setup realtime subscription:', err);
+    }).catch((_err) => {
+      // Silent failure - will work without realtime updates
     });
   }
 
@@ -358,7 +350,6 @@ export class NotificationService {
     try {
       const user = await this.supabase.client.auth.getUser();
       if (!user.data.user) {
-        console.error('Cannot create notification: No authenticated user');
         return null;
       }
 
@@ -399,8 +390,7 @@ export class NotificationService {
       }
 
       return data;
-    } catch (error) {
-      console.error('Failed to create notification:', error);
+    } catch {
       // Fall back to local-only notification
       return this.notifyLocal(payload, showToast);
     }
@@ -564,8 +554,7 @@ export class NotificationService {
           n.id === id ? { ...n, read: true, read_at: new Date().toISOString() } : n
         )
       );
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+    } catch {
       // Update local state anyway
       this.notificationsSubject.next(
         this.notificationsSubject.value.map(n =>
@@ -587,8 +576,7 @@ export class NotificationService {
       this.notificationsSubject.next(
         this.notificationsSubject.value.map(n => ({ ...n, read: true, read_at: new Date().toISOString() }))
       );
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+    } catch {
       // Update local state anyway
       this.notificationsSubject.next(
         this.notificationsSubject.value.map(n => ({ ...n, read: true }))
@@ -611,8 +599,8 @@ export class NotificationService {
       this.notificationsSubject.next(
         this.notificationsSubject.value.filter(n => n.id !== id)
       );
-    } catch (error) {
-      console.error('Failed to delete notification:', error);
+    } catch {
+      // Silent failure
     }
   }
 
@@ -631,8 +619,8 @@ export class NotificationService {
 
       if (error) throw error;
       this.notificationsSubject.next([]);
-    } catch (error) {
-      console.error('Failed to clear notifications:', error);
+    } catch {
+      // Silent failure
     }
   }
 
@@ -660,8 +648,7 @@ export class NotificationService {
       if (data) {
         this.preferencesSubject.next(data);
       }
-    } catch (error) {
-      console.error('Failed to update preferences:', error);
+    } catch {
       // Update local state anyway
       this.preferencesSubject.next({
         ...this.preferencesSubject.value,

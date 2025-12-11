@@ -43,9 +43,11 @@ export const authGuard: CanActivateFn = (route, state) => {
         const hasOrgInService = organizationService.currentOrganizationId;
         const hasOrgInStorage = localStorage.getItem('current_organization_id');
 
+        // Super admin routes don't require an organization - they manage the platform
         if (!hasOrgInService && !hasOrgInStorage &&
             !state.url.startsWith('/organization/setup') &&
-            !state.url.startsWith('/auth/accept-invitation')) {
+            !state.url.startsWith('/auth/accept-invitation') &&
+            !state.url.startsWith('/super-admin')) {
           return router.parseUrl('/organization/setup');
         }
 
@@ -86,7 +88,15 @@ export const financeGuard: CanActivateFn = (_route, _state) => {
   return organizationService.organizationInitialized$.pipe(
     filter(initialized => initialized === true),
     take(1),
-    map(() => {
+    switchMap(() => organizationService.currentMembership$),
+    take(1),
+    map((membership) => {
+      // SECURITY: Verify membership is active before granting access
+      if (!membership?.is_active) {
+        router.navigate(['/auth/login']);
+        return false;
+      }
+
       if (organizationService.isCurrentUserFinanceOrAdmin()) {
         return true;
       }
@@ -119,7 +129,15 @@ export const adminGuard: CanActivateFn = (_route, _state) => {
   return organizationService.organizationInitialized$.pipe(
     filter(initialized => initialized === true),
     take(1),
-    map(() => {
+    switchMap(() => organizationService.currentMembership$),
+    take(1),
+    map((membership) => {
+      // SECURITY: Verify membership is active before granting access
+      if (!membership?.is_active) {
+        router.navigate(['/auth/login']);
+        return false;
+      }
+
       if (organizationService.isCurrentUserAdmin()) {
         return true;
       }
@@ -152,7 +170,15 @@ export const managerGuard: CanActivateFn = (_route, _state) => {
   return organizationService.organizationInitialized$.pipe(
     filter(initialized => initialized === true),
     take(1),
-    map(() => {
+    switchMap(() => organizationService.currentMembership$),
+    take(1),
+    map((membership) => {
+      // SECURITY: Verify membership is active before granting access
+      if (!membership?.is_active) {
+        router.navigate(['/auth/login']);
+        return false;
+      }
+
       if (organizationService.isCurrentUserManagerOrAbove()) {
         return true;
       }

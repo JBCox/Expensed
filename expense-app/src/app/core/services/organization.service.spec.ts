@@ -58,7 +58,7 @@ describe('OrganizationService', () => {
     originalLocalStorage = window.localStorage;
 
     // Mock localStorage
-    let store: { [key: string]: string } = {};
+    let store: Record<string, string> = {};
     localStorageMock = {
       getItem: jasmine.createSpy('getItem').and.callFake((key: string) => store[key] || null),
       setItem: jasmine.createSpy('setItem').and.callFake((key: string, value: string) => {

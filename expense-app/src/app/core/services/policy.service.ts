@@ -295,7 +295,7 @@ export class PolicyService {
   duplicatePolicy(policyId: string, newName: string): Observable<CreatePolicyDto> {
     return this.getPolicy(policyId).pipe(
       map(policy => {
-        const { id, created_at, updated_at, created_by, organization_id, ...policyData } = policy;
+        const { id: _id, created_at: _created_at, updated_at: _updated_at, created_by: _created_by, organization_id: _organization_id, ...policyData } = policy;
         return {
           ...policyData,
           name: newName

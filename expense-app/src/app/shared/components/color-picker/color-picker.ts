@@ -26,7 +26,7 @@ export interface PresetColor {
   ],
   template: `
     <div class="color-picker">
-      <label class="picker-label">{{ label }}</label>
+      <span class="picker-label">{{ label }}</span>
 
       <!-- Preset Colors Grid -->
       <div class="presets-grid">

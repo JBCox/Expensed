@@ -5,6 +5,7 @@ import { UserManagementComponent } from './user-management.component';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { InvitationService } from '../../../core/services/invitation.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { FeatureGateService } from '../../../core/services/feature-gate.service';
 import { OrganizationMember, Invitation } from '../../../core/models';
 import { UserRole } from '../../../core/models/enums';
 
@@ -14,6 +15,7 @@ describe('UserManagementComponent', () => {
   let organizationServiceMock: jasmine.SpyObj<OrganizationService>;
   let invitationServiceMock: jasmine.SpyObj<InvitationService>;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
+  let featureGateServiceMock: jasmine.SpyObj<FeatureGateService>;
 
   const createMockMember = (overrides: Partial<OrganizationMember> = {}): OrganizationMember => ({
     id: 'member-' + Math.random().toString(36).substr(2, 9),
@@ -98,9 +100,14 @@ describe('UserManagementComponent', () => {
       'showError'
     ]);
 
+    featureGateServiceMock = jasmine.createSpyObj('FeatureGateService', [
+      'getUserUsage'
+    ]);
+
     // Default return values
     organizationServiceMock.getOrganizationMembers.and.returnValue(of(mockMembers));
     invitationServiceMock.getOrganizationInvitations.and.returnValue(of([]));
+    featureGateServiceMock.getUserUsage.and.returnValue(of({ current: 5, limit: 10, remaining: 5, percentage: 50 }));
 
     await TestBed.configureTestingModule({
       imports: [
@@ -110,7 +117,8 @@ describe('UserManagementComponent', () => {
       providers: [
         { provide: OrganizationService, useValue: organizationServiceMock },
         { provide: InvitationService, useValue: invitationServiceMock },
-        { provide: NotificationService, useValue: notificationServiceMock }
+        { provide: NotificationService, useValue: notificationServiceMock },
+        { provide: FeatureGateService, useValue: featureGateServiceMock }
       ]
     }).compileComponents();
 

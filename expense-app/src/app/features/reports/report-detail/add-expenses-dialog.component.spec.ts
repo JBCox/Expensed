@@ -169,11 +169,10 @@ describe('AddExpensesDialogComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     component.loadExpenses();
 
     setTimeout(() => {
-      expect(console.error).toHaveBeenCalledWith('Failed to load expenses', jasmine.any(Error));
+      // Error is handled silently - loading state is set to false
       expect(component.loading()).toBe(false);
       done();
     }, 0);
@@ -188,7 +187,6 @@ describe('AddExpensesDialogComponent', () => {
       throwError(() => new Error('Load failed'))
     );
 
-    spyOn(console, 'error');
     component.loadExpenses();
 
     setTimeout(() => {
