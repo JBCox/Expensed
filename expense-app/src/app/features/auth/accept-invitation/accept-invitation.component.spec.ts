@@ -56,9 +56,11 @@ describe('AcceptInvitationComponent', () => {
       'getInvitationByToken',
       'acceptInvitation'
     ]);
-    mockAuthService = jasmine.createSpyObj('AuthService', [], {
+    mockAuthService = jasmine.createSpyObj('AuthService', ['refreshUserProfile'], {
       isAuthenticated: true
     });
+    // Mock refreshUserProfile to return a resolved promise
+    mockAuthService.refreshUserProfile.and.returnValue(Promise.resolve());
     mockNotificationService = jasmine.createSpyObj('NotificationService', [
       'showSuccess',
       'showError'
@@ -136,22 +138,24 @@ describe('AcceptInvitationComponent', () => {
       done();
   });
 
-  it('should accept invitation when authenticated', (done) => {
-    mockInvitationService.acceptInvitation.and.returnValue(of({ id: 'mem-123' } as any));
+  it('should accept invitation when authenticated', async () => {
+    mockInvitationService.acceptInvitation.and.returnValue(of({
+      id: 'mem-123',
+      organization_id: 'org-456'
+    } as any));
 
     fixture.detectChanges();
 
-    
-      component.acceptInvitation();
+    component.acceptInvitation();
 
-      
-        expect(mockInvitationService.acceptInvitation).toHaveBeenCalledWith({
-          token: 'test-token-123'
-        });
-        expect(mockNotificationService.showSuccess).toHaveBeenCalledWith(
-          'Successfully joined Acme Corp!'
-        );
-        done();
+    // Wait for the async operations to complete
+    await fixture.whenStable();
+
+    expect(mockInvitationService.acceptInvitation).toHaveBeenCalledWith({
+      token: 'test-token-123'
+    });
+    expect(mockAuthService.refreshUserProfile).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/home']);
   });
 
   it('should redirect to login if not authenticated', (done) => {
@@ -192,15 +196,14 @@ describe('AcceptInvitationComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('should navigate to login with return URL', (done) => {
+  it('should navigate to login and store token in localStorage', (done) => {
+    spyOn(localStorage, 'setItem');
     fixture.detectChanges();
 
-    
-      component.goToLogin();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login'], {
-        queryParams: { returnUrl: '/auth/accept-invitation?token=test-token-123' }
-      });
-      done();
+    component.goToLogin();
+    expect(localStorage.setItem).toHaveBeenCalledWith('pending_invitation_token', 'test-token-123');
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
+    done();
   });
 
   it('should navigate to login without return URL if no token', () => {
@@ -209,15 +212,14 @@ describe('AcceptInvitationComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/login']);
   });
 
-  it('should navigate to register with return URL', (done) => {
+  it('should navigate to register and store token in localStorage', (done) => {
+    spyOn(localStorage, 'setItem');
     fixture.detectChanges();
 
-    
-      component.goToRegister();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/register'], {
-        queryParams: { returnUrl: '/auth/accept-invitation?token=test-token-123' }
-      });
-      done();
+    component.goToRegister();
+    expect(localStorage.setItem).toHaveBeenCalledWith('pending_invitation_token', 'test-token-123');
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/register']);
+    done();
   });
 
   it('should navigate to register without return URL if no token', () => {
@@ -226,16 +228,24 @@ describe('AcceptInvitationComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/auth/register']);
   });
 
-  it('should set loading state correctly during accept', (done) => {
-    mockInvitationService.acceptInvitation.and.returnValue(of({ id: 'mem-123' } as any));
+  it('should set loading state correctly during accept', async () => {
+    mockInvitationService.acceptInvitation.and.returnValue(of({
+      id: 'mem-123',
+      organization_id: 'org-456'
+    } as any));
 
     fixture.detectChanges();
 
     expect(component.isLoading()).toBe(false);
     component.acceptInvitation();
-    // After sync observable completes, loading should be false
+    // Loading should be true immediately after calling acceptInvitation
+    expect(component.isLoading()).toBe(true);
+
+    // Wait for the async operations to complete
+    await fixture.whenStable();
+
+    // After all async operations complete, loading should be false
     expect(component.isLoading()).toBe(false);
-    done();
   });
 
   it('should store token from query params', (done) => {

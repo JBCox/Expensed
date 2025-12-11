@@ -142,6 +142,9 @@ export class NotificationService {
   /** Track if service has been initialized */
   private initialized = false;
 
+  /** Track notification IDs created locally to prevent duplicate toasts from realtime */
+  private locallyCreatedIds = new Set<string>();
+
   constructor() {
     // Wait for session to be initialized, then check for user
     this.supabase.sessionInitialized$.subscribe(initialized => {
@@ -189,6 +192,7 @@ export class NotificationService {
     this.initialized = false;
     this.notificationsSubject.next([]);
     this.preferencesSubject.next(DEFAULT_PREFERENCES);
+    this.locallyCreatedIds.clear();
     if (this.realtimeChannel) {
       this.supabase.client.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
@@ -303,8 +307,9 @@ export class NotificationService {
 
               this.notificationsSubject.next([newNotification, ...current].slice(0, 50));
 
-              // Show toast if preferences allow
-              if (this.preferencesSubject.value.show_toast) {
+              // Show toast if preferences allow, but skip if we created this locally
+              // (local notify() already showed the toast)
+              if (this.preferencesSubject.value.show_toast && !this.locallyCreatedIds.has(newNotification.id)) {
                 this.showToast(newNotification);
               }
             });
@@ -382,6 +387,11 @@ export class NotificationService {
 
       // Add to local state (realtime will also fire, but this is faster)
       if (data) {
+        // Track this ID to prevent duplicate toasts from realtime subscription
+        this.locallyCreatedIds.add(data.id);
+        // Clean up after 5 seconds (enough time for realtime to process)
+        setTimeout(() => this.locallyCreatedIds.delete(data.id), 5000);
+
         const current = this.notificationsSubject.value;
         // Avoid duplicate if realtime already added it
         if (!current.find(n => n.id === data.id)) {

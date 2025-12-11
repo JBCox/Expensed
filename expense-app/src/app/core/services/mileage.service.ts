@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, from, map, catchError, throwError, switchMap } from 'rxjs';
-import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { SupabaseService } from './supabase.service';
 import { OrganizationService } from './organization.service';
 import {
@@ -15,18 +14,6 @@ import {
   MileageStatus,
   TripCoordinate
 } from '../models/mileage.model';
-
-/**
- * Type alias for Supabase query builder used in filter methods.
- * Uses generic parameters to allow flexibility with Supabase's complex type system.
- */
-type SupabaseQueryBuilder = PostgrestFilterBuilder<
-  Record<string, unknown>,
-  Record<string, unknown>,
-  unknown[],
-  string,
-  unknown
->;
 
 /**
  * MileageService
@@ -516,13 +503,18 @@ export class MileageService {
     return data.rate;
   }
 
-  private applyFilters(
-    query: SupabaseQueryBuilder,
+  /**
+   * Apply filters to a Supabase query builder
+   * Uses generic type parameter to work with Supabase's complex type system
+   */
+  private applyFilters<T>(
+    query: T,
     filters?: MileageFilterOptions
-  ): SupabaseQueryBuilder {
+  ): T {
     if (!filters) return query;
 
-    let filteredQuery = query;
+    // Using any to work with Supabase's complex query builder types
+    let filteredQuery: any = query;
 
     if (filters.startDate) filteredQuery = filteredQuery.gte('trip_date', filters.startDate);
     if (filters.endDate) filteredQuery = filteredQuery.lte('trip_date', filters.endDate);
@@ -549,7 +541,7 @@ export class MileageService {
       );
     }
 
-    return filteredQuery;
+    return filteredQuery as T;
   }
 
   private handleError(error: unknown): Observable<never> {
