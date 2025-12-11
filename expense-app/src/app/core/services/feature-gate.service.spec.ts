@@ -88,6 +88,7 @@ describe('FeatureGateService', () => {
       {
         subscription$: subscriptionSubject.asObservable(),
         usageLimits$: usageLimitsSubject.asObservable(),
+        subscriptionLoaded$: of(true), // Always loaded in tests
       }
     );
     mockSubscriptionService.getCurrentPlanName.and.returnValue('free');

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, combineLatest } from 'rxjs';
-import { map, distinctUntilChanged, shareReplay } from 'rxjs/operators';
+import { map, distinctUntilChanged, shareReplay, filter, switchMap } from 'rxjs/operators';
 import { SubscriptionService } from './subscription.service';
 import { LoggerService } from './logger.service';
 import { PlanFeatures, FeatureAccessResult } from '../models/subscription.model';
@@ -120,12 +120,17 @@ export class FeatureGateService {
 
   /**
    * Check if user can upload a receipt (under limit)
+   * Waits for subscription data to load before evaluating to prevent race conditions
    */
   canUploadReceipt(): Observable<FeatureAccessResult> {
-    return combineLatest([
-      this.planFeatures$,
-      this.subscriptionService.usageLimits$,
-    ]).pipe(
+    return this.subscriptionService.subscriptionLoaded$.pipe(
+      filter((loaded) => loaded),
+      switchMap(() =>
+        combineLatest([
+          this.planFeatures$,
+          this.subscriptionService.usageLimits$,
+        ])
+      ),
       map(([features, limits]) => {
         // Unlimited receipts
         if (features.receipts_per_month === null) {
