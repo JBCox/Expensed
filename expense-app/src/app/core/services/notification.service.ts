@@ -295,6 +295,12 @@ export class NotificationService {
             this.ngZone.run(() => {
               const newNotification = payload.new as AppNotification;
               const current = this.notificationsSubject.value;
+
+              // Avoid duplicate if notify() already added it locally
+              if (current.find(n => n.id === newNotification.id)) {
+                return; // Already added locally, skip realtime duplicate
+              }
+
               this.notificationsSubject.next([newNotification, ...current].slice(0, 50));
 
               // Show toast if preferences allow
