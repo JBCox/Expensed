@@ -4,11 +4,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Production origins only - localhost removed for security
 const ALLOWED_ORIGINS = [
   "https://expensed.app",
   "https://www.expensed.app",
-  "https://bfudcugrarerqvvyfpoz.supabase.co"
+  "https://bfudcugrarerqvvyfpoz.supabase.co",
+  "http://localhost:4200"
 ];
 
 /**
@@ -164,9 +164,8 @@ serve(async (req: Request) => {
     const emailHtml = generateEmailHtml(invitation, invitationLink);
     const emailText = generateEmailText(invitation, invitationLink);
 
-    // Send email (using Resend, SendGrid, or your preferred service)
-    // For now, this is a placeholder. You'll need to integrate with an email service
-    const emailServiceApiKey = Deno.env.get("EMAIL_SERVICE_API_KEY");
+    // Send email via Resend
+    const emailServiceApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!emailServiceApiKey) {
       console.log(

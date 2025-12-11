@@ -123,11 +123,21 @@ export class LoginComponent implements OnInit, OnDestroy {
             await this.authService.refreshUserProfile();
             // Wait for super admin check to complete before determining route
             await this.superAdminService.waitForAdminCheck();
-            const destination =
-              this.returnUrl &&
-                !this.authService.shouldUseDefaultRoute(this.returnUrl)
-                ? this.returnUrl
-                : this.authService.getDefaultRoute();
+
+            // Check for pending invitation token (stored when coming from accept-invitation page)
+            const pendingInvitationToken = localStorage.getItem('pending_invitation_token');
+            let destination: string;
+
+            if (pendingInvitationToken) {
+              // Clear the stored token and redirect to accept invitation
+              localStorage.removeItem('pending_invitation_token');
+              destination = `/auth/accept-invitation?token=${pendingInvitationToken}`;
+            } else if (this.returnUrl && !this.authService.shouldUseDefaultRoute(this.returnUrl)) {
+              destination = this.returnUrl;
+            } else {
+              destination = this.authService.getDefaultRoute();
+            }
+
             await this.router.navigateByUrl(destination);
           } else {
             this.errorMessage = this.getErrorMessage(

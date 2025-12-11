@@ -138,13 +138,13 @@ export class AcceptInvitationComponent implements OnInit, OnDestroy {
 
   /**
    * Navigate to login
+   * Stores the invitation token in localStorage so it persists through the login flow
    */
   goToLogin(): void {
     if (this.token) {
-      const returnUrl = `/auth/accept-invitation?token=${this.token}`;
-      this.router.navigate(['/auth/login'], {
-        queryParams: { returnUrl }
-      });
+      // Store invitation token to persist through login flow
+      localStorage.setItem('pending_invitation_token', this.token);
+      this.router.navigate(['/auth/login']);
     } else {
       this.router.navigate(['/auth/login']);
     }
@@ -152,13 +152,13 @@ export class AcceptInvitationComponent implements OnInit, OnDestroy {
 
   /**
    * Navigate to register
+   * Stores the invitation token in localStorage so it persists through the registration flow
    */
   goToRegister(): void {
     if (this.token) {
-      const returnUrl = `/auth/accept-invitation?token=${this.token}`;
-      this.router.navigate(['/auth/register'], {
-        queryParams: { returnUrl }
-      });
+      // Store invitation token to persist through registration + email confirmation flow
+      localStorage.setItem('pending_invitation_token', this.token);
+      this.router.navigate(['/auth/register']);
     } else {
       this.router.navigate(['/auth/register']);
     }

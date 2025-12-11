@@ -617,7 +617,7 @@ export class ReportService {
       .select('manager_id')
       .eq('user_id', userId)
       .eq('organization_id', organizationId)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .single();
 
     if (error || !data) {
@@ -635,7 +635,7 @@ export class ReportService {
       .select('id')
       .eq('user_id', data.manager_id)
       .eq('organization_id', organizationId)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .single();
 
     return !managerError && !!managerData;

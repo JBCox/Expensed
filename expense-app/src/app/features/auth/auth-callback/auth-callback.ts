@@ -148,7 +148,7 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
             if (this.supabase.isAuthenticated) {
               this.message.set('Email verified! Redirecting...');
               setTimeout(() => {
-                this.router.navigate(['/home']);
+                this.redirectAfterAuth();
               }, 1000);
             } else {
               // Session not established, might need to wait longer or there's an issue
@@ -179,13 +179,34 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
         clearInterval(checkSession);
         this.message.set('Email verified! Redirecting...');
         setTimeout(() => {
-          this.router.navigate(['/home']);
+          this.redirectAfterAuth();
         }, 1000);
       } else if (attempts >= maxAttempts) {
         clearInterval(checkSession);
         this.error.set('Verification timed out. Please try logging in.');
       }
     }, 500);
+  }
+
+  /**
+   * Redirect after successful authentication
+   * Checks for pending invitation token and redirects accordingly
+   */
+  private redirectAfterAuth(): void {
+    // Check if there's a pending invitation to accept
+    const pendingInvitationToken = localStorage.getItem('pending_invitation_token');
+
+    if (pendingInvitationToken) {
+      // Clear the stored token
+      localStorage.removeItem('pending_invitation_token');
+      // Redirect to accept the invitation
+      this.router.navigate(['/auth/accept-invitation'], {
+        queryParams: { token: pendingInvitationToken }
+      });
+    } else {
+      // Normal flow - go to home
+      this.router.navigate(['/home']);
+    }
   }
 
   goToLogin(): void {

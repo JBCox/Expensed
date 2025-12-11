@@ -733,7 +733,7 @@ export class NotificationService {
         .from('organization_members')
         .select('organization_id')
         .eq('user_id', user.data.user.id)
-        .eq('status', 'active')
+        .eq('is_active', true)
         .single();
 
       return data?.organization_id || null;
