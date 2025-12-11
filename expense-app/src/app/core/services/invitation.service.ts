@@ -69,10 +69,10 @@ export class InvitationService {
         if (!data) throw new Error('No invitation data returned');
         return data as Invitation;
       }),
-      tap(async (invitation) => {
-        // Send invitation email via Edge Function
-        await this.sendInvitationEmail(invitation);
-        this.notificationService.showSuccess(`Invitation sent to ${dto.email}`);
+      tap((invitation) => {
+        // Send invitation email via Edge Function (fire-and-forget)
+        // NOTE: Success notification is handled by the component to avoid duplicate notifications
+        this.sendInvitationEmail(invitation);
       }),
       catchError(this.handleError)
     );
@@ -114,12 +114,10 @@ export class InvitationService {
         if (error) throw error;
         return (data || []) as Invitation[];
       }),
-      tap(async (invitations) => {
-        // Send invitation emails via Edge Function (parallel batch)
-        await Promise.all(
-          invitations.map(invitation => this.sendInvitationEmail(invitation))
-        );
-        this.notificationService.showSuccess(`${invitations.length} invitations sent successfully`);
+      tap((invitations) => {
+        // Send invitation emails via Edge Function (fire-and-forget)
+        // NOTE: Success notification is handled by the component to avoid duplicate notifications
+        invitations.forEach(invitation => this.sendInvitationEmail(invitation));
       }),
       catchError(this.handleError)
     );
@@ -280,9 +278,10 @@ export class InvitationService {
         if (!data) throw new Error('Invitation not found');
         return data as Invitation;
       }),
-      tap(async (invitation) => {
-        await this.sendInvitationEmail(invitation);
-        this.notificationService.showSuccess('Invitation resent');
+      tap((invitation) => {
+        // Fire-and-forget email send
+        // NOTE: Success notification is handled by the component to avoid duplicate notifications
+        this.sendInvitationEmail(invitation);
       }),
       catchError(this.handleError)
     );

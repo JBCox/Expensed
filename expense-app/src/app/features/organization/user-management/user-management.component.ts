@@ -356,11 +356,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.invitationService.createInvitation(dto)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (_invitation) => {
+        next: (invitation) => {
           this.isLoading.set(false);
           this.inviteForm.reset({ role: UserRole.EMPLOYEE });
           this.loadInvitations();
-          // Note: Success notification is shown by InvitationService
+          this.notificationService.showSuccess(`Invitation sent to ${invitation.email}`);
         },
         error: (error) => {
           this.isLoading.set(false);
@@ -445,7 +445,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          // Note: Success notification is shown by InvitationService
+          this.notificationService.showSuccess(`Invitation resent to ${invitation.email}`);
         },
         error: () => {
           this.notificationService.showError('Failed to resend invitation');
