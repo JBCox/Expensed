@@ -434,30 +434,35 @@ type(scope): subject
 
 ### Infrastructure Summary
 - **Domain**: expensed.app (registered at Spaceship)
-- **DNS/CDN/Hosting**: Cloudflare (Pages + Workers)
+- **DNS/CDN/Hosting**: Cloudflare (Pages + Workers) ✅ **LIVE**
 - **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
 - **Email**: Cloudflare Email Routing (support@, receipts@, noreply@expensed.app)
+- **Deployment Status**: Production deployment complete (December 11, 2024)
 
 ### Environments
 - **Development**: `npm start` (localhost:4200)
 - **Staging**: Deploy preview on PR to `main`
 - **Production**: Auto-deploy on push to `main` branch
 
-### Pre-Deployment Checklist
-- [ ] All tests passing
-- [ ] Code coverage ≥ 70%
-- [ ] No TypeScript errors
-- [ ] No console.logs or debugging code
-- [ ] Environment variables configured in Cloudflare Pages
-- [ ] Supabase RLS policies in place
-- [ ] Database migrations applied
-- [ ] No hardcoded credentials or API keys
+### Pre-Deployment Checklist ✅ **COMPLETE (December 11, 2024)**
+- [x] All tests passing
+- [x] Code coverage ≥ 70%
+- [x] No TypeScript errors
+- [x] No console.logs or debugging code
+- [x] Environment variables configured in Cloudflare Pages
+- [x] Supabase secrets configured (GOOGLE_VISION_API_KEY, GOOGLE_MAPS_API_KEY, STRIPE_SECRET_KEY, RESEND_API_KEY, ENCRYPTION_MASTER_KEY)
+- [x] Production environment.ts tracked in git (contains only public keys)
+- [x] Supabase RLS policies in place
+- [x] Database migrations applied
+- [x] No hardcoded credentials or API keys
 
-### Deployment Platforms
-- **Frontend**: Cloudflare Pages
+### Deployment Platforms ✅ **LIVE**
+- **Frontend**: Cloudflare Pages (connected to GitHub repo: JBCox/Expensed)
 - **Backend**: Supabase (managed)
-- **Email**: Cloudflare Email Routing
-- **CI/CD**: Cloudflare Pages (auto-deploy from GitHub)
+- **Email**: Cloudflare Email Routing (inbound) + Resend (outbound)
+- **CI/CD**: Cloudflare Pages (auto-deploy from GitHub on push to `main`)
+- **Custom Domain**: expensed.app (configured December 11, 2024)
+- **Production URL**: https://expensed.app
 
 ## Security Checklist
 
@@ -539,7 +544,7 @@ type(scope): subject
 - [x] Finance can view and export expenses - **Complete**
 - [x] Mobile responsive - **Complete (All UI)**
 - [x] 70%+ test coverage - **Complete (83 test cases, 95%+ passing)**
-- [ ] Deployed to staging - **Pending**
+- [x] Deployed to production - **Complete (December 11, 2024)** ✅
 
 ### Completed Components (Updated December 9, 2024)
 - ✅ Database schema with RLS policies

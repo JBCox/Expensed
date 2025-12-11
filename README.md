@@ -21,7 +21,8 @@ Expensed is a comprehensive expense management solution for tracking all busines
 ## 🚀 Current Phase: Phase 0 - Expense Receipt MVP
 
 **Timeline**: 2-3 weeks (Started November 13, 2024)
-**Status**: ✅ **98% Complete** (Ready for Staging Deployment)
+**Status**: ✅ **COMPLETE & DEPLOYED** (Production live at https://expensed.app)
+**Deployment Date**: December 11, 2024
 **Initial Focus**: Gas receipts for traveling employees
 **Supports**: All expense categories (gas, hotels, flights, meals, office supplies, etc.)
 
@@ -106,9 +107,10 @@ Supporting tokens (e.g., `*-soft`, `*-border`, text/icon colors, focus ring) are
 
 ### DevOps
 - **Version Control**: Git + GitHub
-- **CI/CD**: GitHub Actions
-- **Hosting**: Vercel / Netlify
-- **Monitoring**: Supabase Dashboard
+- **CI/CD**: Cloudflare Pages (auto-deploy from GitHub)
+- **Hosting**: Cloudflare Pages ✅ **LIVE**
+- **Custom Domain**: expensed.app
+- **Monitoring**: Supabase Dashboard + Cloudflare Analytics
 
 ## 📋 Prerequisites
 
@@ -249,29 +251,28 @@ The build artifacts will be stored in the `dist/` directory.
 
 ## 🚢 Deployment
 
-### Deploy to Vercel
+### Production Deployment ✅ **LIVE**
 
-1. Install Vercel CLI:
+The application is deployed to Cloudflare Pages and automatically deploys on push to `main` branch.
+
+- **Production URL**: https://expensed.app
+- **Hosting**: Cloudflare Pages
+- **GitHub Repo**: JBCox/Expensed
+- **Auto-Deploy**: Enabled on `main` branch
+- **Preview Deploys**: Enabled on pull requests
+
+### Manual Deployment
+
+If you need to trigger a manual deployment:
+
+1. Push to `main` branch:
 ```bash
-npm install -g vercel
+git push origin main
 ```
 
-2. Deploy:
-```bash
-vercel --prod
-```
+2. Or create a pull request to preview changes before merging
 
-### Deploy to Netlify
-
-1. Install Netlify CLI:
-```bash
-npm install -g netlify-cli
-```
-
-2. Deploy:
-```bash
-netlify deploy --prod
-```
+See [docs/DEPLOYMENT_INFRASTRUCTURE.md](./docs/DEPLOYMENT_INFRASTRUCTURE.md) for complete deployment details.
 
 ## 📖 Documentation
 
@@ -284,14 +285,14 @@ netlify deploy --prod
 
 ## 🗺️ Roadmap
 
-### ✅ Phase 0: Expense Receipt MVP (Weeks 1-3) - **98% Complete**
+### ✅ Phase 0: Expense Receipt MVP (Weeks 1-3) - **COMPLETE** 🎉
 - ✅ User authentication (complete)
 - ✅ Receipt upload for all expense types (complete)
 - ✅ **OCR extraction with Google Vision API (complete)**
 - ✅ Expense form with category selection (complete)
 - ✅ Finance dashboard (complete)
 - ✅ CSV export (complete)
-- 🔄 Staging deployment (final step)
+- ✅ Production deployment (December 11, 2024) 🎉
 
 **Supported Categories**: Fuel, Meals & Entertainment, Lodging, Airfare, Ground Transportation, Office Supplies, Software/Subscriptions, Miscellaneous
 
@@ -366,4 +367,4 @@ For technical support or questions:
 
 **Built with ❤️ for Corvaer Manufacturing**
 
-*Last Updated: November 27, 2024*
+*Last Updated: December 11, 2024*
