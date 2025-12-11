@@ -118,6 +118,9 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Version marker for deployment verification
+    console.log('%c EXPENSED VERSION: 2024-12-11-v2 ', 'background: #ff5900; color: white; font-size: 14px; padding: 4px 8px; border-radius: 4px;');
+
     this.handleAuthCallback();
     this.setupKeyboardShortcuts();
     this.setupBrandColor();
