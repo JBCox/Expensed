@@ -145,6 +145,12 @@ export class NotificationService {
   /** Track notification IDs created locally to prevent duplicate toasts from realtime */
   private locallyCreatedIds = new Set<string>();
 
+  /** Track recent notification messages to prevent duplicates (message -> timestamp) */
+  private recentNotifications = new Map<string, number>();
+
+  /** Deduplication window in milliseconds */
+  private readonly DEDUP_WINDOW_MS = 2000;
+
   constructor() {
     // Wait for session to be initialized, then check for user
     this.supabase.sessionInitialized$.subscribe(initialized => {
@@ -193,6 +199,7 @@ export class NotificationService {
     this.notificationsSubject.next([]);
     this.preferencesSubject.next(DEFAULT_PREFERENCES);
     this.locallyCreatedIds.clear();
+    this.recentNotifications.clear();
     if (this.realtimeChannel) {
       this.supabase.client.removeChannel(this.realtimeChannel);
       this.realtimeChannel = null;
@@ -305,13 +312,12 @@ export class NotificationService {
                 return; // Already added locally, skip realtime duplicate
               }
 
+              // Add to notification list (for badge count, dropdown, etc.)
               this.notificationsSubject.next([newNotification, ...current].slice(0, 50));
 
-              // Show toast if preferences allow, but skip if we created this locally
-              // (local notify() already showed the toast)
-              if (this.preferencesSubject.value.show_toast && !this.locallyCreatedIds.has(newNotification.id)) {
-                this.showToast(newNotification);
-              }
+              // NOTE: We intentionally do NOT show toasts from realtime subscription
+              // The local notify() method already shows toasts for user-initiated actions
+              // Realtime is only for updating the notification list/badge
             });
           }
         )
@@ -358,6 +364,21 @@ export class NotificationService {
     payload: CreateNotificationPayload,
     showToast?: boolean
   ): Promise<AppNotification | null> {
+    // Deduplication: prevent same notification from being created twice within window
+    const dedupKey = `${payload.type}:${payload.category}:${payload.message}`;
+    const now = Date.now();
+    const lastCreated = this.recentNotifications.get(dedupKey);
+
+    if (lastCreated && (now - lastCreated) < this.DEDUP_WINDOW_MS) {
+      // Skip duplicate notification
+      return null;
+    }
+
+    // Track this notification
+    this.recentNotifications.set(dedupKey, now);
+    // Clean up old entries after the window expires
+    setTimeout(() => this.recentNotifications.delete(dedupKey), this.DEDUP_WINDOW_MS);
+
     try {
       const user = await this.supabase.client.auth.getUser();
       if (!user.data.user) {
