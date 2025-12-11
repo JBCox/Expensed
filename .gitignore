@@ -3,8 +3,9 @@
 supabase/.branches/
 supabase/.temp/
 
-# Environment files (sensitive credentials)
-expense-app/src/environments/environment.ts
+# Environment files
+# Note: environment.ts is tracked - it only contains PUBLIC keys
+# (Supabase anon key and Stripe publishable key are designed for public use)
 expense-app/src/environments/environment.development.ts
 .env
 .env.local
