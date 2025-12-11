@@ -159,6 +159,7 @@ export class AcceptInvitationComponent implements OnInit, OnDestroy {
     if (this.token) {
       // Store invitation token to persist through login flow
       localStorage.setItem('pending_invitation_token', this.token);
+      console.log('%c[INVITATION FLOW] Token stored:', 'background: #4CAF50; color: white;', this.token);
       this.router.navigate(['/auth/login']);
     } else {
       this.router.navigate(['/auth/login']);
@@ -173,6 +174,7 @@ export class AcceptInvitationComponent implements OnInit, OnDestroy {
     if (this.token) {
       // Store invitation token to persist through registration + email confirmation flow
       localStorage.setItem('pending_invitation_token', this.token);
+      console.log('%c[INVITATION FLOW] Token stored:', 'background: #4CAF50; color: white;', this.token);
       this.router.navigate(['/auth/register']);
     } else {
       this.router.navigate(['/auth/register']);

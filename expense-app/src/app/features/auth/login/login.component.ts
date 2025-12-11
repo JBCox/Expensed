@@ -142,6 +142,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
             // Check for pending invitation token (stored when coming from accept-invitation page)
             const pendingInvitationToken = localStorage.getItem('pending_invitation_token');
+            console.log('%c[LOGIN] Checking for pending token after login:', 'background: #9C27B0; color: white;', pendingInvitationToken);
             let destination: string;
 
             if (pendingInvitationToken) {

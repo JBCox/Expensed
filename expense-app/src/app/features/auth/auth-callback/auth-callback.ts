@@ -234,6 +234,7 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
   private redirectAfterAuth(): void {
     // Check if there's a pending invitation to accept
     const pendingInvitationToken = localStorage.getItem('pending_invitation_token');
+    console.log('%c[AUTH CALLBACK] Checking for pending token:', 'background: #2196F3; color: white;', pendingInvitationToken);
 
     if (pendingInvitationToken) {
       // Redirect to accept the invitation
