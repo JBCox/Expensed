@@ -67,7 +67,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.invitationToken = params['invitation_token'] || localStorage.getItem('pending_invitation_token');
       if (this.invitationToken) {
-        console.log('%c[REGISTER] Invitation token found:', 'background: #9C27B0; color: white;', this.invitationToken);
+        // CRITICAL: Persist token to localStorage so it survives the email verification flow
+        // When user clicks email verification link, auth-callback reads from localStorage
+        localStorage.setItem('pending_invitation_token', this.invitationToken);
+        console.log('%c[REGISTER] Invitation token found and persisted:', 'background: #9C27B0; color: white;', this.invitationToken);
       }
     });
 
@@ -189,6 +192,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.loading = true;
 
     const { fullName, email, password, confirmPassword } = this.registerForm.value;
+
+    // Ensure token is persisted before registration (safety net)
+    if (this.invitationToken) {
+      localStorage.setItem('pending_invitation_token', this.invitationToken);
+    }
 
     this.authService.register({
       email,
