@@ -200,15 +200,19 @@ export class AuthService implements OnDestroy {
 
   /**
    * Register a new user
+   * @param credentials - User registration credentials
+   * @param invitationToken - Optional invitation token for cross-device invitation flow
    */
   register(
     credentials: RegisterCredentials,
+    invitationToken?: string,
   ): Observable<{ success: boolean; error?: string }> {
     return from(
       this.supabase.signUp(
         credentials.email,
         credentials.password,
         credentials.full_name,
+        invitationToken,
       ),
     ).pipe(
       map(({ data: _data, error }) => {

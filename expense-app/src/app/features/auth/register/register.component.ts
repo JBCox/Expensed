@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -44,6 +44,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private supabaseService = inject(SupabaseService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
 
   // Cleanup
@@ -58,12 +59,23 @@ export class RegisterComponent implements OnInit, OnDestroy {
   hidePassword = true;
   hideConfirmPassword = true;
 
+  // Invitation token from URL (for cross-device support)
+  private invitationToken: string | null = null;
+
   ngOnInit(): void {
+    // Read invitation token from URL query params (cross-device support)
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      this.invitationToken = params['invitation_token'] || localStorage.getItem('pending_invitation_token');
+      if (this.invitationToken) {
+        console.log('%c[REGISTER] Invitation token found:', 'background: #9C27B0; color: white;', this.invitationToken);
+      }
+    });
+
     // Check if user is already authenticated with pending invitation
     // This handles edge case where user started registration, got interrupted,
     // and came back with an existing session
     if (this.authService.isAuthenticated) {
-      const pendingToken = localStorage.getItem('pending_invitation_token');
+      const pendingToken = this.invitationToken || localStorage.getItem('pending_invitation_token');
       if (pendingToken) {
         // Redirect to accept invitation - token will be cleared there
         this.router.navigate(['/auth/accept-invitation'], {
@@ -183,7 +195,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       password,
       full_name: fullName,
       confirm_password: confirmPassword
-    })
+    }, this.invitationToken || undefined)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {

@@ -143,7 +143,9 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
       // Set up fallback timeout (10 seconds) in case session initialization hangs
       this.fallbackTimeoutId = setTimeout(() => {
         // If we're still on this page, something went wrong - try fallback redirect
-        const pendingToken = localStorage.getItem('pending_invitation_token');
+        // Check URL params first (cross-device), then localStorage (same-device)
+        const urlParams = new URLSearchParams(window.location.search);
+        const pendingToken = urlParams.get('invitation_token') || localStorage.getItem('pending_invitation_token');
         if (pendingToken) {
           this.router.navigate(['/auth/accept-invitation'], {
             queryParams: { token: pendingToken }
@@ -186,10 +188,15 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
         });
     } else {
       // No hash fragment - might be a direct visit or different flow
+      // Check URL params for invitation token (cross-device flow)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlInvitationToken = urlParams.get('invitation_token');
+
       // Check if already authenticated
       if (this.supabase.isAuthenticated) {
         // Check for pending invitation before redirecting to home
-        const pendingToken = localStorage.getItem('pending_invitation_token');
+        // URL params take priority (cross-device), then localStorage (same-device)
+        const pendingToken = urlInvitationToken || localStorage.getItem('pending_invitation_token');
         if (pendingToken) {
           this.router.navigate(['/auth/accept-invitation'], {
             queryParams: { token: pendingToken }
@@ -197,6 +204,9 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
         } else {
           this.router.navigate(['/home']);
         }
+      } else if (urlInvitationToken) {
+        // Not authenticated but have invitation token - redirect to login with token preserved
+        this.error.set('Please log in to accept your invitation.');
       } else {
         this.error.set('No verification token found. Please check your email link.');
       }
@@ -227,14 +237,25 @@ export class AuthCallbackComponent implements OnInit, OnDestroy {
   /**
    * Redirect after successful authentication
    * Checks for pending invitation token and redirects accordingly
-   * NOTE: We do NOT remove the token here - let accept-invitation component
-   * remove it after successfully loading the invitation. This prevents token
-   * loss if navigation fails.
+   * Supports cross-device flow by checking URL query params first, then localStorage
    */
   private redirectAfterAuth(): void {
-    // Check if there's a pending invitation to accept
-    const pendingInvitationToken = localStorage.getItem('pending_invitation_token');
-    console.log('%c[AUTH CALLBACK] Checking for pending token:', 'background: #2196F3; color: white;', pendingInvitationToken);
+    // Check for invitation token in URL query params (cross-device support)
+    // The URL will be like: /auth/callback?invitation_token=xxx#access_token=yyy
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlInvitationToken = urlParams.get('invitation_token');
+
+    // Fall back to localStorage for same-device flow
+    const localStorageToken = localStorage.getItem('pending_invitation_token');
+
+    // Prefer URL token (cross-device) over localStorage (same-device)
+    const pendingInvitationToken = urlInvitationToken || localStorageToken;
+
+    console.log('%c[AUTH CALLBACK] Checking for pending token:', 'background: #2196F3; color: white;', {
+      urlToken: urlInvitationToken,
+      localStorageToken: localStorageToken,
+      using: pendingInvitationToken
+    });
 
     if (pendingInvitationToken) {
       // Redirect to accept the invitation

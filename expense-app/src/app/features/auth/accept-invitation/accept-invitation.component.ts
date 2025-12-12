@@ -168,14 +168,17 @@ export class AcceptInvitationComponent implements OnInit, OnDestroy {
 
   /**
    * Navigate to register
-   * Stores the invitation token in localStorage so it persists through the registration flow
+   * Passes invitation token in URL so it works across devices
    */
   goToRegister(): void {
     if (this.token) {
-      // Store invitation token to persist through registration + email confirmation flow
+      // Pass token in URL - works across devices (unlike localStorage)
+      // Also store in localStorage as backup for same-device flow
       localStorage.setItem('pending_invitation_token', this.token);
-      console.log('%c[INVITATION FLOW] Token stored:', 'background: #4CAF50; color: white;', this.token);
-      this.router.navigate(['/auth/register']);
+      console.log('%c[INVITATION FLOW] Token passed to register:', 'background: #4CAF50; color: white;', this.token);
+      this.router.navigate(['/auth/register'], {
+        queryParams: { invitation_token: this.token }
+      });
     } else {
       this.router.navigate(['/auth/register']);
     }

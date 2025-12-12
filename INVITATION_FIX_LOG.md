@@ -109,19 +109,109 @@ This ensures exactly ONE notification per successful operation, because the comp
 
 ---
 
-## Next Steps
+---
 
-1. **TEST INVITATION FLOW** - Send new invitation and verify only 1 notification appears
-2. **TEST FULL FLOW** - Complete invitation → registration → email confirmation → accept invitation
+## ACTUAL ROOT CAUSE FOUND - December 11, 2024 @ 5:30 PM CST
+
+### The Real Problem: Supabase URL Configuration
+
+**The invitation flow code was CORRECT all along!** The issue was a **Supabase configuration problem**.
+
+### Evidence from Supabase Auth Logs
+
+Almost all auth requests showed:
+```
+referer: http://localhost:3000
+```
+
+Even for production traffic hitting expensed.app!
+
+### Root Cause
+
+**Supabase URL Configuration was wrong:**
+
+| Setting | Wrong Value | Correct Value |
+|---------|-------------|---------------|
+| Site URL | `http://localhost:3000` | `https://expensed.app` |
+| Redirect URLs | Old Netlify URLs only | Added `https://expensed.app/**` |
+
+### Why This Broke the Invitation Flow
+
+1. User clicks invitation link on `expensed.app`
+2. User clicks "Create Account" → token stored in `localStorage` on `expensed.app` domain
+3. User registers → Supabase sends confirmation email
+4. **Email confirmation link pointed to `localhost:3000`** (from Site URL config!)
+5. User clicks link → browser goes to wrong domain (or nowhere)
+6. User manually navigates to `expensed.app` and logs in
+7. **localStorage on `expensed.app` has the token, but the auth callback never ran properly**
+8. Auth guard sees no organization → redirects to "Create Organization"
+
+### The localStorage Domain Scope Issue
+
+`localStorage` is **domain-scoped**:
+- Token stored on `expensed.app` ≠ accessible on `localhost:3000`
+- If Supabase redirects email confirmation to wrong domain, token is "lost"
+
+### Fix Applied
+
+User updated Supabase Dashboard → Authentication → URL Configuration:
+
+**Site URL**: `https://expensed.app`
+
+**Redirect URLs**:
+- `https://expensed.app/auth/callback`
+- `https://expensed.app/**`
+- `http://localhost:3000/auth/callback`
+- `http://localhost:4200/auth/callback`
 
 ---
 
-## How to Verify Fix is Deployed
+## Summary
 
-Add a version indicator:
+| Issue | Root Cause | Fix |
+|-------|------------|-----|
+| Duplicate notifications | RxJS `tap(async)` fires and forgets | Move `showSuccess` to component subscribe handlers |
+| User redirected to create org | Supabase Site URL = localhost:3000 | Update to `https://expensed.app` |
+| Token "lost" after email confirm | Email links redirected to wrong domain | Add correct redirect URLs to Supabase |
+
+---
+
+## Next Steps
+
+1. **TEST FULL INVITATION FLOW** on production:
+   - Send new invitation from admin
+   - Click invite link → accept-invitation page
+   - Click "Create Account" → register
+   - Complete registration → confirm email
+   - Click email confirmation link → **should land on accept-invitation**
+   - Accept invitation → should join invited organization
+
+2. **Verify diagnostic logs** in browser console:
+   - `[INVITATION FLOW] Token stored:` - when clicking Create Account
+   - `[AUTH CALLBACK] Checking for pending token:` - after email confirmation
+   - `[LOGIN] Checking for pending token:` - if user logs in manually
+
+---
+
+## Diagnostic Logs Added
+
+For debugging, these console logs were added and should remain for now:
+
 ```typescript
-// In app.component.ts or similar
-console.log('EXPENSED VERSION: 2024-12-11-fix-7');
+// accept-invitation.component.ts
+console.log('%c[INVITATION FLOW] Token stored:', 'background: #4CAF50; color: white;', token);
+
+// auth-callback.ts
+console.log('%c[AUTH CALLBACK] Checking for pending token:', 'background: #2196F3; color: white;', token);
+
+// auth.guard.ts
+console.log('%c[AUTH GUARD] Safety net check:', 'background: #FF9800; color: white;', {...});
+
+// login.component.ts
+console.log('%c[LOGIN] Checking for pending token:', 'background: #9C27B0; color: white;', token);
+
+// app.ts
+console.log('%c EXPENSED VERSION: 2024-12-11-v2 ', 'background: #ff5900; color: white;', ...);
 ```
 
-If this doesn't appear in browser console, deployment is NOT working.
+These can be removed after confirming the fix works in production.

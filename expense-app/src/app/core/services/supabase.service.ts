@@ -200,9 +200,19 @@ export class SupabaseService {
 
   /**
    * Sign up with email and password
+   * @param email - User email
+   * @param password - User password
+   * @param fullName - User's full name
+   * @param invitationToken - Optional invitation token to include in redirect URL (for cross-device support)
    */
-  async signUp(email: string, password: string, fullName: string) {
+  async signUp(email: string, password: string, fullName: string, invitationToken?: string) {
     try {
+      // Build redirect URL - include invitation token if present for cross-device support
+      let redirectUrl = `${window.location.origin}/auth/callback`;
+      if (invitationToken) {
+        redirectUrl += `?invitation_token=${encodeURIComponent(invitationToken)}`;
+      }
+
       const { data, error } = await this.supabase.auth.signUp({
         email,
         password,
@@ -210,7 +220,7 @@ export class SupabaseService {
           data: {
             full_name: fullName
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: redirectUrl
         }
       });
 
