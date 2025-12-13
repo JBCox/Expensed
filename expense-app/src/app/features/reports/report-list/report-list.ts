@@ -80,7 +80,7 @@ export class ReportListComponent implements OnInit, OnDestroy {
   statusFilter = new FormControl<ReportStatus | 'all'>('all');
 
   readonly ReportStatus = ReportStatus;
-  readonly statusOptions = [
+  readonly statusOptions: { value: ReportStatus | 'all'; label: string }[] = [
     { value: 'all', label: 'All Reports' },
     { value: ReportStatus.DRAFT, label: 'Draft' },
     { value: ReportStatus.SUBMITTED, label: 'Submitted' },
@@ -346,6 +346,13 @@ export class ReportListComponent implements OnInit, OnDestroy {
    */
   canDelete(report: ExpenseReport): boolean {
     return report.status === ReportStatus.DRAFT;
+  }
+
+  /**
+   * Set status filter with proper typing
+   */
+  setStatusFilter(value: ReportStatus | 'all'): void {
+    this.statusFilter.setValue(value);
   }
 
   private handleStatusNotifications(reports: ExpenseReport[]): void {

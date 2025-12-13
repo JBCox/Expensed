@@ -5,23 +5,23 @@
       <div class="jensify-brand-header">
         <app-brand-logo [size]="56" [showOrgLogoInput]="false"></app-brand-logo>
       </div>
-      <h3>Expenses Made Simple</h3>
+      <h3>{{ 'auth.expensesMadeSimple' | translate }}</h3>
       <ul class="jensify-benefits-list">
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Snap a receipt, skip the data entry</span>
+          <span>{{ 'auth.benefit1' | translate }}</span>
         </li>
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Track mileage with one tap</span>
+          <span>{{ 'auth.benefit2' | translate }}</span>
         </li>
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Get reimbursed faster</span>
+          <span>{{ 'auth.benefit3' | translate }}</span>
         </li>
         <li>
           <mat-icon>check_circle</mat-icon>
-          <span>Access your expenses anywhere</span>
+          <span>{{ 'auth.benefit4' | translate }}</span>
         </li>
       </ul>
     </div>
@@ -34,16 +34,16 @@
       </div>
       <mat-card-header class="jensify-text-center jensify-mb-lg">
         <mat-card-title>
-          <h1 class="jensify-auth-title jensify-mb-xs">Create Your Account</h1>
+          <h1 class="jensify-auth-title jensify-mb-xs">{{ 'auth.createYourAccount' | translate }}</h1>
         </mat-card-title>
-        <mat-card-subtitle class="jensify-page-subtitle jensify-mb-0">Join Expensed to manage your expenses</mat-card-subtitle>
+        <mat-card-subtitle class="jensify-page-subtitle jensify-mb-0">{{ 'auth.getStarted' | translate }}</mat-card-subtitle>
       </mat-card-header>
 
     <mat-card-content>
       <!-- Loading State - Checking Signup Status -->
       <div *ngIf="checkingSignupStatus" class="jensify-signup-checking">
         <mat-spinner diameter="32"></mat-spinner>
-        <span>Loading...</span>
+        <span>{{ 'common.loading' | translate }}</span>
       </div>
 
       <!-- Signups Disabled Message -->
@@ -51,15 +51,15 @@
         <div class="jensify-disabled-icon">
           <mat-icon>lock</mat-icon>
         </div>
-        <h2>Registration Currently Closed</h2>
-        <p>New account signups are temporarily disabled. Please check back later or contact support if you have an invitation.</p>
+        <h2>{{ 'auth.registrationClosed' | translate }}</h2>
+        <p>{{ 'auth.registrationClosedMessage' | translate }}</p>
         <div class="jensify-disabled-actions">
           <a mat-raised-button color="primary" routerLink="/auth/login">
             <mat-icon>login</mat-icon>
-            Sign In Instead
+            {{ 'auth.signInInstead' | translate }}
           </a>
           <a mat-stroked-button routerLink="/pricing">
-            View Plans
+            {{ 'auth.viewPlans' | translate }}
           </a>
         </div>
       </div>
@@ -80,114 +80,114 @@
       <form *ngIf="!checkingSignupStatus && signupsEnabled" [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="jensify-form">
         <!-- Full Name Field -->
         <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
-          <mat-label>Full Name</mat-label>
+          <mat-label>{{ 'auth.fullName' | translate }}</mat-label>
           <mat-icon matPrefix>person</mat-icon>
           <input
             matInput
             type="text"
             formControlName="fullName"
-            placeholder="John Doe"
+            [placeholder]="'auth.fullNamePlaceholder' | translate"
             autocomplete="name"
-            [attr.aria-label]="'Full name'"
+            [attr.aria-label]="'auth.fullName' | translate"
           />
           <mat-error *ngIf="f['fullName'].hasError('required')">
-            Full name is required
+            {{ 'validation.required' | translate }}
           </mat-error>
           <mat-error *ngIf="f['fullName'].hasError('minlength')">
-            Full name must be at least 2 characters
+            {{ 'auth.fullNameMinLength' | translate }}
           </mat-error>
         </mat-form-field>
 
         <!-- Email Field -->
         <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ 'auth.email' | translate }}</mat-label>
           <mat-icon matPrefix>email</mat-icon>
           <input
             matInput
             type="email"
             formControlName="email"
-            placeholder="your.email@company.com"
+            [placeholder]="'auth.emailPlaceholder' | translate"
             autocomplete="email"
-            [attr.aria-label]="'Email address'"
+            [attr.aria-label]="'auth.email' | translate"
           />
           <mat-error *ngIf="f['email'].hasError('required')">
-            Email is required
+            {{ 'validation.required' | translate }}
           </mat-error>
           <mat-error *ngIf="f['email'].hasError('email')">
-            Please enter a valid email address
+            {{ 'validation.email' | translate }}
           </mat-error>
         </mat-form-field>
 
         <!-- Password Field -->
         <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ 'auth.password' | translate }}</mat-label>
           <mat-icon matPrefix>lock</mat-icon>
           <input
             matInput
             [type]="hidePassword ? 'password' : 'text'"
             formControlName="password"
-            placeholder="Password (8+ chars)"
+            [placeholder]="'auth.passwordPlaceholderRegister' | translate"
             autocomplete="new-password"
-            [attr.aria-label]="'Password'"
+            [attr.aria-label]="'auth.password' | translate"
           />
           <button
             mat-icon-button
             matSuffix
             type="button"
             (click)="togglePasswordVisibility()"
-            [attr.aria-label]="'Toggle password visibility'"
+            [attr.aria-label]="'auth.togglePassword' | translate"
             tabindex="-1"
           >
             <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
           <mat-error *ngIf="f['password'].hasError('required')">
-            Password is required
+            {{ 'validation.required' | translate }}
           </mat-error>
           <mat-error *ngIf="f['password'].hasError('minlength')">
-            Password must be at least 8 characters
+            {{ 'auth.passwordMin8' | translate }}
           </mat-error>
           <mat-error *ngIf="f['password'].hasError('passwordStrength')">
-            Password must contain uppercase, lowercase, and numbers or special characters
+            {{ 'auth.passwordStrengthError' | translate }}
           </mat-error>
         </mat-form-field>
 
         <!-- Confirm Password Field -->
         <mat-form-field appearance="fill" floatLabel="always" class="jensify-full-width">
-          <mat-label>Confirm Password</mat-label>
+          <mat-label>{{ 'auth.confirmPassword' | translate }}</mat-label>
           <mat-icon matPrefix>lock</mat-icon>
           <input
             matInput
             [type]="hideConfirmPassword ? 'password' : 'text'"
             formControlName="confirmPassword"
-            placeholder="Confirm password"
+            [placeholder]="'auth.confirmPasswordPlaceholder' | translate"
             autocomplete="new-password"
-            [attr.aria-label]="'Confirm password'"
+            [attr.aria-label]="'auth.confirmPassword' | translate"
           />
           <button
             mat-icon-button
             matSuffix
             type="button"
             (click)="toggleConfirmPasswordVisibility()"
-            [attr.aria-label]="'Toggle confirm password visibility'"
+            [attr.aria-label]="'auth.togglePassword' | translate"
             tabindex="-1"
           >
             <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
           <mat-error *ngIf="f['confirmPassword'].hasError('required')">
-            Please confirm your password
+            {{ 'validation.required' | translate }}
           </mat-error>
           <mat-error *ngIf="!passwordsMatch && f['confirmPassword'].touched">
-            Passwords do not match
+            {{ 'validation.passwordMismatch' | translate }}
           </mat-error>
         </mat-form-field>
 
         <!-- Password Requirements -->
         <div class="jensify-password-requirements">
-          <p class="jensify-requirements-title">Password must contain:</p>
+          <p class="jensify-requirements-title">{{ 'auth.passwordMustContain' | translate }}</p>
           <ul>
-            <li>At least 8 characters</li>
-            <li>Uppercase and lowercase letters</li>
-            <li>Numbers or special characters</li>
+            <li>{{ 'auth.passwordReq1' | translate }}</li>
+            <li>{{ 'auth.passwordReq2' | translate }}</li>
+            <li>{{ 'auth.passwordReq3' | translate }}</li>
           </ul>
         </div>
 
@@ -199,19 +199,19 @@
           class="jensify-full-width jensify-button jensify-mt-md"
           [disabled]="loading"
         >
-          <span *ngIf="!loading">Create Account</span>
+          <span *ngIf="!loading">{{ 'auth.createAccount' | translate }}</span>
           <mat-spinner *ngIf="loading" diameter="24"></mat-spinner>
         </button>
 
         <!-- Login Link -->
         <div class="jensify-text-center jensify-text-muted jensify-mt-lg">
-          Already have an account?
-          <a routerLink="/auth/login" class="jensify-link">Sign in</a>
+          {{ 'auth.alreadyHaveAccount' | translate }}
+          <a routerLink="/auth/login" class="jensify-link">{{ 'auth.signIn' | translate }}</a>
         </div>
 
         <!-- Pricing Link -->
         <p class="jensify-text-center jensify-text-muted jensify-mt-md">
-          <a routerLink="/pricing" class="jensify-link">View pricing plans</a>
+          <a routerLink="/pricing" class="jensify-link">{{ 'auth.viewPricing' | translate }}</a>
         </p>
       </form>
     </mat-card-content>

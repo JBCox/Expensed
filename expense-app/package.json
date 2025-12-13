@@ -42,6 +42,8 @@
     "@angular/router": "^20.3.0",
     "@angular/service-worker": "^20.3.11",
     "@googlemaps/js-api-loader": "^2.0.2",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
     "@supabase/supabase-js": "^2.83.0",
     "@swimlane/ngx-charts": "^23.1.0",
     "@types/uuid": "^10.0.0",

@@ -20,6 +20,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApprovalService } from '../../../core/services/approval.service';
 import { ApprovalWithDetails, ApprovalStatus } from '../../../core/models/approval.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { OrganizationService } from '../../../core/services/organization.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { LoadingSkeleton } from '../../../shared/components/loading-skeleton/loading-skeleton';
 import { PullToRefresh } from '../../../shared/components/pull-to-refresh/pull-to-refresh';
@@ -56,6 +57,7 @@ import { ApprovalHistoryDialog, ApprovalHistoryDialogData } from '../approval-hi
 export class ApprovalQueue implements OnInit {
   private approvalService = inject(ApprovalService);
   private authService = inject(AuthService);
+  private organizationService = inject(OrganizationService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private dialog = inject(MatDialog);
@@ -81,7 +83,7 @@ export class ApprovalQueue implements OnInit {
 
   // Check if user has Finance role (can process payments)
   get isFinanceUser(): boolean {
-    const member = this.authService.currentMember;
+    const member = this.organizationService.currentMembership;
     return member?.role === 'finance' || member?.role === 'admin';
   }
 

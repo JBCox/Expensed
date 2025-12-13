@@ -22,6 +22,7 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatIconModule } from "@angular/material/icon";
 import { Subject } from "rxjs";
 import { takeUntil } from "rxjs/operators";
+import { TranslateModule } from "@ngx-translate/core";
 import { AuthService } from "../../../core/services/auth.service";
 import { SupabaseService } from "../../../core/services/supabase.service";
 import { SuperAdminService } from "../../../core/services/super-admin.service";
@@ -45,6 +46,7 @@ import { BrandLogoComponent } from "../../../shared/components/brand-logo/brand-
     MatButtonModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    TranslateModule,
     BrandLogoComponent,
   ],
   templateUrl: "./login.component.html",

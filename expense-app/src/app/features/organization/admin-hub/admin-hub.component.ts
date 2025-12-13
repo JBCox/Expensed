@@ -51,21 +51,26 @@ interface AdminCard {
   styles: [`
     .admin-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: var(--jensify-spacing-md, 1rem);
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--jensify-spacing-sm, 0.75rem);
     }
 
     .admin-card {
       display: flex;
       align-items: center;
-      gap: var(--jensify-spacing-md, 1rem);
-      padding: var(--jensify-spacing-lg, 1.5rem);
+      gap: var(--jensify-spacing-sm, 0.75rem);
+      padding: var(--jensify-spacing-md, 1rem);
       cursor: pointer;
       transition: all 0.2s ease;
+      position: relative;
 
       &:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+        .admin-card-arrow {
+          color: var(--jensify-primary, #ff5900);
+        }
       }
     }
 
@@ -73,16 +78,16 @@ interface AdminCard {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       border-radius: var(--jensify-radius-md, 8px);
       flex-shrink: 0;
 
       mat-icon {
         color: white;
-        font-size: 24px;
-        width: 24px;
-        height: 24px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
       }
     }
 
@@ -91,22 +96,29 @@ interface AdminCard {
       min-width: 0;
 
       h3 {
-        margin: 0 0 4px 0;
-        font-size: 1rem;
+        margin: 0 0 2px 0;
+        font-size: 0.9375rem;
         font-weight: 600;
         color: var(--jensify-text-strong, #1a1a1a);
       }
 
       p {
         margin: 0;
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         color: var(--jensify-text-muted, #666);
+        line-height: 1.3;
       }
     }
 
     .admin-card-arrow {
+      position: absolute;
+      top: 1rem;
+      right: 0.75rem;
       color: var(--jensify-text-muted, #999);
-      flex-shrink: 0;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      transition: color 0.2s ease;
     }
 
     :host-context(.dark) {
@@ -124,18 +136,23 @@ interface AdminCard {
       }
 
       .admin-card {
-        padding: var(--jensify-spacing-md, 1rem);
+        padding: var(--jensify-spacing-sm, 0.75rem);
       }
 
       .admin-card-icon {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
 
         mat-icon {
-          font-size: 20px;
-          width: 20px;
-          height: 20px;
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
         }
+      }
+
+      .admin-card-arrow {
+        top: 0.75rem;
+        right: 0.5rem;
       }
     }
   `],
@@ -151,6 +168,13 @@ export class AdminHubComponent {
       description: 'Update company name, logo, and branding',
       route: '/organization/settings',
       color: '#f59e0b',
+    },
+    {
+      icon: 'translate',
+      title: 'Language Settings',
+      description: 'Set default language for your organization',
+      route: '/organization/language',
+      color: '#059669',
     },
     {
       icon: 'people',

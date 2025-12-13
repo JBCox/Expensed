@@ -33,10 +33,10 @@
       (keydown.enter)="navigate(item.route)"
       tabindex="0"
       role="button"
-      [attr.aria-label]="item.label"
+      [attr.aria-label]="item.label | translate"
     >
       <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
-      <span class="nav-label" *ngIf="!collapsed()">{{ item.label }}</span>
+      <span class="nav-label" *ngIf="!collapsed()">{{ item.label | translate }}</span>
       <!-- Badges for key routes -->
       <span class="nav-badge" *ngIf="!collapsed()">
         <ng-container [ngSwitch]="item.route">
@@ -64,8 +64,8 @@
       mat-icon-button
       class="collapse-toggle"
       (click)="toggleCollapse()"
-      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
-      [matTooltip]="collapsed() ? 'Expand' : 'Collapse'"
+      [attr.aria-label]="collapsed() ? ('nav.expandSidebar' | translate) : ('nav.collapseSidebar' | translate)"
+      [matTooltip]="collapsed() ? ('nav.expand' | translate) : ('nav.collapse' | translate)"
       matTooltipPosition="right"
     >
       <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>

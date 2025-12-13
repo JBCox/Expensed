@@ -159,6 +159,16 @@ export const routes: Routes = [
         data: { breadcrumb: "Company Settings" },
       },
       {
+        path: "language",
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import(
+            "./features/organization/language-settings/language-settings.component"
+          ).then((m) => m.LanguageSettingsComponent),
+        title: "Language Settings - Expensed",
+        data: { breadcrumb: "Language" },
+      },
+      {
         path: "users",
         canActivate: [adminGuard],
         loadComponent: () =>

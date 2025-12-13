@@ -9,10 +9,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
 import { RouterModule } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { LocaleService, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../../core/services/locale.service';
 
 @Component({
   selector: 'app-profile-settings',
@@ -29,6 +32,8 @@ import { ThemeService } from '../../../core/services/theme.service';
     MatProgressSpinnerModule,
     MatDividerModule,
     MatSlideToggleModule,
+    MatSelectModule,
+    TranslateModule,
   ],
   template: `
     <div class="jensify-container">
@@ -103,8 +108,8 @@ import { ThemeService } from '../../../core/services/theme.service';
                 <div class="setting-info">
                   <mat-icon>dark_mode</mat-icon>
                   <div class="setting-text">
-                    <span class="setting-label">Dark Mode</span>
-                    <span class="setting-description">Switch between light and dark themes</span>
+                    <span class="setting-label">{{ 'profile.darkMode' | translate }}</span>
+                    <span class="setting-description">{{ 'profile.darkModeDescription' | translate }}</span>
                   </div>
                 </div>
                 <mat-slide-toggle
@@ -112,6 +117,28 @@ import { ThemeService } from '../../../core/services/theme.service';
                   (change)="toggleDarkMode()"
                   color="primary">
                 </mat-slide-toggle>
+              </div>
+
+              <mat-divider></mat-divider>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <mat-icon>translate</mat-icon>
+                  <div class="setting-text">
+                    <span class="setting-label">{{ 'profile.language' | translate }}</span>
+                    <span class="setting-description">{{ 'profile.languageDescription' | translate }}</span>
+                  </div>
+                </div>
+                <mat-select
+                  [value]="currentLanguage()"
+                  (selectionChange)="onLanguageChange($event.value)"
+                  class="language-select">
+                  @for (lang of languages; track lang.code) {
+                    <mat-option [value]="lang.code">
+                      {{ lang.nativeName }}
+                    </mat-option>
+                  }
+                </mat-select>
               </div>
             </mat-card-content>
           </mat-card>
@@ -231,6 +258,13 @@ import { ThemeService } from '../../../core/services/theme.service';
       color: var(--jensify-text-muted, #666);
     }
 
+    .language-select {
+      width: 140px;
+      background: var(--jensify-bg-soft, #f5f5f5);
+      border-radius: var(--jensify-radius-sm, 4px);
+      padding: 0.25rem 0.5rem;
+    }
+
     .quick-links {
       display: flex;
       flex-direction: column;
@@ -305,11 +339,16 @@ export class ProfileSettingsComponent implements OnInit {
   private supabase = inject(SupabaseService);
   private notificationService = inject(NotificationService);
   private themeService = inject(ThemeService);
+  private localeService = inject(LocaleService);
   private fb = inject(FormBuilder);
 
   loading = signal(true);
   saving = signal(false);
   isDarkMode = signal(false);
+
+  // Language settings
+  currentLanguage = this.localeService.currentLanguage;
+  languages: SupportedLanguage[] = SUPPORTED_LANGUAGES;
 
   profileForm: FormGroup = this.fb.group({
     full_name: ['', Validators.required],
@@ -383,5 +422,16 @@ export class ProfileSettingsComponent implements OnInit {
   toggleDarkMode(): void {
     this.themeService.toggleTheme();
     this.isDarkMode.set(this.themeService.theme() === 'dark');
+  }
+
+  onLanguageChange(langCode: string): void {
+    this.localeService.setLanguage(langCode).subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Language updated');
+      },
+      error: () => {
+        this.notificationService.showError('Failed to update language');
+      },
+    });
   }
 }

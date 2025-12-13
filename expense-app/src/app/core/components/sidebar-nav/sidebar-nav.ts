@@ -5,6 +5,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatListModule } from "@angular/material/list";
 import { MatButtonModule } from "@angular/material/button";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { TranslateModule } from "@ngx-translate/core";
 import { AuthService } from "../../services/auth.service";
 import { OrganizationService } from "../../services/organization.service";
 import { ExpenseService } from "../../services/expense.service";
@@ -32,6 +33,7 @@ interface NavItem {
     MatListModule,
     MatButtonModule,
     MatTooltipModule,
+    TranslateModule,
     OrgSwitcher,
   ],
   templateUrl: "./sidebar-nav.html",
@@ -72,52 +74,52 @@ export class SidebarNav implements OnDestroy, AfterViewInit {
     // Dashboard & Admin
     {
       icon: "dashboard",
-      label: "Dashboard",
+      label: "nav.dashboard",
       route: "/home",
     },
     {
       icon: "task_alt",
-      label: "Approvals",
+      label: "nav.approvals",
       route: "/approvals",
       requiredRole: "manager",
     },
     {
       icon: "account_balance",
-      label: "Finance",
+      label: "nav.finance",
       route: "/finance",
       requiredRole: "finance",
     },
     {
       icon: "admin_panel_settings",
-      label: "Admin",
+      label: "nav.admin",
       route: "/admin",
       requiredRole: "admin",
     },
     // Natural expense workflow: Receipts → Expenses → Reports → Mileage
     {
       icon: "receipt_long",
-      label: "Receipts",
+      label: "nav.receipts",
       route: "/receipts",
     },
     {
       icon: "list_alt",
-      label: "Expenses",
+      label: "nav.expenses",
       route: "/expenses",
     },
     {
       icon: "folder_open",
-      label: "Reports",
+      label: "nav.reports",
       route: "/reports",
     },
     {
       icon: "commute",
-      label: "Mileage",
+      label: "nav.mileage",
       route: "/mileage",
     },
     // User settings
     {
       icon: "person",
-      label: "Profile",
+      label: "nav.profile",
       route: "/profile",
     },
   ];

@@ -112,6 +112,12 @@ export interface OrganizationSettings {
   mileage_settings?: MileageSettings;
   /** GL code mappings for expense categories (Finance admin configurable) */
   gl_code_mappings?: GLCodeMappings;
+  /**
+   * Default language for new users (ISO 639-1 code)
+   * Users can override in their profile settings
+   * Example: 'en', 'es', 'fr', 'de'
+   */
+  default_language?: string;
 }
 
 /**

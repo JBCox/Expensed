@@ -444,6 +444,20 @@ export class OrganizationService {
   }
 
   /**
+   * Get current organization (synchronous access)
+   */
+  get currentOrganization(): Organization | null {
+    return this.currentOrganizationSubject.value;
+  }
+
+  /**
+   * Get current user's membership (synchronous access)
+   */
+  get currentMembership(): OrganizationMember | null {
+    return this.currentMembershipSubject.value;
+  }
+
+  /**
    * Get current user's role in current organization
    */
   get currentUserRole(): string | null {
